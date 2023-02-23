@@ -1,0 +1,49 @@
+syntax = "proto3";
+package quip.matchmaker;
+option go_package="github.com/GambitLLC/quip/packages/api/pkg/pb";
+
+import "google/protobuf/empty.proto";
+
+message StartQueueRequest {
+  string gamemode = 1;
+}
+
+// Event message indicating change in queue status.
+message QueueUpdate {
+  // Identifies the entities whose queue has received an update.
+  repeated string targets = 1;
+
+  oneof update {
+    string stopped = 2;
+    MatchDetails found = 3;
+  }
+}
+
+message MatchDetails {
+  string connection = 1;
+}
+
+message StatusResponse {
+  enum Status {
+    OFFLINE = 0;
+    IDLE = 1;
+    SEARCHING = 2;
+    PLAYING = 3;
+  }
+
+  Status status = 1;
+
+  // Details about the match the user is currently playing in.
+  optional MatchDetails match = 2;
+}
+
+service Matchmaker {
+  // GetStatus returns the current matchmaking status.
+  rpc GetStatus(google.protobuf.Empty) returns (StatusResponse);
+
+  // StartQueue starts searching for a match with the given parameters.
+  rpc StartQueue(StartQueueRequest) returns (google.protobuf.Empty);
+
+  // StopQueue stops searching for a match. Idempotent.
+  rpc StopQueue(google.protobuf.Empty) returns (google.protobuf.Empty);
+}

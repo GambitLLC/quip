@@ -1,0 +1,79 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "packages/api/quip-matchmaker.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "Matchmaker"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "googlerpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "matchmakerMatchDetails": {
+      "type": "object",
+      "properties": {
+        "connection": {
+          "type": "string"
+        }
+      }
+    },
+    "matchmakerStatusResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/matchmakerStatusResponseStatus"
+        },
+        "match": {
+          "$ref": "#/definitions/matchmakerMatchDetails",
+          "description": "Details about the match the user is currently playing in."
+        }
+      }
+    },
+    "matchmakerStatusResponseStatus": {
+      "type": "string",
+      "enum": [
+        "OFFLINE",
+        "IDLE",
+        "SEARCHING",
+        "PLAYING"
+      ],
+      "default": "OFFLINE"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    }
+  }
+}

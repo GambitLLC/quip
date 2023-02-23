@@ -1,0 +1,9 @@
+{
+  "name": "api",
+  "implicitDependencies": ["third-party"],
+  "targets": {
+    "make": {
+      "command": "make all-protos"
+    }
+  }
+}
