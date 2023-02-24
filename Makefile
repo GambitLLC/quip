@@ -8,7 +8,6 @@ GRPC_GATEWAY_VERSION = 2.15.0
 
 # Defines the absolute local directory of this project
 REPOSITORY_ROOT := $(patsubst %/,%,$(dir $(abspath $(MAKEFILE_LIST))))
-PACKAGE_DIR := $(REPOSITORY_ROOT)/packages
 BUILD_DIR := $(REPOSITORY_ROOT)/build
 TOOLCHAIN_DIR := $(BUILD_DIR)/toolchain
 TOOLCHAIN_BIN := $(TOOLCHAIN_DIR)/bin
@@ -33,8 +32,9 @@ else
 	endif
 endif
 
-PROTOC_INCLUDES := $(PACKAGE_DIR)/third-party
-GOLANG_PROTOS = packages/api/pkg/pb/quip-matchmaker.pb.go
+PROTOC_INCLUDES := packages/api/third-party
+MATCHMAKER_GOLANG_PROTOS = packages/matchmaker/pb/quip-matchmaker.pb.go
+GOLANG_PROTOS = $(MATCHMAKER_GOLANG_PROTOS)
 SWAGGER_JSON_DOCS = packages/api/quip-matchmaker.swagger.json
 ALL_PROTOS = $(GOLANG_PROTOS) $(SWAGGER_JSON_DOCS)
 
@@ -50,7 +50,6 @@ install-toolchain: install-protoc-tools
 install-protoc-tools: build/toolchain/bin/protoc$(EXE_EXTENSION)
 install-protoc-tools: build/toolchain/bin/protoc-gen-go$(EXE_EXTENSION)
 install-protoc-tools: build/toolchain/bin/protoc-gen-go-grpc$(EXE_EXTENSION)
-install-protoc-tools: build/toolchain/bin/protoc-gen-grpc-gateway$(EXE_EXTENSION)
 install-protoc-tools: build/toolchain/bin/protoc-gen-openapiv2$(EXE_EXTENSION)
 
 build/toolchain/bin/protoc$(EXE_EXTENSION):
@@ -67,30 +66,27 @@ build/toolchain/bin/protoc-gen-go-grpc$(EXE_EXTENSION):
 	mkdir -p $(TOOLCHAIN_BIN)
 	cd $(TOOLCHAIN_BIN) && $(GO) get google.golang.org/grpc/cmd/protoc-gen-go-grpc && $(GO) build -pkgdir . google.golang.org/grpc/cmd/protoc-gen-go-grpc
 
-build/toolchain/bin/protoc-gen-grpc-gateway$(EXE_EXTENSION):
-	cd $(TOOLCHAIN_BIN) && $(GO) get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway && $(GO) build -pkgdir . github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
-
 build/toolchain/bin/protoc-gen-openapiv2$(EXE_EXTENSION):
 	mkdir -p $(TOOLCHAIN_BIN)
 	cd $(TOOLCHAIN_BIN) && $(GO) get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 && $(GO) build -pkgdir . github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
 
-packages/third-party/: packages/third-party/google/api packages/third-party/protoc-gen-openapiv2/options
+packages/api/third-party/: packages/api/third-party/google/api packages/api/third-party/protoc-gen-openapiv2/options
 
 GOOGLE_API_FILES := http annotations
-packages/third-party/google/api:
+packages/api/third-party/google/api:
 	mkdir -p $(TOOLCHAIN_DIR)/googleapis-temp/
-	mkdir -p $(PACKAGE_DIR)/third-party/google/api
+	mkdir -p $(REPOSITORY_ROOT)/packages/api/third-party/google/api
 	curl -o $(TOOLCHAIN_DIR)/googleapis-temp/googleapis.zip -L https://github.com/googleapis/googleapis/archive/$(GOOGLE_APIS_VERSION).zip
 	(cd $(TOOLCHAIN_DIR)/googleapis-temp/; unzip -q -o googleapis.zip)
-	cp -f $(foreach file,$(GOOGLE_API_FILES),$(TOOLCHAIN_DIR)/googleapis-temp/googleapis-$(GOOGLE_APIS_VERSION)/google/api/$(file).proto) $(PACKAGE_DIR)/third-party/google/api/
+	cp -f $(foreach file,$(GOOGLE_API_FILES),$(TOOLCHAIN_DIR)/googleapis-temp/googleapis-$(GOOGLE_APIS_VERSION)/google/api/$(file).proto) $(REPOSITORY_ROOT)/packages/api/third-party/google/api/
 	rm -rf $(TOOLCHAIN_DIR)/googleapis-temp
 
-packages/third-party/protoc-gen-openapiv2/options:
+packages/api/third-party/protoc-gen-openapiv2/options:
 	mkdir -p $(TOOLCHAIN_DIR)/grpc-gateway-temp/
-	mkdir -p $(PACKAGE_DIR)/third-party/protoc-gen-openapiv2/options
+	mkdir -p $(REPOSITORY_ROOT)/packages/api/third-party/protoc-gen-openapiv2/options
 	curl -o $(TOOLCHAIN_DIR)/grpc-gateway-temp/grpc-gateway.zip -L https://github.com/grpc-ecosystem/grpc-gateway/archive/v$(GRPC_GATEWAY_VERSION).zip
 	(cd $(TOOLCHAIN_DIR)/grpc-gateway-temp/; unzip -q -o grpc-gateway.zip)
-	cp -f $(TOOLCHAIN_DIR)/grpc-gateway-temp/grpc-gateway-$(GRPC_GATEWAY_VERSION)/protoc-gen-openapiv2/options/*.proto $(PACKAGE_DIR)/third-party/protoc-gen-openapiv2/options/
+	cp -f $(TOOLCHAIN_DIR)/grpc-gateway-temp/grpc-gateway-$(GRPC_GATEWAY_VERSION)/protoc-gen-openapiv2/options/*.proto $(REPOSITORY_ROOT)/packages/api/third-party/protoc-gen-openapiv2/options/
 	rm -rf $(TOOLCHAIN_DIR)/grpc-gateway-temp
 
 ## ####################################
@@ -99,25 +95,25 @@ packages/third-party/protoc-gen-openapiv2/options:
 
 ## # Build all protobuf definitions
 ## all-protos
+## matchmaker-protos
 ##
 
 all-protos: $(ALL_PROTOS)
+matchmaker-protos: $(MATCHMAKER_GOLANG_PROTOS)
 
 GO_PROTOC_DEPS := build/toolchain/bin/protoc$(EXE_EXTENSION)
 GO_PROTOC_DEPS += build/toolchain/bin/protoc-gen-go$(EXE_EXTENSION)
 GO_PROTOC_DEPS += build/toolchain/bin/protoc-gen-go-grpc$(EXE_EXTENSION)
 GO_PROTOC_DEPS += build/toolchain/bin/protoc-gen-grpc-gateway$(EXE_EXTENSION)
 
-packages/api/pkg/pb/%.pb.go: packages/api/%.proto packages/third-party/ $(GO_PROTOC_DEPS)
-	mkdir -p $(PACKAGE_DIR)/api/pkg/pb
+packages/matchmaker/pb/quip-matchmaker.pb.go: packages/api/quip-matchmaker.proto packages/api/third-party/ $(GO_PROTOC_DEPS)
+	mkdir -p $(REPOSITORY_ROOT)/packages/matchmaker/pb
 	$(PROTOC) $< \
 		-I $(REPOSITORY_ROOT) -I $(PROTOC_INCLUDES) \
-		--go_out=$(PACKAGE_DIR)/api \
-		--go_opt=module=$(GO_MODULE)/packages/api \
-		--go-grpc_out=require_unimplemented_servers=false:$(PACKAGE_DIR)/api \
-		--go-grpc_opt=module=$(GO_MODULE)/packages/api
-#		--grpc-gateway_out=$(PACKAGE_DIR)/api \
-#		--grpc-gateway_opt=module=$(GO_MODULE)/packages/api
+		--go_out=$(REPOSITORY_ROOT)/packages/matchmaker \
+		--go_opt=module=$(GO_MODULE)/packages/matchmaker \
+		--go-grpc_out=require_unimplemented_servers=false:$(REPOSITORY_ROOT)/packages/matchmaker \
+		--go-grpc_opt=module=$(GO_MODULE)/packages/matchmaker
 
 packages/api/%.swagger.json: packages/api/%.proto packages/third-party/ build/toolchain/bin/protoc$(EXE_EXTENSION) build/toolchain/bin/protoc-gen-openapiv2$(EXE_EXTENSION)
 	$(PROTOC) $< \

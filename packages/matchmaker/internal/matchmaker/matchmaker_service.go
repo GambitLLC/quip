@@ -3,7 +3,7 @@ package matchmaker
 import (
 	"context"
 
-	"github.com/GambitLLC/quip/packages/api/pkg/pb"
+	"github.com/GambitLLC/quip/packages/matchmaker/pb"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 

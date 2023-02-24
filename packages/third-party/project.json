@@ -1,9 +1,0 @@
-{
-  "name": "third-party",
-  "projectType": "library",
-  "targets": {
-    "make": {
-      "command": "make packages/third-party/"
-    }
-  }
-}

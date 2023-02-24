@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/GambitLLC/quip/packages/api/pkg/pb"
 	"github.com/GambitLLC/quip/packages/matchmaker/internal/matchmaker"
+	"github.com/GambitLLC/quip/packages/matchmaker/pb"
 	"google.golang.org/grpc"
 )
 

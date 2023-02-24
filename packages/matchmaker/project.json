@@ -5,9 +5,12 @@
   "sourceRoot": "packages/matchmaker",
   "implicitDependencies": ["api"],
   "targets": {
+    "make": {
+      "command": "make matchmaker-protos"
+    },
     "build": {
       "executor": "@nx-go/nx-go:build",
-      "dependsOn": ["^make"],
+      "dependsOn": ["make"],
       "options": {
         "outputPath": "dist/packages/matchmaker",
         "main": "packages/matchmaker/main.go"
