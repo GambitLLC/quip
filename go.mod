@@ -33,6 +33,7 @@ require (
 	github.com/go-redsync/redsync/v4 v4.8.1
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
+	github.com/pkg/errors v0.9.1
 	github.com/rs/xid v1.4.0
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.1
