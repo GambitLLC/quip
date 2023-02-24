@@ -6,7 +6,7 @@ option go_package="github.com/GambitLLC/quip/packages/matchmaker/internal/ipb";
 message PlayerInternal {
   string player_id = 1;
 
-  repeated ConnectionInternal connections = 2;
+  map<string, ConnectionInternal> connections = 2;
 
   optional string ticket_id = 3;
 
