@@ -4,10 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/GambitLLC/quip/packages/matchmaker/internal/statestore"
 	"github.com/GambitLLC/quip/packages/matchmaker/pb"
+	"github.com/rs/xid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,7 +36,15 @@ func TestGetStatus(t *testing.T) {
 		ctx   context.Context
 		check func(*testing.T, *pb.StatusResponse, error)
 	}{
-		// TODO: add test cases
+		{
+			name:  "expect IDLE status",
+			setup: nil,
+			ctx:   newContextWithPlayer(t, xid.New().String()),
+			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
+				require.NoError(t, err)
+				require.Equal(t, pb.StatusResponse_IDLE, sr.Status, "expected status to be IDLE")
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -107,4 +117,11 @@ func TestStopQueue(t *testing.T) {
 			tt.check(t, err)
 		})
 	}
+}
+
+type contextTestKey string
+
+func newContextWithPlayer(t *testing.T, playerId string) context.Context {
+	ctx := context.WithValue(context.Background(), contextTestKey("testing.T"), t)
+	return metadata.NewIncomingContext(ctx, metadata.Pairs("Player-Id", playerId))
 }
