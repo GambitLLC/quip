@@ -3,6 +3,7 @@ package statestore
 import (
 	"context"
 
+	"github.com/GambitLLC/quip/packages/config"
 	"github.com/GambitLLC/quip/packages/matchmaker/internal/ipb"
 )
 
@@ -22,8 +23,6 @@ type Service interface {
 
 	GetPlayer(ctx context.Context, id string) (*ipb.PlayerInternal, error)
 
-	// Matching
-
 	TrackTicket(ctx context.Context, id string, players []string) error
 
 	UntrackTicket(ctx context.Context, id string) error
@@ -31,6 +30,10 @@ type Service interface {
 	TrackMatch(ctx context.Context, matchId string, players []string) error
 
 	UntrackMatch(ctx context.Context, id string) error
+}
+
+func New(cfg config.View) Service {
+	return NewRedis(cfg)
 }
 
 // Locker provides methods to use distributed locks against the storage backend.
