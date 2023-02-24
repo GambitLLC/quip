@@ -33,7 +33,7 @@ else
 endif
 
 PROTOC_INCLUDES := packages/api/third-party
-MATCHMAKER_GOLANG_PROTOS = packages/matchmaker/pb/quip-matchmaker.pb.go
+MATCHMAKER_GOLANG_PROTOS = packages/matchmaker/pb/quip-matchmaker.pb.go packages/matchmaker/internal/ipb/messages.pb.go
 GOLANG_PROTOS = $(MATCHMAKER_GOLANG_PROTOS)
 SWAGGER_JSON_DOCS = packages/api/quip-matchmaker.swagger.json
 ALL_PROTOS = $(GOLANG_PROTOS) $(SWAGGER_JSON_DOCS)
@@ -106,7 +106,14 @@ GO_PROTOC_DEPS += build/toolchain/bin/protoc-gen-go$(EXE_EXTENSION)
 GO_PROTOC_DEPS += build/toolchain/bin/protoc-gen-go-grpc$(EXE_EXTENSION)
 GO_PROTOC_DEPS += build/toolchain/bin/protoc-gen-grpc-gateway$(EXE_EXTENSION)
 
-packages/matchmaker/pb/quip-matchmaker.pb.go: packages/api/quip-matchmaker.proto packages/api/third-party/ $(GO_PROTOC_DEPS)
+packages/matchmaker/internal/ipb/%.pb.go: packages/matchmaker/internal/api/%.proto $(GO_PROTOC_DEPS)
+	mkdir -p $(REPOSITORY_ROOT)/packages/matchmaker/internal/ipb
+	$(PROTOC) $< \
+		-I $(REPOSITORY_ROOT) -I $(PROTOC_INCLUDES) \
+		--go_out=$(REPOSITORY_ROOT)/packages/matchmaker/internal/ipb \
+		--go_opt=module=$(GO_MODULE)/packages/matchmaker/internal/ipb
+
+packages/matchmaker/pb/%.pb.go: packages/api/%.proto packages/api/third-party/ $(GO_PROTOC_DEPS)
 	mkdir -p $(REPOSITORY_ROOT)/packages/matchmaker/pb
 	$(PROTOC) $< \
 		-I $(REPOSITORY_ROOT) -I $(PROTOC_INCLUDES) \

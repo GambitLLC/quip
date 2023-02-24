@@ -1,0 +1,40 @@
+package statestore
+
+import (
+	"context"
+
+	"github.com/GambitLLC/quip/packages/matchmaker/internal/ipb"
+)
+
+// Service is an interface for talking to a storage backend.
+type Service interface {
+	// Closes the connection to the underlying storage.
+	Close() error
+
+	// Mutex
+
+	// NewMutex returns a Locker with the given name.
+	NewMutex(key string) Locker
+
+	// Player
+
+	CreatePlayer(ctx context.Context, player *ipb.PlayerInternal) error
+
+	GetPlayer(ctx context.Context, id string) (*ipb.PlayerInternal, error)
+
+	// Matching
+
+	TrackTicket(ctx context.Context, id string, players []string) error
+
+	UntrackTicket(ctx context.Context, id string) error
+
+	TrackMatch(ctx context.Context, matchId string, players []string) error
+
+	UntrackMatch(ctx context.Context, id string) error
+}
+
+// Locker provides methods to use distributed locks against the storage backend.
+type Locker interface {
+	Lock(context.Context) error
+	Unlock(context.Context) (bool, error)
+}
