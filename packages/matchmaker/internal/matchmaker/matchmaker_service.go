@@ -54,11 +54,7 @@ func getStatus(player *ipb.PlayerInternal) pb.StatusResponse_Status {
 		return pb.StatusResponse_SEARCHING
 	}
 
-	if len(player.Connections) > 0 {
-		return pb.StatusResponse_IDLE
-	}
-
-	return pb.StatusResponse_OFFLINE
+	return pb.StatusResponse_IDLE
 }
 
 // GetStatus returns the current matchmaking status.
@@ -91,8 +87,6 @@ func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*e
 	defer unlock()
 
 	switch getStatus(player) {
-	case pb.StatusResponse_OFFLINE:
-		return nil, status.Error(codes.Aborted, "player is not online")
 	case pb.StatusResponse_SEARCHING:
 		return nil, status.Error(codes.Aborted, "player is already in queue")
 	case pb.StatusResponse_PLAYING:

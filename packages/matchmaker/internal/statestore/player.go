@@ -57,30 +57,6 @@ func (rb *redisBackend) GetPlayer(ctx context.Context, id string) (*ipb.PlayerIn
 	return player, nil
 }
 
-func (rb *redisBackend) TrackConnection(ctx context.Context, playerId string, conn *ipb.ConnectionInternal) error {
-	player, err := rb.GetPlayer(ctx, playerId)
-	if err != nil {
-		return err
-	}
-
-	player.Connections[conn.Connection] = conn
-	return rb.CreatePlayer(ctx, player)
-}
-
-func (rb *redisBackend) UntrackConnection(ctx context.Context, playerId string, conn *ipb.ConnectionInternal) error {
-	player, err := rb.GetPlayer(ctx, playerId)
-	if err != nil {
-		return err
-	}
-
-	if _, exists := player.Connections[conn.Connection]; !exists {
-		return nil
-	}
-
-	delete(player.Connections, conn.Connection)
-	return rb.CreatePlayer(ctx, player)
-}
-
 func (rb *redisBackend) TrackTicket(ctx context.Context, id string, playerIds []string) error {
 	res, err := rb.redisClient.MGet(ctx, playerIds...).Result()
 	if err != nil {

@@ -122,7 +122,7 @@ packages/matchmaker/pb/%.pb.go: packages/api/%.proto packages/api/third-party/ $
 		--go-grpc_out=require_unimplemented_servers=false:$(REPOSITORY_ROOT)/packages/matchmaker \
 		--go-grpc_opt=module=$(GO_MODULE)/packages/matchmaker
 
-packages/api/%.swagger.json: packages/api/%.proto packages/third-party/ build/toolchain/bin/protoc$(EXE_EXTENSION) build/toolchain/bin/protoc-gen-openapiv2$(EXE_EXTENSION)
+packages/api/%.swagger.json: packages/api/%.proto packages/api/third-party/ build/toolchain/bin/protoc$(EXE_EXTENSION) build/toolchain/bin/protoc-gen-openapiv2$(EXE_EXTENSION)
 	$(PROTOC) $< \
 		-I $(REPOSITORY_ROOT) -I $(PROTOC_INCLUDES) \
 		--openapiv2_out=json_names_for_fields=false,logtostderr=true,allow_delete_body=true:$(REPOSITORY_ROOT)
@@ -136,6 +136,6 @@ clean-build: clean-toolchain
 	rm -rf $(BUILD_DIR)/
 
 clean-third-party:
-	rm -rf $(REPOSITORY_ROOT)/third_party/
+	rm -rf $(REPOSITORY_ROOT)/api/third_party/
 
 clean: clean-build clean-third-party

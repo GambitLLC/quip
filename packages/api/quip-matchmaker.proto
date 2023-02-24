@@ -25,10 +25,9 @@ message MatchDetails {
 
 message StatusResponse {
   enum Status {
-    OFFLINE = 0;
-    IDLE = 1;
-    SEARCHING = 2;
-    PLAYING = 3;
+    IDLE = 0;
+    SEARCHING = 1;
+    PLAYING = 2;
   }
 
   Status status = 1;

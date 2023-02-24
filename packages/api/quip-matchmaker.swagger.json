@@ -59,12 +59,11 @@
     "matchmakerStatusResponseStatus": {
       "type": "string",
       "enum": [
-        "OFFLINE",
         "IDLE",
         "SEARCHING",
         "PLAYING"
       ],
-      "default": "OFFLINE"
+      "default": "IDLE"
     },
     "protobufAny": {
       "type": "object",

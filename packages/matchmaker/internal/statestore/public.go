@@ -23,10 +23,6 @@ type Service interface {
 
 	GetPlayer(ctx context.Context, id string) (*ipb.PlayerInternal, error)
 
-	TrackConnection(ctx context.Context, playerId string, conn *ipb.ConnectionInternal) error
-
-	UntrackConnection(ctx context.Context, playerId string, conn *ipb.ConnectionInternal) error
-
 	TrackTicket(ctx context.Context, id string, playerIds []string) error
 
 	UntrackTicket(ctx context.Context, playerId string) error
