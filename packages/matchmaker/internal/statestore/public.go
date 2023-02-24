@@ -23,13 +23,13 @@ type Service interface {
 
 	GetPlayer(ctx context.Context, id string) (*ipb.PlayerInternal, error)
 
-	TrackTicket(ctx context.Context, id string, players []string) error
+	TrackTicket(ctx context.Context, id string, playerIds []string) error
 
-	UntrackTicket(ctx context.Context, id string) error
+	UntrackTicket(ctx context.Context, playerId string) error
 
-	TrackMatch(ctx context.Context, matchId string, players []string) error
+	TrackMatch(ctx context.Context, matchId string, playerIds []string) error
 
-	UntrackMatch(ctx context.Context, id string) error
+	UntrackMatch(ctx context.Context, playerId string) error
 }
 
 func New(cfg config.View) Service {
