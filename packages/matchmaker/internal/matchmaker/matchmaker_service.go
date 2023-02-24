@@ -61,6 +61,11 @@ func getStatus(player *ipb.PlayerInternal) pb.StatusResponse_Status {
 func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusResponse, error) {
 	player, unlock, err := getPlayer(ctx, s.store)
 	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return &pb.StatusResponse{
+				Status: pb.StatusResponse_IDLE,
+			}, nil
+		}
 		return nil, err
 	}
 	defer unlock()

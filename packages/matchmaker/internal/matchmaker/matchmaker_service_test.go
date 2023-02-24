@@ -8,8 +8,10 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/GambitLLC/quip/packages/matchmaker/internal/statestore"
+	statestoreTesting "github.com/GambitLLC/quip/packages/matchmaker/internal/statestore/testing"
 	"github.com/GambitLLC/quip/packages/matchmaker/pb"
 	"github.com/rs/xid"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,7 +50,8 @@ func TestGetStatus(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var store statestore.Service
+			cfg := viper.New()
+			store := statestoreTesting.NewService(t, cfg)
 			s := &Service{
 				store: store,
 			}
