@@ -33,6 +33,10 @@ func TestService(t *testing.T) {
 }
 
 func TestGetStatus(t *testing.T) {
+	playerId := xid.New().String()
+	ctx := newContextWithPlayer(t, playerId)
+	randomId := xid.New().String()
+
 	tests := []struct {
 		name  string
 		setup func(*testing.T, statestore.Service)
@@ -42,10 +46,38 @@ func TestGetStatus(t *testing.T) {
 		{
 			name:  "expect IDLE status",
 			setup: nil,
-			ctx:   newContextWithPlayer(t, xid.New().String()),
+			ctx:   ctx,
 			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
 				require.NoError(t, err)
 				require.Equal(t, pb.StatusResponse_IDLE, sr.Status, "expected status to be IDLE")
+			},
+		},
+		{
+			name: "expect SEARCHING status",
+			setup: func(t *testing.T, s statestore.Service) {
+				s.CreatePlayer(ctx, &ipb.PlayerInternal{
+					PlayerId: playerId,
+					TicketId: &randomId,
+				})
+			},
+			ctx: ctx,
+			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
+				require.NoError(t, err)
+				require.Equal(t, pb.StatusResponse_SEARCHING, sr.Status, "expected status to be SEARCHING")
+			},
+		},
+		{
+			name: "expect PLAYING status",
+			setup: func(t *testing.T, s statestore.Service) {
+				s.CreatePlayer(ctx, &ipb.PlayerInternal{
+					PlayerId: playerId,
+					MatchId:  &randomId,
+				})
+			},
+			ctx: ctx,
+			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
+				require.NoError(t, err)
+				require.Equal(t, pb.StatusResponse_PLAYING, sr.Status, "expected status to be PLAYING")
 			},
 		},
 	}
