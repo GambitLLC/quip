@@ -71,13 +71,13 @@ func (rb *redisBackend) TrackTicket(ctx context.Context, id string, playerIds []
 			continue
 		}
 
-		bs, ok := val.([]byte)
+		sval, ok := val.(string)
 		if !ok {
 			return status.Errorf(codes.Internal, "player value is not type []byte, is %T", val)
 		}
 
 		player := &ipb.PlayerInternal{}
-		err = proto.Unmarshal(bs, player)
+		err = proto.Unmarshal([]byte(sval), player)
 		if err != nil {
 			err = errors.Wrap(err, "failed to unmarshal player proto")
 			return status.Error(codes.Internal, err.Error())

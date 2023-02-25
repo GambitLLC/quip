@@ -50,14 +50,10 @@ func TestGetStatus(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := viper.New()
-			store := statestoreTesting.NewService(t, cfg)
-			s := &Service{
-				store: store,
-			}
+			s := newService(t)
 
 			if tt.setup != nil {
-				tt.setup(t, store)
+				tt.setup(t, s.store)
 			}
 
 			got, err := s.GetStatus(tt.ctx, &emptypb.Empty{})
@@ -77,17 +73,26 @@ func TestStartQueue(t *testing.T) {
 		args  args
 		check func(*testing.T, error)
 	}{
-		// TODO: add test cases
+		{
+			name:  "expect success with normal input",
+			setup: nil,
+			args: args{
+				ctx: newContextWithPlayer(t, xid.New().String()),
+				req: &pb.StartQueueRequest{
+					Gamemode: "some gamemode",
+				},
+			},
+			check: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var store statestore.Service
-			s := &Service{
-				store: store,
-			}
+			s := newService(t)
 
 			if tt.setup != nil {
-				tt.setup(t, store)
+				tt.setup(t, s.store)
 			}
 
 			_, err := s.StartQueue(tt.args.ctx, tt.args.req)
@@ -103,17 +108,21 @@ func TestStopQueue(t *testing.T) {
 		ctx   context.Context
 		check func(*testing.T, error)
 	}{
-		// TODO: add test cases
+		{
+			name:  "expect success when not in queue",
+			setup: nil,
+			ctx:   newContextWithPlayer(t, xid.New().String()),
+			check: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var store statestore.Service
-			s := &Service{
-				store: store,
-			}
+			s := newService(t)
 
 			if tt.setup != nil {
-				tt.setup(t, store)
+				tt.setup(t, s.store)
 			}
 
 			_, err := s.StopQueue(tt.ctx, &emptypb.Empty{})
@@ -127,4 +136,12 @@ type contextTestKey string
 func newContextWithPlayer(t *testing.T, playerId string) context.Context {
 	ctx := context.WithValue(context.Background(), contextTestKey("testing.T"), t)
 	return metadata.NewIncomingContext(ctx, metadata.Pairs("Player-Id", playerId))
+}
+
+func newService(t *testing.T) *Service {
+	cfg := viper.New()
+	store := statestoreTesting.NewService(t, cfg)
+	return &Service{
+		store: store,
+	}
 }

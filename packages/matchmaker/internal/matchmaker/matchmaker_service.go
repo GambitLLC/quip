@@ -19,7 +19,7 @@ type Service struct {
 
 // getPlayer retrieves the player from the metadata attached to the context.
 // Also locks the player mutex and returns an unlock function.
-func getPlayer(ctx context.Context, store statestore.Service) (player *ipb.PlayerInternal, unlock func(), err error) {
+func getPlayer(ctx context.Context, store statestore.Service, create bool) (player *ipb.PlayerInternal, unlock func(), err error) {
 	playerId := metautils.ExtractIncoming(ctx).Get("Player-Id")
 	if playerId == "" {
 		err = status.Error(codes.InvalidArgument, "missing Player-Id metadata")
@@ -39,7 +39,15 @@ func getPlayer(ctx context.Context, store statestore.Service) (player *ipb.Playe
 
 	player, err = store.GetPlayer(ctx, playerId)
 	if err != nil {
-		unlock()
+		if status.Code(err) != codes.NotFound || !create {
+			unlock()
+			return
+		}
+
+		player = &ipb.PlayerInternal{
+			PlayerId: playerId,
+		}
+		err = store.CreatePlayer(ctx, player)
 	}
 
 	return
@@ -59,7 +67,7 @@ func getStatus(player *ipb.PlayerInternal) pb.StatusResponse_Status {
 
 // GetStatus returns the current matchmaking status.
 func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusResponse, error) {
-	player, unlock, err := getPlayer(ctx, s.store)
+	player, unlock, err := getPlayer(ctx, s.store, false)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return &pb.StatusResponse{
@@ -85,7 +93,7 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 
 // StartQueue starts searching for a match with the given parameters.
 func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*emptypb.Empty, error) {
-	player, unlock, err := getPlayer(ctx, s.store)
+	player, unlock, err := getPlayer(ctx, s.store, true)
 	if err != nil {
 		return nil, err
 	}
@@ -116,8 +124,12 @@ func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*e
 
 // StopQueue stops searching for a match. Idempotent.
 func (s *Service) StopQueue(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	player, unlock, err := getPlayer(ctx, s.store)
+	player, unlock, err := getPlayer(ctx, s.store, false)
 	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return &emptypb.Empty{}, nil
+		}
+
 		return nil, err
 	}
 	defer unlock()
