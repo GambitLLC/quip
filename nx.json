@@ -1,8 +1,4 @@
 {
-  "implicitDependencies": {
-    "go.mod": "*"
-  },
-  "plugins": ["@nx-go/nx-go"],
   "tasksRunnerOptions": {
     "default": {
       "runner": "nx/tasks-runners/default",
@@ -11,5 +7,21 @@
       }
     }
   },
-  "extends": "nx/presets/npm.json"
+  "implicitDependencies": {
+    "go.mod": "*"
+  },
+  "plugins": ["@nx-go/nx-go"],
+  "extends": "nx/presets/npm.json",
+  "targetDefaults": {
+    "test": {
+      "inputs": ["default", "^default", "{workspaceRoot}/jest.preset.js"]
+    },
+    "lint": {
+      "inputs": [
+        "default",
+        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/.eslintignore"
+      ]
+    }
+  }
 }
