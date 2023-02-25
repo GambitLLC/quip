@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/GambitLLC/quip/packages/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/packages/matchmaker/internal/statestore"
 	statestoreTesting "github.com/GambitLLC/quip/packages/matchmaker/internal/statestore/testing"
 	"github.com/GambitLLC/quip/packages/matchmaker/pb"
@@ -63,6 +64,10 @@ func TestGetStatus(t *testing.T) {
 }
 
 func TestStartQueue(t *testing.T) {
+	playerId := xid.New().String()
+	ctx := newContextWithPlayer(t, playerId)
+	randomId := xid.New().String()
+
 	type args struct {
 		ctx context.Context
 		req *pb.StartQueueRequest
@@ -77,13 +82,49 @@ func TestStartQueue(t *testing.T) {
 			name:  "expect success with normal input",
 			setup: nil,
 			args: args{
-				ctx: newContextWithPlayer(t, xid.New().String()),
+				ctx: ctx,
 				req: &pb.StartQueueRequest{
 					Gamemode: "some gamemode",
 				},
 			},
 			check: func(t *testing.T, err error) {
 				require.NoError(t, err)
+			},
+		},
+		{
+			name: "expect error if already queued",
+			setup: func(t *testing.T, s statestore.Service) {
+				s.CreatePlayer(ctx, &ipb.PlayerInternal{
+					PlayerId: playerId,
+					TicketId: &randomId,
+				})
+			},
+			args: args{
+				ctx: ctx,
+				req: &pb.StartQueueRequest{
+					Gamemode: "some gamemode",
+				},
+			},
+			check: func(t *testing.T, err error) {
+				require.Error(t, err)
+			},
+		},
+		{
+			name: "expect error if already in game",
+			setup: func(t *testing.T, s statestore.Service) {
+				s.CreatePlayer(ctx, &ipb.PlayerInternal{
+					PlayerId: playerId,
+					MatchId:  &randomId,
+				})
+			},
+			args: args{
+				ctx: ctx,
+				req: &pb.StartQueueRequest{
+					Gamemode: "some gamemode",
+				},
+			},
+			check: func(t *testing.T, err error) {
+				require.Error(t, err)
 			},
 		},
 	}
