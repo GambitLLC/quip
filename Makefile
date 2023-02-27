@@ -35,8 +35,10 @@ endif
 PROTOC_INCLUDES := packages/api/third-party
 MATCHMAKER_GOLANG_PROTOS = packages/matchmaker/pb/quip-matchmaker.pb.go packages/matchmaker/internal/ipb/messages.pb.go
 GOLANG_PROTOS = $(MATCHMAKER_GOLANG_PROTOS)
+SOCKET_IO_PROTOS = packages/socket.io-server/proto/packages/api/quip-matchmaker.ts
+TYPESCRIPT_PROTOS = $(SOCKET_IO_PROTOS)
 SWAGGER_JSON_DOCS = packages/api/quip-matchmaker.swagger.json
-ALL_PROTOS = $(GOLANG_PROTOS) $(SWAGGER_JSON_DOCS)
+ALL_PROTOS = $(GOLANG_PROTOS) $(SOCKET_IO_PROTOS) $(SWAGGER_JSON_DOCS)
 
 help:
 	@cat Makefile | grep ^\#\# | grep -v ^\#\#\# |cut -c 4-
@@ -96,10 +98,12 @@ packages/api/third-party/protoc-gen-openapiv2/options:
 ## # Build all protobuf definitions
 ## all-protos
 ## matchmaker-protos
+## socket-io-protos
 ##
 
 all-protos: $(ALL_PROTOS)
 matchmaker-protos: $(MATCHMAKER_GOLANG_PROTOS)
+socket.io-protos: $(SOCKET_IO_PROTOS)
 
 GO_PROTOC_DEPS := build/toolchain/bin/protoc$(EXE_EXTENSION)
 GO_PROTOC_DEPS += build/toolchain/bin/protoc-gen-go$(EXE_EXTENSION)
@@ -121,6 +125,13 @@ packages/matchmaker/pb/%.pb.go: packages/api/%.proto packages/api/third-party/ $
 		--go_opt=module=$(GO_MODULE)/packages/matchmaker \
 		--go-grpc_out=require_unimplemented_servers=false:$(REPOSITORY_ROOT)/packages/matchmaker \
 		--go-grpc_opt=module=$(GO_MODULE)/packages/matchmaker
+
+packages/socket.io-server/proto/packages/api/%.ts: packages/api/%.proto packages/api/third-party/
+	mkdir -p $(REPOSITORY_ROOT)/packages/socket.io-server/proto
+	$(PROTOC) $< \
+		-I $(REPOSITORY_ROOT) -I $(PROTOC_INCLUDES) \
+		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
+		--ts_proto_out=$(REPOSITORY_ROOT)/packages/socket.io-server/proto
 
 packages/api/%.swagger.json: packages/api/%.proto packages/api/third-party/ build/toolchain/bin/protoc$(EXE_EXTENSION) build/toolchain/bin/protoc-gen-openapiv2$(EXE_EXTENSION)
 	$(PROTOC) $< \

@@ -4,9 +4,13 @@
   "sourceRoot": "packages/socket.io-server/src",
   "projectType": "application",
   "targets": {
+    "make": {
+      "command": "make socket.io-protos"
+    },
     "build": {
       "executor": "@nrwl/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],
+      "dependsOn": ["make"],
       "options": {
         "outputPath": "dist/packages/socket.io-server",
         "format": ["cjs"],
