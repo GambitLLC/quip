@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	"github.com/GambitLLC/quip/packages/matchmaker/internal/matchmaker"
-	"github.com/GambitLLC/quip/packages/matchmaker/pb"
+	"github.com/GambitLLC/quip/packages/pb"
 	"google.golang.org/grpc"
 )
 

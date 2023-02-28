@@ -6,7 +6,7 @@ import (
 
 	"github.com/GambitLLC/quip/packages/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/packages/matchmaker/internal/statestore"
-	"github.com/GambitLLC/quip/packages/matchmaker/pb"
+	"github.com/GambitLLC/quip/packages/pb"
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -53,16 +53,16 @@ func getPlayer(ctx context.Context, store statestore.Service, create bool) (play
 	return
 }
 
-func getStatus(player *ipb.PlayerInternal) pb.StatusResponse_Status {
+func getStatus(player *ipb.PlayerInternal) pb.Status {
 	if player.MatchId != nil {
-		return pb.StatusResponse_PLAYING
+		return pb.Status_PLAYING
 	}
 
 	if player.TicketId != nil {
-		return pb.StatusResponse_SEARCHING
+		return pb.Status_SEARCHING
 	}
 
-	return pb.StatusResponse_IDLE
+	return pb.Status_IDLE
 }
 
 // GetStatus returns the current matchmaking status.
@@ -71,7 +71,7 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return &pb.StatusResponse{
-				Status: pb.StatusResponse_IDLE,
+				Status: pb.Status_IDLE,
 			}, nil
 		}
 		return nil, err
@@ -100,9 +100,9 @@ func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*e
 	defer unlock()
 
 	switch getStatus(player) {
-	case pb.StatusResponse_SEARCHING:
+	case pb.Status_SEARCHING:
 		return nil, status.Error(codes.Aborted, "player is already in queue")
-	case pb.StatusResponse_PLAYING:
+	case pb.Status_PLAYING:
 		return nil, status.Error(codes.Aborted, "player is already in game")
 	}
 

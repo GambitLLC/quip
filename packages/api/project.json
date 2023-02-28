@@ -1,8 +1,5 @@
 {
   "name": "api",
   "targets": {
-    "make": {
-      "command": "make all-protos"
-    }
   }
 }

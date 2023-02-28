@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.21.12
-// source: packages/api/quip-matchmaker.proto
+// source: quip-matchmaker.proto
 
 package pb
 
@@ -41,7 +41,7 @@ func NewMatchmakerClient(cc grpc.ClientConnInterface) MatchmakerClient {
 
 func (c *matchmakerClient) GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*StatusResponse, error) {
 	out := new(StatusResponse)
-	err := c.cc.Invoke(ctx, "/quip.matchmaker.Matchmaker/GetStatus", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/quip.Matchmaker/GetStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (c *matchmakerClient) GetStatus(ctx context.Context, in *emptypb.Empty, opt
 
 func (c *matchmakerClient) StartQueue(ctx context.Context, in *StartQueueRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/quip.matchmaker.Matchmaker/StartQueue", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/quip.Matchmaker/StartQueue", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (c *matchmakerClient) StartQueue(ctx context.Context, in *StartQueueRequest
 
 func (c *matchmakerClient) StopQueue(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/quip.matchmaker.Matchmaker/StopQueue", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/quip.Matchmaker/StopQueue", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func _Matchmaker_GetStatus_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/quip.matchmaker.Matchmaker/GetStatus",
+		FullMethod: "/quip.Matchmaker/GetStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MatchmakerServer).GetStatus(ctx, req.(*emptypb.Empty))
@@ -131,7 +131,7 @@ func _Matchmaker_StartQueue_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/quip.matchmaker.Matchmaker/StartQueue",
+		FullMethod: "/quip.Matchmaker/StartQueue",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MatchmakerServer).StartQueue(ctx, req.(*StartQueueRequest))
@@ -149,7 +149,7 @@ func _Matchmaker_StopQueue_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/quip.matchmaker.Matchmaker/StopQueue",
+		FullMethod: "/quip.Matchmaker/StopQueue",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MatchmakerServer).StopQueue(ctx, req.(*emptypb.Empty))
@@ -161,7 +161,7 @@ func _Matchmaker_StopQueue_Handler(srv interface{}, ctx context.Context, dec fun
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Matchmaker_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "quip.matchmaker.Matchmaker",
+	ServiceName: "quip.Matchmaker",
 	HandlerType: (*MatchmakerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -178,5 +178,5 @@ var Matchmaker_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "packages/api/quip-matchmaker.proto",
+	Metadata: "quip-matchmaker.proto",
 }

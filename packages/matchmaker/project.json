@@ -10,7 +10,7 @@
     },
     "build": {
       "executor": "@nx-go/nx-go:build",
-      "dependsOn": ["make"],
+      "dependsOn": ["^make", "make"],
       "options": {
         "outputPath": "dist/packages/matchmaker",
         "main": "packages/matchmaker/main.go"

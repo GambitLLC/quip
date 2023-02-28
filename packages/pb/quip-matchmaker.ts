@@ -1,68 +1,18 @@
 /* eslint-disable */
 import * as _m0 from "protobufjs/minimal";
-import { Empty } from "../../google/protobuf/empty";
+import { Empty } from "./google/protobuf/empty";
+import { MatchDetails, Status, statusFromJSON, statusToJSON } from "./quip-messages";
 
-export const protobufPackage = "quip.matchmaker";
+export const protobufPackage = "quip";
 
 export interface StartQueueRequest {
   gamemode: string;
 }
 
-/** Event message indicating change in queue status. */
-export interface QueueUpdate {
-  /** Identifies the entities whose queue has received an update. */
-  targets: string[];
-  stopped?: string | undefined;
-  found?: MatchDetails | undefined;
-}
-
-export interface MatchDetails {
-  connection: string;
-}
-
 export interface StatusResponse {
-  status: StatusResponse_Status;
+  status: Status;
   /** Details about the match the user is currently playing in. */
   match?: MatchDetails | undefined;
-}
-
-export enum StatusResponse_Status {
-  IDLE = 0,
-  SEARCHING = 1,
-  PLAYING = 2,
-  UNRECOGNIZED = -1,
-}
-
-export function statusResponse_StatusFromJSON(object: any): StatusResponse_Status {
-  switch (object) {
-    case 0:
-    case "IDLE":
-      return StatusResponse_Status.IDLE;
-    case 1:
-    case "SEARCHING":
-      return StatusResponse_Status.SEARCHING;
-    case 2:
-    case "PLAYING":
-      return StatusResponse_Status.PLAYING;
-    case -1:
-    case "UNRECOGNIZED":
-    default:
-      return StatusResponse_Status.UNRECOGNIZED;
-  }
-}
-
-export function statusResponse_StatusToJSON(object: StatusResponse_Status): string {
-  switch (object) {
-    case StatusResponse_Status.IDLE:
-      return "IDLE";
-    case StatusResponse_Status.SEARCHING:
-      return "SEARCHING";
-    case StatusResponse_Status.PLAYING:
-      return "PLAYING";
-    case StatusResponse_Status.UNRECOGNIZED:
-    default:
-      return "UNRECOGNIZED";
-  }
 }
 
 function createBaseStartQueueRequest(): StartQueueRequest {
@@ -116,134 +66,6 @@ export const StartQueueRequest = {
   },
 };
 
-function createBaseQueueUpdate(): QueueUpdate {
-  return { targets: [], stopped: undefined, found: undefined };
-}
-
-export const QueueUpdate = {
-  encode(message: QueueUpdate, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    for (const v of message.targets) {
-      writer.uint32(10).string(v!);
-    }
-    if (message.stopped !== undefined) {
-      writer.uint32(18).string(message.stopped);
-    }
-    if (message.found !== undefined) {
-      MatchDetails.encode(message.found, writer.uint32(26).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): QueueUpdate {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseQueueUpdate();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.targets.push(reader.string());
-          break;
-        case 2:
-          message.stopped = reader.string();
-          break;
-        case 3:
-          message.found = MatchDetails.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): QueueUpdate {
-    return {
-      targets: Array.isArray(object?.targets) ? object.targets.map((e: any) => String(e)) : [],
-      stopped: isSet(object.stopped) ? String(object.stopped) : undefined,
-      found: isSet(object.found) ? MatchDetails.fromJSON(object.found) : undefined,
-    };
-  },
-
-  toJSON(message: QueueUpdate): unknown {
-    const obj: any = {};
-    if (message.targets) {
-      obj.targets = message.targets.map((e) => e);
-    } else {
-      obj.targets = [];
-    }
-    message.stopped !== undefined && (obj.stopped = message.stopped);
-    message.found !== undefined && (obj.found = message.found ? MatchDetails.toJSON(message.found) : undefined);
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<QueueUpdate>, I>>(base?: I): QueueUpdate {
-    return QueueUpdate.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<QueueUpdate>, I>>(object: I): QueueUpdate {
-    const message = createBaseQueueUpdate();
-    message.targets = object.targets?.map((e) => e) || [];
-    message.stopped = object.stopped ?? undefined;
-    message.found = (object.found !== undefined && object.found !== null)
-      ? MatchDetails.fromPartial(object.found)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseMatchDetails(): MatchDetails {
-  return { connection: "" };
-}
-
-export const MatchDetails = {
-  encode(message: MatchDetails, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.connection !== "") {
-      writer.uint32(10).string(message.connection);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): MatchDetails {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseMatchDetails();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.connection = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): MatchDetails {
-    return { connection: isSet(object.connection) ? String(object.connection) : "" };
-  },
-
-  toJSON(message: MatchDetails): unknown {
-    const obj: any = {};
-    message.connection !== undefined && (obj.connection = message.connection);
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<MatchDetails>, I>>(base?: I): MatchDetails {
-    return MatchDetails.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<MatchDetails>, I>>(object: I): MatchDetails {
-    const message = createBaseMatchDetails();
-    message.connection = object.connection ?? "";
-    return message;
-  },
-};
-
 function createBaseStatusResponse(): StatusResponse {
   return { status: 0, match: undefined };
 }
@@ -282,14 +104,14 @@ export const StatusResponse = {
 
   fromJSON(object: any): StatusResponse {
     return {
-      status: isSet(object.status) ? statusResponse_StatusFromJSON(object.status) : 0,
+      status: isSet(object.status) ? statusFromJSON(object.status) : 0,
       match: isSet(object.match) ? MatchDetails.fromJSON(object.match) : undefined,
     };
   },
 
   toJSON(message: StatusResponse): unknown {
     const obj: any = {};
-    message.status !== undefined && (obj.status = statusResponse_StatusToJSON(message.status));
+    message.status !== undefined && (obj.status = statusToJSON(message.status));
     message.match !== undefined && (obj.match = message.match ? MatchDetails.toJSON(message.match) : undefined);
     return obj;
   },
@@ -321,7 +143,7 @@ export class MatchmakerClientImpl implements Matchmaker {
   private readonly rpc: Rpc;
   private readonly service: string;
   constructor(rpc: Rpc, opts?: { service?: string }) {
-    this.service = opts?.service || "quip.matchmaker.Matchmaker";
+    this.service = opts?.service || "quip.Matchmaker";
     this.rpc = rpc;
     this.GetStatus = this.GetStatus.bind(this);
     this.StartQueue = this.StartQueue.bind(this);

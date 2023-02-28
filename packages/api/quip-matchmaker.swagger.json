@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "packages/api/quip-matchmaker.proto",
+    "title": "quip-matchmaker.proto",
     "version": "version not set"
   },
   "tags": [
@@ -36,35 +36,6 @@
         }
       }
     },
-    "matchmakerMatchDetails": {
-      "type": "object",
-      "properties": {
-        "connection": {
-          "type": "string"
-        }
-      }
-    },
-    "matchmakerStatusResponse": {
-      "type": "object",
-      "properties": {
-        "status": {
-          "$ref": "#/definitions/matchmakerStatusResponseStatus"
-        },
-        "match": {
-          "$ref": "#/definitions/matchmakerMatchDetails",
-          "description": "Details about the match the user is currently playing in."
-        }
-      }
-    },
-    "matchmakerStatusResponseStatus": {
-      "type": "string",
-      "enum": [
-        "IDLE",
-        "SEARCHING",
-        "PLAYING"
-      ],
-      "default": "IDLE"
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -73,6 +44,36 @@
         }
       },
       "additionalProperties": {}
+    },
+    "quipMatchDetails": {
+      "type": "object",
+      "properties": {
+        "connection": {
+          "type": "string"
+        }
+      }
+    },
+    "quipStatus": {
+      "type": "string",
+      "enum": [
+        "OFFLINE",
+        "IDLE",
+        "SEARCHING",
+        "PLAYING"
+      ],
+      "default": "OFFLINE"
+    },
+    "quipStatusResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/quipStatus"
+        },
+        "match": {
+          "$ref": "#/definitions/quipMatchDetails",
+          "description": "Details about the match the user is currently playing in."
+        }
+      }
     }
   }
 }

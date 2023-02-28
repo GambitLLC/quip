@@ -33,9 +33,9 @@ else
 endif
 
 PROTOC_INCLUDES := packages/api/third-party
-MATCHMAKER_GOLANG_PROTOS = packages/matchmaker/pb/quip-matchmaker.pb.go packages/matchmaker/internal/ipb/messages.pb.go
-GOLANG_PROTOS = $(MATCHMAKER_GOLANG_PROTOS)
-SOCKET_IO_PROTOS = packages/socket.io-server/proto/packages/api/quip-matchmaker.ts
+MATCHMAKER_GOLANG_PROTOS = packages/matchmaker/internal/ipb/messages.pb.go
+GOLANG_PROTOS = packages/pb/quip-matchmaker.pb.go packages/pb/quip-messages.pb.go $(MATCHMAKER_GOLANG_PROTOS)
+SOCKET_IO_PROTOS = packages/pb/quip-matchmaker.ts
 TYPESCRIPT_PROTOS = $(SOCKET_IO_PROTOS)
 SWAGGER_JSON_DOCS = packages/api/quip-matchmaker.swagger.json
 ALL_PROTOS = $(GOLANG_PROTOS) $(SOCKET_IO_PROTOS) $(SWAGGER_JSON_DOCS)
@@ -117,26 +117,29 @@ packages/matchmaker/internal/ipb/%.pb.go: packages/matchmaker/internal/api/%.pro
 		--go_out=$(REPOSITORY_ROOT)/packages/matchmaker/internal/ipb \
 		--go_opt=module=$(GO_MODULE)/packages/matchmaker/internal/ipb
 
-packages/matchmaker/pb/%.pb.go: packages/api/%.proto packages/api/third-party/ $(GO_PROTOC_DEPS)
-	mkdir -p $(REPOSITORY_ROOT)/packages/matchmaker/pb
-	$(PROTOC) $< \
-		-I $(REPOSITORY_ROOT) -I $(PROTOC_INCLUDES) \
-		--go_out=$(REPOSITORY_ROOT)/packages/matchmaker \
-		--go_opt=module=$(GO_MODULE)/packages/matchmaker \
-		--go-grpc_out=require_unimplemented_servers=false:$(REPOSITORY_ROOT)/packages/matchmaker \
-		--go-grpc_opt=module=$(GO_MODULE)/packages/matchmaker
+packages/pb/%.pb.go: packages/api/%.proto packages/api/third-party/ $(GO_PROTOC_DEPS)
+	mkdir -p $(REPOSITORY_ROOT)/packages/pb
+	$(PROTOC) $(*F).proto \
+		-I $(REPOSITORY_ROOT)/packages/api -I $(PROTOC_INCLUDES) \
+		--go_out=$(REPOSITORY_ROOT)/packages/pb \
+		--go_opt=module=$(GO_MODULE)/packages/pb \
+		--go-grpc_out=require_unimplemented_servers=false:$(REPOSITORY_ROOT)/packages/pb \
+		--go-grpc_opt=module=$(GO_MODULE)/packages/pb
 
-packages/socket.io-server/proto/packages/api/%.ts: packages/api/%.proto packages/api/third-party/
-	mkdir -p $(REPOSITORY_ROOT)/packages/socket.io-server/proto
-	$(PROTOC) $< \
-		-I $(REPOSITORY_ROOT) -I $(PROTOC_INCLUDES) \
+# Include proto structure for dependency chain to run properly.
+packages/pb/quip-matchmaker.pb.go: packages/pb/quip-messages.pb.go
+
+packages/pb/%.ts: packages/api/%.proto packages/api/third-party/
+	mkdir -p $(REPOSITORY_ROOT)/packages/pb
+	$(PROTOC) $(*F).proto \
+		-I $(REPOSITORY_ROOT)/packages/api -I $(PROTOC_INCLUDES) \
 		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
-		--ts_proto_out=$(REPOSITORY_ROOT)/packages/socket.io-server/proto
+		--ts_proto_out=$(REPOSITORY_ROOT)/packages/pb
 
 packages/api/%.swagger.json: packages/api/%.proto packages/api/third-party/ build/toolchain/bin/protoc$(EXE_EXTENSION) build/toolchain/bin/protoc-gen-openapiv2$(EXE_EXTENSION)
-	$(PROTOC) $< \
-		-I $(REPOSITORY_ROOT) -I $(PROTOC_INCLUDES) \
-		--openapiv2_out=json_names_for_fields=false,logtostderr=true,allow_delete_body=true:$(REPOSITORY_ROOT)
+	$(PROTOC) $(*F).proto \
+		-I $(REPOSITORY_ROOT)/packages/api -I $(PROTOC_INCLUDES) \
+		--openapiv2_out=json_names_for_fields=false,logtostderr=true,allow_delete_body=true:$(REPOSITORY_ROOT)/packages/api
 
 #######################################
 

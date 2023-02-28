@@ -1,35 +1,15 @@
 syntax = "proto3";
-package quip.matchmaker;
-option go_package="github.com/GambitLLC/quip/packages/matchmaker/pb";
+package quip;
+option go_package="github.com/GambitLLC/quip/packages/pb";
 
+import "quip-messages.proto";
 import "google/protobuf/empty.proto";
 
 message StartQueueRequest {
   string gamemode = 1;
 }
 
-// Event message indicating change in queue status.
-message QueueUpdate {
-  // Identifies the entities whose queue has received an update.
-  repeated string targets = 1;
-
-  oneof update {
-    string stopped = 2;
-    MatchDetails found = 3;
-  }
-}
-
-message MatchDetails {
-  string connection = 1;
-}
-
 message StatusResponse {
-  enum Status {
-    IDLE = 0;
-    SEARCHING = 1;
-    PLAYING = 2;
-  }
-
   Status status = 1;
 
   // Details about the match the user is currently playing in.

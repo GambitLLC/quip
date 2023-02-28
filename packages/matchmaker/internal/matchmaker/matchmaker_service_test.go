@@ -10,7 +10,7 @@ import (
 	"github.com/GambitLLC/quip/packages/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/packages/matchmaker/internal/statestore"
 	statestoreTesting "github.com/GambitLLC/quip/packages/matchmaker/internal/statestore/testing"
-	"github.com/GambitLLC/quip/packages/matchmaker/pb"
+	"github.com/GambitLLC/quip/packages/pb"
 	"github.com/rs/xid"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
@@ -49,7 +49,7 @@ func TestGetStatus(t *testing.T) {
 			ctx:   ctx,
 			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
 				require.NoError(t, err)
-				require.Equal(t, pb.StatusResponse_IDLE, sr.Status, "expected status to be IDLE")
+				require.Equal(t, pb.Status_IDLE, sr.Status, "expected status to be IDLE")
 			},
 		},
 		{
@@ -63,7 +63,7 @@ func TestGetStatus(t *testing.T) {
 			ctx: ctx,
 			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
 				require.NoError(t, err)
-				require.Equal(t, pb.StatusResponse_SEARCHING, sr.Status, "expected status to be SEARCHING")
+				require.Equal(t, pb.Status_SEARCHING, sr.Status, "expected status to be SEARCHING")
 			},
 		},
 		{
@@ -77,7 +77,7 @@ func TestGetStatus(t *testing.T) {
 			ctx: ctx,
 			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
 				require.NoError(t, err)
-				require.Equal(t, pb.StatusResponse_PLAYING, sr.Status, "expected status to be PLAYING")
+				require.Equal(t, pb.Status_PLAYING, sr.Status, "expected status to be PLAYING")
 			},
 		},
 	}
