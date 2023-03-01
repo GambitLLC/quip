@@ -3,10 +3,13 @@ package matchmaker
 import (
 	"context"
 	"testing"
+	"time"
 
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/GambitLLC/quip/packages/broker"
 	"github.com/GambitLLC/quip/packages/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/packages/matchmaker/internal/statestore"
 	statestoreTesting "github.com/GambitLLC/quip/packages/matchmaker/internal/statestore/testing"
@@ -95,7 +98,62 @@ func TestGetStatus(t *testing.T) {
 	}
 }
 
-func TestStartQueue(t *testing.T) {
+func TestStartQueueStatestore(t *testing.T) {
+	playerId := xid.New().String()
+	ctx := newContextWithPlayer(t, playerId)
+
+	type args struct {
+		ctx context.Context
+		req *pb.StartQueueRequest
+	}
+	tests := []struct {
+		name    string
+		setup   func(*testing.T, statestore.Service)
+		args    args
+		wantErr bool
+		check   func(*testing.T, context.Context, statestore.Service)
+	}{
+		{
+			name:  "expect ticket id to be set",
+			setup: nil,
+			args: args{
+				ctx: ctx,
+				req: &pb.StartQueueRequest{
+					Gamemode: "some gamemode",
+				},
+			},
+			check: func(t *testing.T, ctx context.Context, s statestore.Service) {
+				player, err := s.GetPlayer(ctx, playerId)
+				require.NoError(t, err, "GetPlayer failed")
+				require.NotEmpty(t, player.TicketId, "player TicketId is not set")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newService(t)
+
+			if tt.setup != nil {
+				tt.setup(t, s.store)
+			}
+
+			_, err := s.StartQueue(tt.args.ctx, tt.args.req)
+			if tt.wantErr {
+				require.Error(t, err, "wantErr = true, StartQueue returned nil")
+			} else {
+				require.NoError(t, err, "wantErr = false, StartQueue failed")
+			}
+
+			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			t.Cleanup(cancel)
+
+			tt.check(t, ctx, s.store)
+		})
+	}
+}
+
+func TestStartQueueBehaviour(t *testing.T) {
 	playerId := xid.New().String()
 	ctx := newContextWithPlayer(t, playerId)
 	randomId := xid.New().String()
@@ -204,6 +262,87 @@ func TestStopQueue(t *testing.T) {
 	}
 }
 
+func TestQueueUpdate(t *testing.T) {
+	gamemode := "some gamemode"
+	player := xid.New().String()
+	ctx := newContextWithPlayer(t, player)
+
+	tests := []struct {
+		name     string
+		ctx      context.Context
+		expected *pb.QueueUpdate
+		action   func(*testing.T, context.Context, *Service)
+	}{
+		{
+			name: "expect queue started after start queue",
+			ctx:  ctx,
+			expected: &pb.QueueUpdate{
+				Targets: []string{player},
+				Update: &pb.QueueUpdate_Started{
+					Started: &pb.QueueDetails{
+						Gamemode: gamemode,
+					},
+				},
+			},
+			action: func(t *testing.T, ctx context.Context, s *Service) {
+				_, err := s.StartQueue(ctx, &pb.StartQueueRequest{
+					Gamemode: gamemode,
+				})
+				require.NoError(t, err, "StartQueue failed")
+			},
+		},
+		{
+			name: "expect queue stopped after stop queue",
+			ctx:  ctx,
+			expected: &pb.QueueUpdate{
+				Targets: []string{player},
+				Update: &pb.QueueUpdate_Stopped{
+					Stopped: player,
+				},
+			},
+			action: func(t *testing.T, ctx context.Context, s *Service) {
+				// Queue needs to be started before stop update will be sent
+				_, err := s.StartQueue(ctx, &pb.StartQueueRequest{
+					Gamemode: gamemode,
+				})
+				require.NoError(t, err, "StartQueue failed")
+
+				_, err = s.StopQueue(ctx, &emptypb.Empty{})
+				require.NoError(t, err, "StopQueue failed")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newService(t)
+			ctx, cancel := context.WithTimeout(tt.ctx, 10*time.Second)
+			t.Cleanup(cancel)
+
+			updates, close, err := s.broker.ConsumeQueueUpdates(ctx)
+			require.NoError(t, err, "ConsumeQueueUpdates failed")
+			t.Cleanup(func() {
+				_ = close()
+			})
+
+			tt.action(t, ctx, s)
+
+			for {
+				select {
+				case <-ctx.Done():
+					t.Fatal("test timed out without receiving expected update")
+				case update, ok := <-updates:
+					require.True(t, ok, "update channel closed")
+					if proto.Equal(update, tt.expected) {
+						// received expected update
+						return
+					}
+				}
+			}
+		})
+	}
+}
+
 type contextTestKey string
 
 func newContextWithPlayer(t *testing.T, playerId string) context.Context {
@@ -215,6 +354,7 @@ func newService(t *testing.T) *Service {
 	cfg := viper.New()
 	store := statestoreTesting.NewService(t, cfg)
 	return &Service{
-		store: store,
+		store:  store,
+		broker: broker.NewRedis(cfg),
 	}
 }

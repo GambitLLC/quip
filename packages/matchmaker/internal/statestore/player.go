@@ -82,6 +82,8 @@ func (rb *redisBackend) TrackTicket(ctx context.Context, id string, playerIds []
 			err = errors.Wrap(err, "failed to unmarshal player proto")
 			return status.Error(codes.Internal, err.Error())
 		}
+
+		players = append(players, player)
 	}
 
 	pipe := rb.redisClient.TxPipeline()

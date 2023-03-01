@@ -165,7 +165,7 @@ func (s *Service) StopQueue(ctx context.Context, _ *emptypb.Empty) (*emptypb.Emp
 		return nil, err
 	}
 
-	err = s.store.UntrackTicket(ctx, *player.TicketId)
+	err = s.store.UntrackTicket(ctx, player.PlayerId)
 	if err != nil {
 		return nil, err
 	}
