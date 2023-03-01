@@ -2,6 +2,7 @@
   "name": "pb",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
+  "implicitDependencies": ["api"],
   "sourceRoot": "packages/pb",
   "targets": {
     "make": {

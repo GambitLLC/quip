@@ -2,15 +2,23 @@ syntax = "proto3";
 package quip;
 option go_package="github.com/GambitLLC/quip/packages/pb";
 
+import "google/protobuf/timestamp.proto";
+
 // Indicates change in queue status.
 message QueueUpdate {
   // Identifies the entities whose queue has received an update.
   repeated string targets = 1;
 
   oneof update {
-    string stopped = 2;
-    MatchDetails found = 3;
+    QueueDetails started = 2;
+    string stopped = 3;
+    MatchDetails found = 4;
   }
+}
+
+message QueueDetails {
+  string gamemode = 1;
+  google.protobuf.Timestamp start_time = 2;
 }
 
 message MatchDetails {

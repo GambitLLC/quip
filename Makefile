@@ -38,7 +38,7 @@ GOLANG_PROTOS = packages/pb/quip-matchmaker.pb.go packages/pb/quip-messages.pb.g
 SOCKET_IO_PROTOS = packages/pb/quip-matchmaker.ts
 TYPESCRIPT_PROTOS = $(SOCKET_IO_PROTOS)
 SWAGGER_JSON_DOCS = packages/api/quip-matchmaker.swagger.json
-ALL_PROTOS = $(GOLANG_PROTOS) $(SOCKET_IO_PROTOS) $(SWAGGER_JSON_DOCS)
+ALL_PROTOS = $(GOLANG_PROTOS) $(TYPESCRIPT_PROTOS) $(SWAGGER_JSON_DOCS)
 
 help:
 	@cat Makefile | grep ^\#\# | grep -v ^\#\#\# |cut -c 4-

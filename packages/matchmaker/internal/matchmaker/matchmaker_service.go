@@ -3,18 +3,24 @@ package matchmaker
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
 
-	"github.com/GambitLLC/quip/packages/matchmaker/internal/ipb"
-	"github.com/GambitLLC/quip/packages/matchmaker/internal/statestore"
-	"github.com/GambitLLC/quip/packages/pb"
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	"github.com/GambitLLC/quip/packages/broker"
+	"github.com/GambitLLC/quip/packages/matchmaker/internal/ipb"
+	"github.com/GambitLLC/quip/packages/matchmaker/internal/statestore"
+	"github.com/GambitLLC/quip/packages/pb"
 )
 
 type Service struct {
-	store statestore.Service
+	store  statestore.Service
+	broker broker.Client
 }
 
 // getPlayer retrieves the player from the metadata attached to the context.
@@ -114,10 +120,26 @@ func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*e
 		return nil, err
 	}
 
-	err = s.store.TrackTicket(ctx, ticketId, []string{player.PlayerId})
+	players := []string{player.PlayerId}
+	err = s.store.TrackTicket(ctx, ticketId, players)
 	if err != nil {
 		return nil, err
 	}
+
+	go s.publish(&pb.QueueUpdate{
+		Targets: players,
+		Update: &pb.QueueUpdate_Started{
+			Started: &pb.QueueDetails{
+				Gamemode: req.Gamemode,
+				// StartTime: ,
+			},
+		},
+	})
+
+	go s.publish(&pb.StatusUpdate{
+		Targets: players,
+		Status:  pb.Status_SEARCHING,
+	})
 
 	return &emptypb.Empty{}, nil
 }
@@ -148,5 +170,42 @@ func (s *Service) StopQueue(ctx context.Context, _ *emptypb.Empty) (*emptypb.Emp
 		return nil, err
 	}
 
+	players := []string{player.PlayerId}
+	go s.publish(&pb.QueueUpdate{
+		Targets: players,
+		Update: &pb.QueueUpdate_Stopped{
+			Stopped: player.PlayerId,
+		},
+	})
+
+	go s.publish(&pb.StatusUpdate{
+		Targets: players,
+		Status:  pb.Status_IDLE,
+	})
+
 	return &emptypb.Empty{}, nil
+}
+
+func (s *Service) publish(msg proto.Message) {
+	if s.broker == nil {
+		log.Print("publish failed: broker is nil")
+		return
+	}
+
+	var err error
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	switch msg := msg.(type) {
+	default:
+		err = fmt.Errorf("unhandled message type %T", msg)
+	case *pb.QueueUpdate:
+		err = s.broker.PublishQueueUpdate(ctx, msg)
+	case *pb.StatusUpdate:
+		err = s.broker.PublishStatusUpdate(ctx, msg)
+	}
+
+	if err != nil {
+		log.Printf("publish failed: %v", err)
+	}
 }
