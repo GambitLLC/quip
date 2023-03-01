@@ -25,11 +25,11 @@ type Service interface {
 
 	TrackTicket(ctx context.Context, id string, playerIds []string) error
 
-	UntrackTicket(ctx context.Context, playerId string) error
+	UntrackTicket(ctx context.Context, playerIds []string) error
 
 	TrackMatch(ctx context.Context, matchId string, playerIds []string) error
 
-	UntrackMatch(ctx context.Context, playerId string) error
+	UntrackMatch(ctx context.Context, playerIds []string) error
 }
 
 func New(cfg config.View) Service {

@@ -165,12 +165,14 @@ func (s *Service) StopQueue(ctx context.Context, _ *emptypb.Empty) (*emptypb.Emp
 		return nil, err
 	}
 
-	err = s.store.UntrackTicket(ctx, player.PlayerId)
+	// TODO: get relevant players from ticket when multiple players is supported
+	players := []string{player.PlayerId}
+
+	err = s.store.UntrackTicket(ctx, players)
 	if err != nil {
 		return nil, err
 	}
 
-	players := []string{player.PlayerId}
 	go s.publish(&pb.QueueUpdate{
 		Targets: players,
 		Update: &pb.QueueUpdate_Stopped{
