@@ -1,4 +1,32 @@
 {
+  "plugins": ["@nx-go/nx-go"],
+  "npmScope": "quip",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": ["default"],
+    "makefile": ["{workspaceRoot}/Makefile"],
+    "sharedGlobals": ["{workspaceRoot}/go.mod"]
+  },
+  "targetDefaults": {
+    "make": {
+      "inputs": ["makefile"]
+    },
+    "build": {
+      "dependsOn": ["^make", "make", "^build"],
+      "inputs": ["production", "^production"]
+    },
+    "lint": {
+      "inputs": [
+        "default",
+        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/.eslintignore"
+      ]
+    },
+    "test": {
+      "dependsOn": ["^make", "make"],
+      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"]
+    }
+  },
   "tasksRunnerOptions": {
     "default": {
       "runner": "nx/tasks-runners/default",
@@ -7,23 +35,5 @@
       }
     }
   },
-  "implicitDependencies": {
-    "go.mod": "*"
-  },
-  "plugins": ["@nx-go/nx-go"],
-  "extends": "nx/presets/npm.json",
-  "targetDefaults": {
-    "test": {
-      "inputs": ["default", "^default", "{workspaceRoot}/jest.preset.js"]
-    },
-    "lint": {
-      "inputs": [
-        "default",
-        "{workspaceRoot}/.eslintrc.json",
-        "{workspaceRoot}/.eslintignore"
-      ]
-    }
-  },
-  "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "npmScope": "quip"
+  "$schema": "./node_modules/nx/schemas/nx-schema.json"
 }

@@ -1,0 +1,12 @@
+syntax = "proto3";
+package quip.matchmaker.internal;
+option go_package="github.com/GambitLLC/quip/libs/matchmaker/internal/ipb";
+
+// Internal message for holding relevant player information.
+message PlayerInternal {
+  string player_id = 1;
+
+  optional string ticket_id = 2;
+
+  optional string match_id = 3;
+}

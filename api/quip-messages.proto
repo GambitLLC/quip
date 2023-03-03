@@ -1,0 +1,40 @@
+syntax = "proto3";
+package quip;
+option go_package="github.com/GambitLLC/quip/libs/pb";
+
+import "google/protobuf/timestamp.proto";
+
+// Indicates change in queue status.
+message QueueUpdate {
+  // Identifies the entities whose queue has received an update.
+  repeated string targets = 1;
+
+  oneof update {
+    QueueDetails started = 2;
+    string stopped = 3;
+    MatchDetails found = 4;
+  }
+}
+
+message QueueDetails {
+  string gamemode = 1;
+  google.protobuf.Timestamp start_time = 2;
+}
+
+message MatchDetails {
+  string connection = 1;
+}
+
+enum Status {
+  OFFLINE = 0;
+  IDLE = 1;
+  SEARCHING = 2;
+  PLAYING = 3;
+}
+
+// Indicates change in status.
+message StatusUpdate {
+  repeated string targets = 1;
+
+  Status status = 2;
+}

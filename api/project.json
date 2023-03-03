@@ -1,0 +1,9 @@
+{
+  "name": "api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "make": {
+      "command": "make api-docs"
+    }
+  }
+}
