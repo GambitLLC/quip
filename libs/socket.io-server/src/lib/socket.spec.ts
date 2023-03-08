@@ -6,7 +6,7 @@ import {
 import { Empty } from '@quip/pb/google/protobuf/empty';
 import { createServer } from 'http';
 import { AddressInfo } from 'net';
-import { Server as SocketServer, Socket as ServerSocket } from 'socket.io';
+import { Server as SocketServer } from 'socket.io';
 import { Server as grpcServer, ServerCredentials } from '@grpc/grpc-js';
 import { io as Client, Socket as ClientSocket } from 'socket.io-client';
 import wrapServer, {
