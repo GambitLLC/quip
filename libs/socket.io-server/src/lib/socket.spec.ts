@@ -32,7 +32,7 @@ const mockMatchmaker: MatchmakerServer = {
 describe('socket listener', () => {
   let io: SocketServer,
     grpc: grpcServer,
-    serverSocket: ServerSocket<ClientToServerEvents, ServerToClientEvents>,
+    // serverSocket: ServerSocket<ClientToServerEvents, ServerToClientEvents>,
     clientSocket: ClientSocket<ServerToClientEvents, ClientToServerEvents>;
 
   beforeAll((done) => {
@@ -48,9 +48,9 @@ describe('socket listener', () => {
     httpServer.listen(() => {
       const { port } = httpServer.address() as AddressInfo;
       clientSocket = Client(`http://localhost:${port}`);
-      io.on('connection', (socket) => {
-        serverSocket = socket;
-      });
+      // io.on('connection', (socket) => {
+      //   serverSocket = socket;
+      // });
       clientSocket.on('connect', done);
     });
   });
