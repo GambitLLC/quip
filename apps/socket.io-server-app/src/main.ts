@@ -1,8 +1,9 @@
 import { createServer } from 'http';
 import { wrapServer } from '@quip/socket.io-server';
+import config from 'config';
 
 const httpServer = createServer();
-wrapServer(httpServer);
+wrapServer(config, httpServer);
 
 const PORT = 3000;
 httpServer.listen(PORT, () => {

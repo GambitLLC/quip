@@ -14,6 +14,10 @@ import wrapServer, {
   ServerToClientEvents,
 } from './socket';
 
+process.env.ALLOW_CONFIG_MUTATIONS = 'true';
+import importFresh from 'import-fresh';
+import { IConfig } from 'config';
+
 const mockMatchmaker: MatchmakerServer = {
   getStatus: function (call, cb) {
     cb(null, StatusResponse.create());
@@ -30,28 +34,47 @@ const mockMatchmaker: MatchmakerServer = {
 };
 
 describe('socket listener', () => {
+  let config: IConfig;
   let io: SocketServer,
     grpc: grpcServer,
     // serverSocket: ServerSocket<ClientToServerEvents, ServerToClientEvents>,
     clientSocket: ClientSocket<ServerToClientEvents, ClientToServerEvents>;
 
-  beforeAll((done) => {
-    grpc = new grpcServer();
-    grpc.addService(MatchmakerService, mockMatchmaker);
-    grpc.bindAsync('0.0.0.0:50051', ServerCredentials.createInsecure(), () => {
-      grpc.start();
+  beforeAll(async () => {
+    const wait = new Promise((resolve) => {
+      grpc = new grpcServer();
+      grpc.addService(MatchmakerService, mockMatchmaker);
+      grpc.bindAsync(
+        'localhost:0',
+        ServerCredentials.createInsecure(),
+        (err, port) => {
+          expect(err).toBeNull;
+          process.env.NODE_CONFIG = JSON.stringify({
+            api: {
+              matchmaker: { hostname: 'localhost', port: port },
+            },
+          });
+
+          config = importFresh('config');
+          grpc.start();
+          resolve(null);
+        }
+      );
     });
 
-    const httpServer = createServer();
-    io = wrapServer(httpServer);
+    await wait;
+    return new Promise<void>((done) => {
+      const httpServer = createServer();
+      io = wrapServer(config, httpServer);
 
-    httpServer.listen(() => {
-      const { port } = httpServer.address() as AddressInfo;
-      clientSocket = Client(`http://localhost:${port}`);
-      // io.on('connection', (socket) => {
-      //   serverSocket = socket;
-      // });
-      clientSocket.on('connect', done);
+      httpServer.listen(() => {
+        const { port } = httpServer.address() as AddressInfo;
+        clientSocket = Client(`http://localhost:${port}`);
+        // io.on('connection', (socket) => {
+        //   serverSocket = socket;
+        // });
+        clientSocket.on('connect', done);
+      });
     });
   });
 

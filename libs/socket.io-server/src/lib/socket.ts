@@ -9,6 +9,7 @@ import {
 } from '@quip/pb/quip-matchmaker';
 import { credentials } from '@grpc/grpc-js';
 import { Empty } from '@quip/pb/google/protobuf/empty';
+import { IConfig } from 'config';
 
 export interface ServerToClientEvents {
   queueUpdate: (update: QueueUpdate) => void;
@@ -23,7 +24,10 @@ export interface ClientToServerEvents {
   stopQueue: (cb: (err: Error) => void) => void;
 }
 
-export const wrapServer = (httpServer: httpServer | httpsServer): Server => {
+export const wrapServer = (
+  config: IConfig,
+  httpServer: httpServer | httpsServer
+): Server => {
   const io = new Server<ClientToServerEvents, ServerToClientEvents>(
     httpServer,
     {
@@ -32,8 +36,11 @@ export const wrapServer = (httpServer: httpServer | httpsServer): Server => {
     }
   );
 
+  const host = config.get('api.matchmaker.hostname');
+  const port = config.get('api.matchmaker.port');
+
   const rpc = new MatchmakerClient(
-    'localhost:50051',
+    `${host}:${port}`,
     credentials.createInsecure()
   );
 

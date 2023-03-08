@@ -1,0 +1,7 @@
+api:
+  matchmaker:
+    hostname: localhost
+    port: 50051
+  socket_io-server:
+    hostname: localhost
+    port: 3000
