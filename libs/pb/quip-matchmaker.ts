@@ -1,4 +1,16 @@
 /* eslint-disable */
+import {
+  CallOptions,
+  ChannelCredentials,
+  Client,
+  ClientOptions,
+  ClientUnaryCall,
+  handleUnaryCall,
+  makeGenericClientConstructor,
+  Metadata,
+  ServiceError,
+  UntypedServiceImplementation,
+} from "@grpc/grpc-js";
 import _m0 from "protobufjs/minimal";
 import { Empty } from "./google/protobuf/empty";
 import { MatchDetails, Status, statusFromJSON, statusToJSON } from "./quip-messages";
@@ -130,47 +142,98 @@ export const StatusResponse = {
   },
 };
 
-export interface Matchmaker {
+export type MatchmakerService = typeof MatchmakerService;
+export const MatchmakerService = {
   /** GetStatus returns the current matchmaking status. */
-  GetStatus(request: Empty): Promise<StatusResponse>;
+  getStatus: {
+    path: "/quip.Matchmaker/GetStatus",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => Empty.decode(value),
+    responseSerialize: (value: StatusResponse) => Buffer.from(StatusResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => StatusResponse.decode(value),
+  },
   /** StartQueue starts searching for a match with the given parameters. */
-  StartQueue(request: StartQueueRequest): Promise<Empty>;
+  startQueue: {
+    path: "/quip.Matchmaker/StartQueue",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: StartQueueRequest) => Buffer.from(StartQueueRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => StartQueueRequest.decode(value),
+    responseSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => Empty.decode(value),
+  },
   /** StopQueue stops searching for a match. Idempotent. */
-  StopQueue(request: Empty): Promise<Empty>;
+  stopQueue: {
+    path: "/quip.Matchmaker/StopQueue",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => Empty.decode(value),
+    responseSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => Empty.decode(value),
+  },
+} as const;
+
+export interface MatchmakerServer extends UntypedServiceImplementation {
+  /** GetStatus returns the current matchmaking status. */
+  getStatus: handleUnaryCall<Empty, StatusResponse>;
+  /** StartQueue starts searching for a match with the given parameters. */
+  startQueue: handleUnaryCall<StartQueueRequest, Empty>;
+  /** StopQueue stops searching for a match. Idempotent. */
+  stopQueue: handleUnaryCall<Empty, Empty>;
 }
 
-export class MatchmakerClientImpl implements Matchmaker {
-  private readonly rpc: Rpc;
-  private readonly service: string;
-  constructor(rpc: Rpc, opts?: { service?: string }) {
-    this.service = opts?.service || "quip.Matchmaker";
-    this.rpc = rpc;
-    this.GetStatus = this.GetStatus.bind(this);
-    this.StartQueue = this.StartQueue.bind(this);
-    this.StopQueue = this.StopQueue.bind(this);
-  }
-  GetStatus(request: Empty): Promise<StatusResponse> {
-    const data = Empty.encode(request).finish();
-    const promise = this.rpc.request(this.service, "GetStatus", data);
-    return promise.then((data) => StatusResponse.decode(new _m0.Reader(data)));
-  }
-
-  StartQueue(request: StartQueueRequest): Promise<Empty> {
-    const data = StartQueueRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "StartQueue", data);
-    return promise.then((data) => Empty.decode(new _m0.Reader(data)));
-  }
-
-  StopQueue(request: Empty): Promise<Empty> {
-    const data = Empty.encode(request).finish();
-    const promise = this.rpc.request(this.service, "StopQueue", data);
-    return promise.then((data) => Empty.decode(new _m0.Reader(data)));
-  }
+export interface MatchmakerClient extends Client {
+  /** GetStatus returns the current matchmaking status. */
+  getStatus(request: Empty, callback: (error: ServiceError | null, response: StatusResponse) => void): ClientUnaryCall;
+  getStatus(
+    request: Empty,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StatusResponse) => void,
+  ): ClientUnaryCall;
+  getStatus(
+    request: Empty,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StatusResponse) => void,
+  ): ClientUnaryCall;
+  /** StartQueue starts searching for a match with the given parameters. */
+  startQueue(
+    request: StartQueueRequest,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  startQueue(
+    request: StartQueueRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  startQueue(
+    request: StartQueueRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  /** StopQueue stops searching for a match. Idempotent. */
+  stopQueue(request: Empty, callback: (error: ServiceError | null, response: Empty) => void): ClientUnaryCall;
+  stopQueue(
+    request: Empty,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  stopQueue(
+    request: Empty,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
 }
 
-interface Rpc {
-  request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
-}
+export const MatchmakerClient = makeGenericClientConstructor(MatchmakerService, "quip.Matchmaker") as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): MatchmakerClient;
+  service: typeof MatchmakerService;
+};
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 

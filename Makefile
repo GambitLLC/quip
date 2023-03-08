@@ -139,7 +139,8 @@ libs/pb/%.ts: api/%.proto api/third-party/
 		-I $(REPOSITORY_ROOT)/api -I $(PROTOC_INCLUDES) \
 		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
 		--ts_proto_out=$(REPOSITORY_ROOT)/libs/pb \
-		--ts_proto_opt=esModuleInterop=true
+		--ts_proto_opt=esModuleInterop=true \
+		--ts_proto_opt=outputServices=grpc-js
 
 # Include proto structure for dependency chain to run properly.
 libs/pb/quip-matchmaker.ts: libs/pb/quip-messages.ts

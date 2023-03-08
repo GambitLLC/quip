@@ -2,7 +2,13 @@ import { Server as httpServer } from 'http';
 import { Server as httpsServer } from 'https';
 import { Server } from 'socket.io';
 import { QueueUpdate, StatusUpdate } from '@quip/pb/quip-messages';
-import { StartQueueRequest, StatusResponse } from '@quip/pb/quip-matchmaker';
+import {
+  MatchmakerClient,
+  StartQueueRequest,
+  StatusResponse,
+} from '@quip/pb/quip-matchmaker';
+import { credentials } from '@grpc/grpc-js';
+import { Empty } from '@quip/pb/google/protobuf/empty';
 
 export interface ServerToClientEvents {
   queueUpdate: (update: QueueUpdate) => void;
@@ -12,9 +18,9 @@ export interface ServerToClientEvents {
 // ClientToServerEvents just match all RPC calls clients can make.
 // Done because the socket.io server will authenticate the users.
 export interface ClientToServerEvents {
-  getStatus: (cb: (resp: StatusResponse) => void) => void;
-  startQueue: (req: StartQueueRequest) => void;
-  stopQueue: () => void;
+  getStatus: (cb: (err: Error, resp: StatusResponse) => void) => void;
+  startQueue: (req: StartQueueRequest, cb: (err: Error) => void) => void;
+  stopQueue: (cb: (err: Error) => void) => void;
 }
 
 export const wrapServer = (httpServer: httpServer | httpsServer): Server => {
@@ -26,18 +32,29 @@ export const wrapServer = (httpServer: httpServer | httpsServer): Server => {
     }
   );
 
+  const rpc = new MatchmakerClient(
+    'localhost:50051',
+    credentials.createInsecure()
+  );
+
   io.on('connection', (socket) => {
     socket.on('getStatus', (cb) => {
-      cb(StatusResponse.create());
+      rpc.getStatus(Empty.create(), (err, resp) => {
+        cb(err, resp);
+      });
     });
 
-    socket.on('startQueue', (req) => {
-      // TODO: send request to matchmaker grpc server
+    socket.on('startQueue', (req, cb) => {
+      rpc.startQueue(req, (err) => {
+        cb(err);
+      });
       return;
     });
 
-    socket.on('stopQueue', () => {
-      // TODO: send request to matchmaker grpc srver
+    socket.on('stopQueue', (cb) => {
+      rpc.stopQueue(Empty.create(), (err) => {
+        cb(err);
+      });
       return;
     });
   });
