@@ -7,7 +7,7 @@ import {
   StartQueueRequest,
   StatusResponse,
 } from '@quip/pb/quip-matchmaker';
-import { credentials } from '@grpc/grpc-js';
+import { credentials, Metadata } from '@grpc/grpc-js';
 import { Empty } from '@quip/pb/google/protobuf/empty';
 import { IConfig } from 'config';
 
@@ -45,21 +45,26 @@ export const wrapServer = (
   );
 
   io.on('connection', (socket) => {
+    // TODO: authenticate socket
+    // TODO: get metadata from socket authentication
+    const md = new Metadata();
+    md.set('Player-Uuid', 'asdsa');
+
     socket.on('getStatus', (cb) => {
-      rpc.getStatus(Empty.create(), (err, resp) => {
+      rpc.getStatus(Empty.create(), md, (err, resp) => {
         cb(err, resp);
       });
     });
 
     socket.on('startQueue', (req, cb) => {
-      rpc.startQueue(req, (err) => {
+      rpc.startQueue(req, md, (err) => {
         cb(err);
       });
       return;
     });
 
     socket.on('stopQueue', (cb) => {
-      rpc.stopQueue(Empty.create(), (err) => {
+      rpc.stopQueue(Empty.create(), md, (err) => {
         cb(err);
       });
       return;

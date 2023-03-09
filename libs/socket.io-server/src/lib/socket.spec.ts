@@ -4,30 +4,88 @@ import {
   StatusResponse,
 } from '@quip/pb/quip-matchmaker';
 import { Empty } from '@quip/pb/google/protobuf/empty';
-import { createServer } from 'http';
-import { AddressInfo } from 'net';
-import { Server as SocketServer } from 'socket.io';
-import { Server as grpcServer, ServerCredentials } from '@grpc/grpc-js';
-import { io as Client, Socket as ClientSocket } from 'socket.io-client';
 import wrapServer, {
   ClientToServerEvents,
   ServerToClientEvents,
 } from './socket';
 
+import { createServer } from 'http';
+import { AddressInfo } from 'net';
+import { Server as SocketServer } from 'socket.io';
+import { io as Client, Socket as ClientSocket } from 'socket.io-client';
+
+import { Server as grpcServer, ServerCredentials, status } from '@grpc/grpc-js';
+import {
+  ServerStatusResponse,
+  ServerSurfaceCall,
+} from '@grpc/grpc-js/build/src/server-call';
+
 process.env.ALLOW_CONFIG_MUTATIONS = 'true';
 import importFresh from 'import-fresh';
 import { IConfig } from 'config';
 
+interface Call {
+  player: string;
+  request: string;
+}
+
+const calls: Call[] = [];
+
+function trackCall(
+  call: ServerSurfaceCall,
+  req: string
+): ServerStatusResponse | null {
+  const player = call.metadata.get('Player-Uuid');
+  if (player.length < 1) {
+    return {
+      details: 'Player-Uuid not found',
+      code: status.INVALID_ARGUMENT,
+    };
+  }
+
+  calls.push({
+    request: req,
+    player: player[0].toString(),
+  });
+
+  return null;
+}
+
+function gotCall(call: Call): boolean {
+  return (
+    calls.find((elem) => JSON.stringify(elem) === JSON.stringify(call)) !==
+    undefined
+  );
+}
+
 const mockMatchmaker: MatchmakerServer = {
   getStatus: function (call, cb) {
+    const err = trackCall(call, 'getStatus');
+    if (err) {
+      cb(err, null);
+      return;
+    }
+
     cb(null, StatusResponse.create());
     return;
   },
   startQueue: function (call, cb) {
+    const err = trackCall(call, 'startQueue');
+    if (err) {
+      cb(err, null);
+      return;
+    }
+
     cb(null, Empty.create());
     return;
   },
   stopQueue: function (call, cb) {
+    const err = trackCall(call, 'stopQueue');
+    if (err) {
+      cb(err, null);
+      return;
+    }
+
     cb(null, Empty.create());
     return;
   },
