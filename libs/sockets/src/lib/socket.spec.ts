@@ -1,27 +1,22 @@
-import {
-  MatchmakerService,
-  MatchmakerServer,
-  StatusResponse,
-} from '@quip/pb/quip-matchmaker';
-import { Empty } from '@quip/pb/google/protobuf/empty';
-import wrapServer, {
-  ClientToServerEvents,
-  ServerToClientEvents,
-} from './socket';
-
 import { createServer } from 'http';
 import { AddressInfo } from 'net';
-import { Server as SocketServer } from 'socket.io';
-import { io as Client, Socket as ClientSocket } from 'socket.io-client';
 
 import { Server as grpcServer, ServerCredentials, status } from '@grpc/grpc-js';
 import {
   ServerStatusResponse,
   ServerSurfaceCall,
 } from '@grpc/grpc-js/build/src/server-call';
-
 process.env.ALLOW_CONFIG_MUTATIONS = 'true';
 import config from 'config';
+
+import {
+  MatchmakerService,
+  MatchmakerServer,
+  StatusResponse,
+} from '@quip/pb/quip-matchmaker';
+import { Empty } from '@quip/pb/google/protobuf/empty';
+import Server from './server';
+import Client from './client';
 
 interface Call {
   player: string;
@@ -92,20 +87,14 @@ const mockMatchmaker: MatchmakerServer = {
 };
 
 describe('socket listener', () => {
-  let io: SocketServer,
+  let io: Server,
     grpc: grpcServer,
     // serverSocket: ServerSocket<ClientToServerEvents, ServerToClientEvents>,
-    clientSocket: ClientSocket<ServerToClientEvents, ClientToServerEvents>;
+    clientSocket: Client;
 
-  async function newClient(
-    player: string
-  ): Promise<ClientSocket<ServerToClientEvents, ClientToServerEvents>> {
-    const host = config.get('api.socket_io-server.hostname');
-    const port = config.get('api.socket_io-server.port');
-
-    // TODO: add authentication as socket option
-    const client = Client(`http://${host}:${port}`, {
-      transports: ['websocket'],
+  async function getClient(player: string): Promise<Client> {
+    const client = Client(config, {
+      auth: undefined, // TODO: set up auth
     });
 
     await new Promise<void>((resolve, reject) => {
@@ -145,7 +134,7 @@ describe('socket listener', () => {
     // wait for socket server to listen
     await new Promise<void>((resolve) => {
       const httpServer = createServer();
-      io = wrapServer(config, httpServer);
+      io = Server(config, httpServer);
 
       httpServer.listen(async () => {
         const { port } = httpServer.address() as AddressInfo;
@@ -155,7 +144,7 @@ describe('socket listener', () => {
           },
         });
 
-        clientSocket = await newClient('asdsa');
+        clientSocket = await getClient('asdsa');
         resolve();
       });
     });

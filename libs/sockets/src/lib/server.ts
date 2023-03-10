@@ -1,34 +1,21 @@
 import { Server as httpServer } from 'http';
 import { Server as httpsServer } from 'https';
-import { Server } from 'socket.io';
-import { QueueUpdate, StatusUpdate } from '@quip/pb/quip-messages';
-import {
-  MatchmakerClient,
-  StartQueueRequest,
-  StatusResponse,
-} from '@quip/pb/quip-matchmaker';
+
+import { Server as SocketIoServer } from 'socket.io';
 import { credentials, Metadata } from '@grpc/grpc-js';
-import { Empty } from '@quip/pb/google/protobuf/empty';
 import { IConfig } from 'config';
 
-export interface ServerToClientEvents {
-  queueUpdate: (update: QueueUpdate) => void;
-  statusUpdate: (update: StatusUpdate) => void;
-}
+import { MatchmakerClient } from '@quip/pb/quip-matchmaker';
+import { Empty } from '@quip/pb/google/protobuf/empty';
+import { ClientToServerEvents, ServerToClientEvents } from './events';
 
-// ClientToServerEvents just match all RPC calls clients can make.
-// Done because the socket.io server will authenticate the users.
-export interface ClientToServerEvents {
-  getStatus: (cb: (err: Error, resp: StatusResponse) => void) => void;
-  startQueue: (req: StartQueueRequest, cb: (err: Error) => void) => void;
-  stopQueue: (cb: (err: Error) => void) => void;
-}
+export type Server = SocketIoServer<ClientToServerEvents, ServerToClientEvents>;
 
-export const wrapServer = (
+export const Server = (
   config: IConfig,
   httpServer: httpServer | httpsServer
 ): Server => {
-  const io = new Server<ClientToServerEvents, ServerToClientEvents>(
+  const io = new SocketIoServer<ClientToServerEvents, ServerToClientEvents>(
     httpServer,
     {
       serveClient: false,
@@ -77,4 +64,4 @@ export const wrapServer = (
   return io;
 };
 
-export default wrapServer;
+export default Server;
