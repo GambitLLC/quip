@@ -1,7 +1,7 @@
 {
-  "name": "socket.io-server-app",
+  "name": "socket-server",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/socket.io-server-app/src",
+  "sourceRoot": "apps/socket-server/src",
   "projectType": "application",
   "targets": {
     "build": {
@@ -9,12 +9,12 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "platform": "node",
-        "outputPath": "dist/apps/socket.io-server-app",
+        "outputPath": "dist/apps/socket-server",
         "format": ["cjs"],
         "bundle": false,
-        "main": "apps/socket.io-server-app/src/main.ts",
-        "tsConfig": "apps/socket.io-server-app/tsconfig.app.json",
-        "assets": ["apps/socket.io-server-app/src/assets"],
+        "main": "apps/socket-server/src/main.ts",
+        "tsConfig": "apps/socket-server/tsconfig.app.json",
+        "assets": ["apps/socket-server/src/assets"],
         "esbuildOptions": {
           "sourcemap": true,
           "outExtension": {
@@ -33,11 +33,11 @@
     "serve": {
       "executor": "@nrwl/js:node",
       "options": {
-        "buildTarget": "socket.io-server-app:build"
+        "buildTarget": "socket-server:build"
       },
       "configurations": {
         "production": {
-          "buildTarget": "socket.io-server-app:build:production"
+          "buildTarget": "socket-server:build:production"
         }
       }
     },
@@ -45,14 +45,14 @@
       "executor": "@nrwl/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["apps/socket.io-server-app/**/*.ts"]
+        "lintFilePatterns": ["apps/socket-server/**/*.ts"]
       }
     },
     "test": {
       "executor": "@nrwl/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "apps/socket.io-server-app/jest.config.ts",
+        "jestConfig": "apps/socket-server/jest.config.ts",
         "passWithNoTests": true
       },
       "configurations": {

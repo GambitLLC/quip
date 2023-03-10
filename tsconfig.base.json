@@ -16,7 +16,7 @@
     "baseUrl": ".",
     "paths": {
       "@quip/pb/*": ["libs/pb/*"],
-      "@quip/socket.io-server": ["libs/socket.io-server/src/index.ts"]
+      "@quip/sockets": ["libs/sockets/src/index.ts"]
     },
     "esModuleInterop": true
   },
