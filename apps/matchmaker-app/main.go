@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker"
 	"github.com/GambitLLC/quip/libs/pb"
 	"google.golang.org/grpc"
@@ -17,13 +19,19 @@ func main() {
 	// SIGTERM is signaled by k8s when it wants a pod to stop.
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 
-	ln, err := net.Listen("tcp", ":0")
+	cfg, err := config.Read("production")
+	if err != nil {
+		panic(err)
+	}
+
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GetInt("api.matchmaker.port")))
 	if err != nil {
 		panic(err)
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterMatchmakerServer(s, &matchmaker.Service{})
+	service := matchmaker.New(cfg)
+	pb.RegisterMatchmakerServer(s, service)
 
 	go func() {
 		log.Printf("Serving on %s", ln.Addr().String())

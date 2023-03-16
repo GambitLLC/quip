@@ -1,11 +1,14 @@
 auth:
-  issuer:
-  audience:
-  jwks_uri:
+  issuer: http://localhost
+  audience: http://localhost
+  jwks_uri: http://localhost
 api:
   matchmaker:
-    hostname:
-    port:
+    hostname: localhost
+    port: 50051
   socket_io-server:
-    hostname:
-    port:
+    hostname: localhost
+    port: 3000
+redis:
+  hostname: localhost
+  port: 6379

@@ -13,6 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/GambitLLC/quip/libs/broker"
+	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	"github.com/GambitLLC/quip/libs/pb"
@@ -21,6 +22,13 @@ import (
 type Service struct {
 	store  statestore.Service
 	broker broker.Client
+}
+
+func New(cfg config.View) *Service {
+	return &Service{
+		store:  statestore.New(cfg),
+		broker: broker.NewRedis(cfg),
+	}
 }
 
 // getPlayer retrieves the player from the metadata attached to the context.

@@ -14,17 +14,35 @@ func Config(name string) string {
 }
 
 func Read(name string) (*viper.Viper, error) {
+	var err error
+	// read in default config values
+	dcfg := viper.New()
+	dcfg.SetConfigType("yaml")
+	dcfg.AddConfigPath("./config")
+	dcfg.AddConfigPath("/app/config") // config path should math volume mount path in k8s
+	dcfg.SetConfigName("default")
+	err = dcfg.ReadInConfig()
+	if err != nil {
+		return nil, fmt.Errorf("fatal error reading default config file: %s", err.Error())
+	}
+
+	// read any overridden
 	cfg := viper.New()
 
+	// set defaults for cfg
+	for k, v := range dcfg.AllSettings() {
+		cfg.SetDefault(k, v)
+	}
+
 	cfg.SetConfigType("yaml")
-	cfg.AddConfigPath(".")
+	cfg.AddConfigPath("./config")
 	// Config path should be set via volume mount path in k8s
 	cfg.AddConfigPath("/app/config")
 	cfg.SetConfigName(name)
 
-	err := cfg.ReadInConfig()
+	err = cfg.ReadInConfig()
 	if err != nil {
-		return nil, fmt.Errorf("fatal error reading config file, desc: %s", err.Error())
+		return nil, fmt.Errorf("fatal error reading config file: %s", err.Error())
 	}
 
 	// Watch for updates to the config; in Kubernetes, this is implemented using
