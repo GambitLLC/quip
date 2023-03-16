@@ -16,7 +16,6 @@ export const Client = (
   const host = config.get('api.socket_io-server.hostname');
   const port = config.get('api.socket_io-server.port');
 
-  // TODO: add authentication
   const client = io(`http://${host}:${port}`, {
     // TODO: set up preferred default options
     ...opts,

@@ -51,8 +51,6 @@ export const Server = (
   });
 
   io.on('connection', (socket) => {
-    // TODO: authenticate socket
-    // TODO: get metadata from socket authentication
     const md = new Metadata();
     md.set('Player-Uuid', socket.data.player);
 

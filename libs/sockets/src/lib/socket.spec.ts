@@ -18,6 +18,7 @@ import { Empty } from '@quip/pb/google/protobuf/empty';
 import Server from './server';
 import Client from './client';
 import { exportJWK, generateKeyPair, KeyLike, SignJWT } from 'jose';
+import { randomBytes } from 'crypto';
 
 interface Call {
   player: string;
@@ -118,8 +119,6 @@ beforeAll(async () => {
 describe('socket listener', () => {
   let io: Server,
     grpc: grpcServer,
-    // serverSocket: ServerSocket<ClientToServerEvents, ServerToClientEvents>,
-    // clientSocket: Client,
     sockets: Client[] = [];
 
   async function getClient(player: string): Promise<Client> {
@@ -200,13 +199,14 @@ describe('socket listener', () => {
   });
 
   test('should receive status', async () => {
-    const client = await getClient('derp');
+    const player = randomBytes(18).toString('hex');
+    const client = await getClient(player);
 
     await new Promise<void>((resolve, reject) => {
       client.emit('getStatus', (err) => {
         if (
           !gotCall({
-            player: 'derp',
+            player: player,
             request: 'getStatus',
           })
         ) {
