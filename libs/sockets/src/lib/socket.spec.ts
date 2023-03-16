@@ -17,6 +17,7 @@ import {
 import { Empty } from '@quip/pb/google/protobuf/empty';
 import Server from './server';
 import Client from './client';
+import { exportJWK, generateKeyPair, KeyLike, SignJWT } from 'jose';
 
 interface Call {
   player: string;
@@ -86,21 +87,62 @@ const mockMatchmaker: MatchmakerServer = {
   },
 };
 
+// spin up http server to provide jwksT
+const alg = 'RS256';
+let publicKey, privateKey: Uint8Array | KeyLike;
+beforeAll(async () => {
+  ({ publicKey, privateKey } = await generateKeyPair(alg));
+  const jwk = await exportJWK(publicKey);
+  jwk.alg = alg;
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ keys: [jwk] }));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(() => {
+      const { port } = server.address() as AddressInfo;
+
+      config.util.extendDeep(config, {
+        auth: {
+          jwks_uri: `http://localhost:${port}/`,
+        },
+      });
+
+      resolve();
+    });
+  });
+});
+
 describe('socket listener', () => {
   let io: Server,
     grpc: grpcServer,
     // serverSocket: ServerSocket<ClientToServerEvents, ServerToClientEvents>,
-    clientSocket: Client;
+    // clientSocket: Client,
+    sockets: Client[] = [];
 
   async function getClient(player: string): Promise<Client> {
+    // create token holding player info
+    const token = await new SignJWT({})
+      .setProtectedHeader({ alg })
+      .setSubject(player)
+      .setIssuer(config.get('auth.issuer'))
+      .setAudience(config.get('auth.audience'))
+      .sign(privateKey);
+
     const client = Client(config, {
-      auth: undefined, // TODO: set up auth
+      auth: {
+        token,
+      },
     });
 
     await new Promise<void>((resolve, reject) => {
       client.on('connect', resolve);
       client.on('connect_error', reject);
     });
+
+    sockets.push(client);
 
     return client;
   }
@@ -144,7 +186,7 @@ describe('socket listener', () => {
           },
         });
 
-        clientSocket = await getClient('asdsa');
+        // clientSocket = await getClient('abc');
         resolve();
       });
     });
@@ -152,22 +194,29 @@ describe('socket listener', () => {
 
   afterAll(() => {
     io.close();
-    clientSocket.close();
+    // clientSocket?.close();
+    sockets.forEach((client) => client.close());
+    sockets = [];
   });
 
-  test('should receive status', (done) => {
-    clientSocket.emit('getStatus', (err) => {
-      if (
-        !gotCall({
-          player: 'asdsa',
-          request: 'getStatus',
-        })
-      ) {
-        done('mock matchmaker did not receive getStatus request');
-        return;
-      }
+  test('should receive status', async () => {
+    const client = await getClient('derp');
 
-      done(err);
+    await new Promise<void>((resolve, reject) => {
+      client.emit('getStatus', (err) => {
+        if (
+          !gotCall({
+            player: 'derp',
+            request: 'getStatus',
+          })
+        ) {
+          reject('mock matchmaker did not receive getStatus request');
+          return;
+        }
+
+        if (err) reject(err);
+        else resolve();
+      });
     });
   });
 });

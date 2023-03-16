@@ -1,7 +1,11 @@
+auth:
+  issuer:
+  audience:
+  jwks_uri:
 api:
   matchmaker:
     hostname:
     port:
   socket_io-server:
     hostname:
-    port: 50051
+    port:

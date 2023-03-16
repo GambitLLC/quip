@@ -1,3 +1,7 @@
+auth:
+  issuer: http://localhost
+  audience: http://localhost
+  jwks_uri: http://localhost
 api:
   matchmaker:
     hostname: localhost
