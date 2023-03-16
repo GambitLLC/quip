@@ -8,11 +8,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Config(name string) string {
-	result := "Config " + name
-	return result
-}
-
 func Read(name string) (*viper.Viper, error) {
 	var err error
 	// read in default config values
