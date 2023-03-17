@@ -1,14 +1,18 @@
 import { Client } from '@quip/sockets';
 import config from 'config';
+import { newToken } from '../auth';
 
 describe('socket tests', () => {
-  it('should connect', (done) => {
+  it('should connect', async () => {
     const client = Client(config, {
       auth: {
-        token: 'asd', // TODO: generate token
+        token: await newToken('asd'),
       },
     });
-    client.on('connect', done);
-    client.on('connect_error', done);
+
+    await new Promise<void>((resolve, reject) => {
+      client.on('connect', resolve);
+      client.on('connect_error', reject);
+    });
   });
 });
