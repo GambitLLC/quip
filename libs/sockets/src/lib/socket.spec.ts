@@ -90,7 +90,7 @@ const mockMatchmaker: MatchmakerServer = {
 
 // spin up http server to provide jwksT
 const alg = 'RS256';
-let publicKey, privateKey: Uint8Array | KeyLike;
+let publicKey: KeyLike, privateKey: KeyLike;
 beforeAll(async () => {
   ({ publicKey, privateKey } = await generateKeyPair(alg));
   const jwk = await exportJWK(publicKey);
