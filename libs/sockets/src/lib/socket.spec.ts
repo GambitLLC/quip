@@ -31,10 +31,10 @@ function trackCall(
   call: ServerSurfaceCall,
   req: string
 ): ServerStatusResponse | null {
-  const player = call.metadata.get('Player-Uuid');
+  const player = call.metadata.get('Player-Id');
   if (player.length < 1) {
     return {
-      details: 'Player-Uuid not found',
+      details: 'Player-Id not found',
       code: status.INVALID_ARGUMENT,
     };
   }

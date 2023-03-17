@@ -52,7 +52,7 @@ export const Server = (
 
   io.on('connection', (socket) => {
     const md = new Metadata();
-    md.set('Player-Uuid', socket.data.player);
+    md.set('Player-Id', socket.data.player);
 
     socket.on('getStatus', (cb) => {
       rpc.getStatus(Empty.create(), md, (err, resp) => {

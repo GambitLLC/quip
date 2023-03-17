@@ -23,5 +23,12 @@ module.exports = async function (globalConfig, projectConfig) {
     join(process.cwd(), 'apps/quip-e2e/setup.go'),
   ]);
 
-  globalThis.__CMDS__ = [authServer, socketServerProc, miniredisProc];
+  const matchmakerProc = spawn(join(process.cwd(), 'dist/apps/matchmaker-app'));
+
+  globalThis.__CMDS__ = [
+    authServer,
+    socketServerProc,
+    miniredisProc,
+    matchmakerProc,
+  ];
 };
