@@ -2,6 +2,7 @@ import { Client } from '@quip/sockets';
 import config from 'config';
 import { newToken } from '../auth';
 import { randomBytes } from 'crypto';
+import { StartQueueRequest } from '@quip/pb/quip-matchmaker';
 
 describe('socket tests', () => {
   const sockets: Map<string, Client> = new Map();
@@ -44,13 +45,52 @@ describe('socket tests', () => {
   });
 
   it('should get status', async () => {
-    const { client, player } = await newClient();
+    const { client } = await newClient();
 
     await new Promise<void>((resolve) => {
       client.emit('getStatus', (err, status) => {
         expect(err).toBeNull();
         expect(status).toBeTruthy();
+        resolve();
+      });
+    });
+  });
 
+  it('should be able to queue', async () => {
+    const { client } = await newClient();
+
+    await new Promise<void>((resolve) => {
+      client.emit('startQueue', StartQueueRequest.create({}), (err) => {
+        expect(err).toBeNull();
+        resolve();
+      });
+    });
+  });
+
+  it.failing('should not be able to double queue', async () => {
+    const { client } = await newClient();
+
+    await new Promise<void>((resolve) => {
+      client.emit('startQueue', StartQueueRequest.create({}), (err) => {
+        expect(err).toBeNull();
+        resolve();
+      });
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      client.emit('startQueue', StartQueueRequest.create({}), (err) => {
+        if (err) reject();
+        else resolve();
+      });
+    });
+  });
+
+  it('should be able to stop queue', async () => {
+    const { client } = await newClient();
+
+    await new Promise<void>((resolve) => {
+      client.emit('stopQueue', (err) => {
+        expect(err).toBeNull();
         resolve();
       });
     });
