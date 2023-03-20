@@ -5,33 +5,34 @@ import { Server as SocketIoServer } from 'socket.io';
 import { credentials, Metadata } from '@grpc/grpc-js';
 import { IConfig } from 'config';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { createClient } from 'redis';
 
 import { MatchmakerClient } from '@quip/pb/quip-matchmaker';
 import { Empty } from '@quip/pb/google/protobuf/empty';
 import { ClientToServerEvents, ServerToClientEvents } from './events';
+import { QueueUpdate, StatusUpdate } from '@quip/pb/quip-messages';
 
 export type Server = SocketIoServer<ClientToServerEvents, ServerToClientEvents>;
 
-export const Server = (
+export const Server = async (
   config: IConfig,
   httpServer: httpServer | httpsServer
-): Server => {
+): Promise<Server> => {
+  const pubClient = createClient({
+    url: `redis://${config.get('redis.hostname')}:${config.get('redis.port')}`,
+  });
+  const subClient = pubClient.duplicate();
+
   const io = new SocketIoServer<ClientToServerEvents, ServerToClientEvents>(
     httpServer,
     {
       serveClient: false,
-      // TODO: redis adapter
+      adapter: createAdapter(pubClient, subClient),
     }
   );
 
-  const host = config.get('api.matchmaker.hostname');
-  const port = config.get('api.matchmaker.port');
-
-  const rpc = new MatchmakerClient(
-    `${host}:${port}`,
-    credentials.createInsecure()
-  );
-
+  // setup authentication
   io.use((socket, next) => {
     const token = socket.handshake.auth.token;
     const jwks = createRemoteJWKSet(new URL(config.get('auth.jwks_uri')));
@@ -49,6 +50,32 @@ export const Server = (
       }
     );
   });
+
+  // listen to broker for status and queue updates
+  subClient
+    .subscribe<true>('status_update', (message) => {
+      const update = StatusUpdate.decode(message);
+      console.log(update);
+      io.to(update.targets).emit('statusUpdate', update);
+    })
+    .catch((err) => console.error(err));
+
+  subClient
+    .subscribe<true>('queue_update', (message) => {
+      const update = QueueUpdate.decode(message);
+      console.log(update);
+      io.to(update.targets).emit('queueUpdate', update);
+    })
+    .catch((err) => console.error(err));
+
+  // create rpc client to send commands to matchmaker
+  const host = config.get('api.matchmaker.hostname');
+  const port = config.get('api.matchmaker.port');
+
+  const rpc = new MatchmakerClient(
+    `${host}:${port}`,
+    credentials.createInsecure()
+  );
 
   io.on('connection', (socket) => {
     const md = new Metadata();
