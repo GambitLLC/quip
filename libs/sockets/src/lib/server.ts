@@ -24,6 +24,15 @@ export const Server = async (
   });
   const subClient = pubClient.duplicate();
 
+  Promise.all([pubClient.connect(), subClient.connect()]).then(
+    () => {
+      console.log('redis pub and sub client connected');
+    },
+    (err) => {
+      console.error(err);
+    }
+  );
+
   const io = new SocketIoServer<ClientToServerEvents, ServerToClientEvents>(
     httpServer,
     {
@@ -53,20 +62,36 @@ export const Server = async (
 
   // listen to broker for status and queue updates
   subClient
-    .subscribe<true>('status_update', (message) => {
-      const update = StatusUpdate.decode(message);
-      console.log(update);
-      io.to(update.targets).emit('statusUpdate', update);
-    })
-    .catch((err) => console.error(err));
+    .subscribe(
+      'status_update',
+      (message) => {
+        const update = StatusUpdate.decode(message);
+        io.to(update.targets).emit('statusUpdate', update);
+      },
+      true
+    )
+    .then(
+      () => {
+        console.log('subscribed to status updates');
+      },
+      (err) => console.error(err)
+    );
 
   subClient
-    .subscribe<true>('queue_update', (message) => {
-      const update = QueueUpdate.decode(message);
-      console.log(update);
-      io.to(update.targets).emit('queueUpdate', update);
-    })
-    .catch((err) => console.error(err));
+    .subscribe(
+      'queue_update',
+      (message) => {
+        const update = QueueUpdate.decode(message);
+        io.to(update.targets).emit('queueUpdate', update);
+      },
+      true
+    )
+    .then(
+      () => {
+        console.log('subscribed to queue updates');
+      },
+      (err) => console.error(err)
+    );
 
   // create rpc client to send commands to matchmaker
   const host = config.get('api.matchmaker.hostname');

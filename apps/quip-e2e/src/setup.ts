@@ -16,6 +16,7 @@ module.exports = async function (globalConfig, projectConfig) {
         NODE_CONFIG: JSON.stringify(config.util.toObject()),
         ...process.env,
       },
+      stdio: [process.stdin, process.stdout, process.stderr],
     }
   );
   const miniredisProc = spawn('go', [
@@ -23,7 +24,10 @@ module.exports = async function (globalConfig, projectConfig) {
     join(process.cwd(), 'apps/quip-e2e/setup.go'),
   ]);
 
-  const matchmakerProc = spawn(join(process.cwd(), 'dist/apps/matchmaker-app'));
+  const matchmakerProc = spawn(
+    join(process.cwd(), 'dist/apps/matchmaker-app'),
+    { stdio: [process.stdin, process.stdout, process.stderr] }
+  );
 
   globalThis.__CMDS__ = [
     authServer,

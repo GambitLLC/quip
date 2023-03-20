@@ -8,7 +8,8 @@
       "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
       "options": {
         "jestConfig": "apps/quip-e2e/jest.config.ts",
-        "passWithNoTests": true
+        "passWithNoTests": true,
+        "silent": false
       }
     },
     "lint": {

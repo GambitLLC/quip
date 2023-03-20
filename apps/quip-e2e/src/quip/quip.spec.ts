@@ -67,6 +67,22 @@ describe('socket tests', () => {
     });
   });
 
+  it('should get queue started update', async () => {
+    const { client } = await newClient();
+
+    await new Promise<void>((resolve, reject) => {
+      client.on('queueUpdate', (update) => {
+        console.log('got queue update');
+        resolve();
+      });
+
+      client.emit('startQueue', StartQueueRequest.create({}), (err) => {
+        if (err) reject();
+        else resolve();
+      });
+    });
+  });
+
   it.failing('should not be able to double queue', async () => {
     const { client } = await newClient();
 
