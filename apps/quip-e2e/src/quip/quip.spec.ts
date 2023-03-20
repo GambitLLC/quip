@@ -72,13 +72,11 @@ describe('socket tests', () => {
 
     await new Promise<void>((resolve, reject) => {
       client.on('queueUpdate', (update) => {
-        console.log('got queue update');
-        resolve();
+        if (update.started) resolve();
       });
 
       client.emit('startQueue', StartQueueRequest.create({}), (err) => {
         if (err) reject();
-        else resolve();
       });
     });
   });

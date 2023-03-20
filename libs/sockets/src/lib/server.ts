@@ -52,6 +52,7 @@ export const Server = async (
     }).then(
       ({ payload }) => {
         socket.data.player = payload.sub;
+        socket.join(payload.sub);
         next();
       },
       (err) => {
@@ -126,9 +127,6 @@ export const Server = async (
       return;
     });
   });
-
-  // io.emit('queueUpdate', QueueUpdate.create());
-  // io.emit('statusUpdate', StatusUpdate.create());
 
   return io;
 };

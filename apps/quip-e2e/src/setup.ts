@@ -16,7 +16,7 @@ module.exports = async function (globalConfig, projectConfig) {
         NODE_CONFIG: JSON.stringify(config.util.toObject()),
         ...process.env,
       },
-      stdio: [process.stdin, process.stdout, process.stderr],
+      // stdio: [process.stdin, process.stdout, process.stderr],
     }
   );
   const miniredisProc = spawn('go', [
@@ -25,9 +25,12 @@ module.exports = async function (globalConfig, projectConfig) {
   ]);
 
   const matchmakerProc = spawn(
-    join(process.cwd(), 'dist/apps/matchmaker-app'),
-    { stdio: [process.stdin, process.stdout, process.stderr] }
+    join(process.cwd(), 'dist/apps/matchmaker-app')
+    // { stdio: [process.stdin, process.stdout, process.stderr] }
   );
+
+  // wait for processes to startup
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   globalThis.__CMDS__ = [
     authServer,
