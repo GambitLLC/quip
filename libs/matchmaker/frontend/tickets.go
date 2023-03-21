@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
+	"github.com/GambitLLC/quip/libs/rpc"
 )
 
 type omFrontendClient struct {
@@ -17,10 +16,7 @@ type omFrontendClient struct {
 
 func newOmFrontendClient(cfg config.View) *omFrontendClient {
 	newInstance := func(cfg config.View) (interface{}, func(), error) {
-		conn, err := grpc.Dial(
-			fmt.Sprintf("%s:%d", cfg.GetString("openmatch.frontend.hostname"), cfg.GetInt("openmatch.frontend.port")),
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-		)
+		conn, err := rpc.GRPCClientFromConfig(cfg, "openmatch.frontend")
 		if err != nil {
 			return nil, nil, err
 		}
