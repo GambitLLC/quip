@@ -8,6 +8,7 @@ import (
 
 	ompb "open-match.dev/open-match/pkg/pb"
 
+	"github.com/GambitLLC/quip/libs/appmain"
 	"github.com/GambitLLC/quip/libs/broker"
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
@@ -23,7 +24,7 @@ type Service struct {
 	broker  broker.Client
 }
 
-func New(cfg config.View) *Service {
+func New(cfg config.View) appmain.Daemon {
 	return &Service{
 		cfg:     cfg,
 		backend: newOMBackendClient(cfg),
@@ -37,6 +38,7 @@ func (s *Service) Start(ctx context.Context) error {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
+	// TODO: determine profiles
 	profiles := []*ompb.MatchProfile{}
 
 	for {
@@ -44,6 +46,8 @@ func (s *Service) Start(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
+			log.Printf("Fetching matches for %d profiles", len(profiles))
+
 			var wg sync.WaitGroup
 			for _, p := range profiles {
 				wg.Add(1)
@@ -66,6 +70,8 @@ func (s *Service) Start(ctx context.Context) error {
 						log.Printf("failed to fetch matches for profile %s: %s", profile.Name, err.Error())
 						return
 					}
+
+					log.Printf("Fetched %d profiles for profile %s", len(matches), profile.Name)
 
 					for _, match := range matches {
 						s.assignMatch(ctx, match)
