@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/protobuf/types/known/anypb"
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/rpc"
 )
 
@@ -35,22 +37,24 @@ func newOmFrontendClient(cfg config.View) *omFrontendClient {
 	}
 }
 
-type ticketRequest struct {
-	PlayerId string
-	Gamemode string
-}
-
 // CreateTicket sends a CreateTicketRequest to Open Match and returns the updated ticket.
-func (fc *omFrontendClient) CreateTicket(ctx context.Context, req ticketRequest) (*ompb.Ticket, error) {
+func (fc *omFrontendClient) CreateTicket(ctx context.Context, req *ipb.TicketInternal) (*ompb.Ticket, error) {
 	client, err := fc.cacher.Get()
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: set up ticket extensions and search fields
+	detailsAny, err := anypb.New(req)
+	if err != nil {
+		return nil, err
+	}
+
 	ticket := &ompb.Ticket{
 		SearchFields: &ompb.SearchFields{
 			Tags: []string{fmt.Sprintf("mode.%s", req.Gamemode)},
+		},
+		Extensions: map[string]*anypb.Any{
+			"details": detailsAny,
 		},
 	}
 

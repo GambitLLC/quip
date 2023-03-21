@@ -122,7 +122,7 @@ func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*e
 		return nil, status.Error(codes.Aborted, "player is already in game")
 	}
 
-	ticket, err := s.omfc.CreateTicket(ctx, ticketRequest{
+	ticket, err := s.omfc.CreateTicket(ctx, &ipb.TicketInternal{
 		PlayerId: player.PlayerId,
 		Gamemode: req.Gamemode,
 	})

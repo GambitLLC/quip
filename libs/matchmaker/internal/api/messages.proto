@@ -10,3 +10,10 @@ message PlayerInternal {
 
   optional string match_id = 3;
 }
+
+// Internal message for holding relevant ticket information.
+message TicketInternal {
+  string player_id = 1;
+
+  string gamemode = 2;
+}
