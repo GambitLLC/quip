@@ -3,12 +3,13 @@ package config
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )
 
-func Read(name string) (*viper.Viper, error) {
+func Read() (*viper.Viper, error) {
 	var err error
 	// read in default config values
 	dcfg := viper.New()
@@ -33,7 +34,11 @@ func Read(name string) (*viper.Viper, error) {
 	cfg.AddConfigPath("./config")
 	// Config path should be set via volume mount path in k8s
 	cfg.AddConfigPath("/app/config")
-	cfg.SetConfigName(name)
+	if name := os.Getenv("NODE_CONFIG_ENV"); name != "" {
+		cfg.SetConfigName(name)
+	} else {
+		cfg.SetConfigName("production")
+	}
 
 	err = cfg.ReadInConfig()
 	if err != nil {

@@ -1,6 +1,8 @@
 import { createServer } from 'http';
 import { importJWK, KeyLike, SignJWT } from 'jose';
 import { AddressInfo } from 'net';
+import yaml from 'js-yaml';
+import fs from 'fs';
 
 process.env.ALLOW_CONFIG_MUTATIONS = 'true';
 import config from 'config';
@@ -48,17 +50,27 @@ export async function startServer(): Promise<{ kill: () => void }> {
     res.end(JSON.stringify({ keys: [publicJWK] }));
   });
 
-  await new Promise<void>((resolve) => {
+  await new Promise<void>((resolve, reject) => {
     server.listen(() => {
       const { port } = server.address() as AddressInfo;
 
-      config.util.extendDeep(config, {
-        auth: {
-          jwks_uri: `http://localhost:${port}/`,
-        },
-      });
-
-      resolve();
+      fs.writeFile(
+        'config/e2e.yaml',
+        yaml.dump(
+          config.util.toObject(
+            config.util.extendDeep(config, {
+              auth: {
+                jwks_uri: `http://localhost:${port}/`,
+              },
+            })
+          )
+        ),
+        (err) => {
+          if (err) {
+            reject(err);
+          } else resolve();
+        }
+      );
     });
   });
 

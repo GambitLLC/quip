@@ -3,20 +3,55 @@ package main
 import (
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/alicebob/miniredis/v2"
+	"github.com/spf13/viper"
+
+	"github.com/GambitLLC/quip/libs/config"
 )
 
 func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 
+	if file, err := os.Open("config/e2e.yaml"); os.IsNotExist(err) {
+		_, _ = os.Create("config/e2e.yaml")
+	} else {
+		_ = file.Close()
+	}
+
+	cfg, err := config.Read()
+	if err != nil {
+		panic(err)
+	}
+
 	mredis := miniredis.NewMiniRedis()
-	if err := mredis.StartAddr(":6379"); err != nil {
+	if err := mredis.StartAddr(":0"); err != nil {
+		panic(err)
+	}
+
+	updateKey(cfg, "", "redis.hostname", "localhost")
+	updateKey(cfg, "", "redis.port", mredis.Port())
+	updateKey(cfg, "", "broker.hostname", "localhost")
+	updateKey(cfg, "", "broker.port", mredis.Port())
+
+	// openmatch should be running on minimatch -- everything on port 50499
+	updateKey(cfg, "openmatch", "port", 50499)
+
+	if err := cfg.WriteConfigAs("config/e2e.yaml"); err != nil {
 		panic(err)
 	}
 
 	<-c
 	mredis.Close()
+}
+
+func updateKey(cfg *viper.Viper, prefix, suffix string, val interface{}) {
+	for _, key := range cfg.AllKeys() {
+		if strings.HasPrefix(key, prefix) && strings.HasSuffix(key, suffix) {
+			cfg.Set(key, val)
+		}
+	}
 }

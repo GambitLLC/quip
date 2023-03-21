@@ -19,7 +19,7 @@ func RunDaemon(daemon func(config.View) Daemon) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 
-	cfg, err := config.Read("production")
+	cfg, err := config.Read()
 	if err != nil {
 		panic(err)
 	}

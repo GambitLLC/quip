@@ -1,41 +1,41 @@
+process.env.ALLOW_CONFIG_MUTATIONS = 'true';
+process.env.NODE_CONFIG_ENV = 'e2e';
+
 import { join } from 'path';
 import { spawn } from 'child_process';
 import { startServer } from './auth';
-import config from 'config';
 
 module.exports = async function (globalConfig, projectConfig) {
-  // spin up auth server first because it modifies config
+  // spin up authServer first as it modifies config
   const authServer = await startServer();
+
+  // spin up background procs which also modify config
+  const backgroundProcs = spawn('go', [
+    'run',
+    join(process.cwd(), 'apps/quip-e2e/setup.go'),
+  ]);
+
+  // wait some time for background procs to modify config
+  await new Promise((resolve) => setTimeout(resolve, 500));
 
   const socketServerProc = spawn(
     'node',
     [join(process.cwd(), 'dist/apps/socket-server')],
     {
-      // include env to update config with auth server changes
-      env: {
-        NODE_CONFIG: JSON.stringify(config.util.toObject()),
-        ...process.env,
-      },
       // stdio: [process.stdin, process.stdout, process.stderr],
     }
   );
-  const miniredisProc = spawn('go', [
-    'run',
-    join(process.cwd(), 'apps/quip-e2e/setup.go'),
-  ]);
 
   const matchmakerProc = spawn(
     join(process.cwd(), 'dist/apps/matchmaker-frontend')
-    // { stdio: [process.stdin, process.stdout, process.stderr] }
   );
 
-  // wait for processes to startup
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  // TODO: launch matchfunction, director, and minimatch?
 
   globalThis.__CMDS__ = [
     authServer,
     socketServerProc,
-    miniredisProc,
+    backgroundProcs,
     matchmakerProc,
   ];
 };
