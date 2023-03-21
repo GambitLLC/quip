@@ -15,10 +15,10 @@ import { QueueUpdate, StatusUpdate } from '@quip/pb/quip-messages';
 
 export type Server = SocketIoServer<ClientToServerEvents, ServerToClientEvents>;
 
-export const Server = async (
+export const Server = (
   config: IConfig,
   httpServer: httpServer | httpsServer
-): Promise<Server> => {
+): Server => {
   const pubClient = createClient({
     url: `redis://${config.get('redis.hostname')}:${config.get('redis.port')}`,
   });
