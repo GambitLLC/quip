@@ -100,8 +100,8 @@ func newConfig(t *testing.T) config.Mutable {
 	}
 	t.Cleanup(mredis.Close)
 
-	cfg.Set("redis.hostname", mredis.Host())
-	cfg.Set("redis.port", mredis.Port())
+	cfg.Set("broker.hostname", mredis.Host())
+	cfg.Set("broker.port", mredis.Port())
 
 	return cfg
 }

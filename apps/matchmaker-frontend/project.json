@@ -1,21 +1,21 @@
 {
-  "name": "matchmaker-app",
+  "name": "matchmaker-frontend",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "sourceRoot": "apps/matchmaker-app",
+  "sourceRoot": "apps/matchmaker-frontend",
   "targets": {
     "build": {
       "executor": "@nx-go/nx-go:build",
       "options": {
-        "outputPath": "dist/apps/matchmaker-app",
-        "main": "apps/matchmaker-app/main.go"
+        "outputPath": "dist/apps/matchmaker-frontend",
+        "main": "apps/matchmaker-frontend/main.go"
       }
     },
     "serve": {
       "executor": "@nx-go/nx-go:serve",
       "options": {
         "cwd": ".",
-        "main": "apps/matchmaker-app/main.go"
+        "main": "apps/matchmaker-frontend/main.go"
       }
     },
     "test": {

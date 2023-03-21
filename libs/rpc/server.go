@@ -20,7 +20,7 @@ type ServerParams struct {
 func NewServerParams(cfg config.View, serviceName string) (*ServerParams, error) {
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GetInt(serviceName+".port")))
 	if err != nil {
-		return nil, errors.Errorf("listen failed", err)
+		return nil, errors.Errorf("listen failed: %s", err.Error())
 	}
 
 	// TODO: read cert files

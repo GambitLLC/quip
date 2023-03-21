@@ -25,7 +25,7 @@ module.exports = async function (globalConfig, projectConfig) {
   ]);
 
   const matchmakerProc = spawn(
-    join(process.cwd(), 'dist/apps/matchmaker-app')
+    join(process.cwd(), 'dist/apps/matchmaker-frontend')
     // { stdio: [process.stdin, process.stdout, process.stderr] }
   );
 

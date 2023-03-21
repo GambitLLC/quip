@@ -17,8 +17,8 @@ func NewService(t *testing.T, cfg config.Mutable) statestore.Service {
 	}
 	t.Cleanup(mredis.Close)
 
-	cfg.Set("redis.hostname", mredis.Host())
-	cfg.Set("redis.port", mredis.Port())
+	cfg.Set("matchmaker.redis.hostname", mredis.Host())
+	cfg.Set("matchmaker.redis.port", mredis.Port())
 
 	return statestore.New(cfg)
 }

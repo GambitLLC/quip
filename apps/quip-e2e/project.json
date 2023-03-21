@@ -1,7 +1,7 @@
 {
   "name": "quip-e2e",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "implicitDependencies": ["socket-server", "matchmaker-app"],
+  "implicitDependencies": ["socket-server", "matchmaker-frontend"],
   "targets": {
     "e2e": {
       "executor": "@nrwl/jest:jest",

@@ -352,6 +352,8 @@ func newContextWithPlayer(t *testing.T, playerId string) context.Context {
 func newService(t *testing.T) *Service {
 	cfg := viper.New()
 	_ = statestoreTesting.NewService(t, cfg)
+	cfg.Set("broker.hostname", cfg.Get("matchmaker.redis.hostname"))
+	cfg.Set("broker.port", cfg.Get("matchmaker.redis.port"))
 
 	// TODO: spin up minimatch in memory
 	cfg.Set("openmatch.frontend.hostname", "localhost")
