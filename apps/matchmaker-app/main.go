@@ -9,7 +9,7 @@ import (
 	"syscall"
 
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/matchmaker"
+	"github.com/GambitLLC/quip/libs/matchmaker/frontend"
 	"github.com/GambitLLC/quip/libs/pb"
 	"google.golang.org/grpc"
 )
@@ -30,7 +30,7 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	service := matchmaker.New(cfg)
+	service := frontend.New(cfg)
 	pb.RegisterMatchmakerServer(s, service)
 
 	go func() {

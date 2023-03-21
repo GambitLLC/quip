@@ -1,4 +1,4 @@
-package matchmaker
+package frontend
 
 import (
 	"context"
