@@ -16,6 +16,8 @@ require (
 	google.golang.org/protobuf v1.29.1
 )
 
+require github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.0 // indirect
+
 require (
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
@@ -41,4 +43,5 @@ require (
 	google.golang.org/genproto v0.0.0-20230223222841-637eb2293923 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	open-match.dev/open-match v1.7.0
 )

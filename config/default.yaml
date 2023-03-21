@@ -12,3 +12,7 @@ api:
 redis:
   hostname: localhost
   port: 6379
+openmatch:
+  frontend:
+    hostname: localhost
+    port: 50504

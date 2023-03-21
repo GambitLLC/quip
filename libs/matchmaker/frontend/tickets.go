@@ -2,21 +2,102 @@ package frontend
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/rs/xid"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	ompb "open-match.dev/open-match/pkg/pb"
+
+	"github.com/GambitLLC/quip/libs/config"
 )
+
+type omFrontendClient struct {
+	cacher *config.Cacher
+}
+
+func newOmFrontendClient(cfg config.View) *omFrontendClient {
+	newInstance := func(cfg config.View) (interface{}, func(), error) {
+		conn, err := grpc.Dial(
+			fmt.Sprintf("%s:%d", cfg.GetString("openmatch.frontend.hostname"), cfg.GetInt("openmatch.frontend.port")),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		close := func() {
+			// TODO: handle close error
+			_ = conn.Close()
+
+		}
+
+		return ompb.NewFrontendServiceClient(conn), close, nil
+	}
+
+	return &omFrontendClient{
+		cacher: config.NewCacher(cfg, newInstance),
+	}
+}
 
 type ticketRequest struct {
 	PlayerId string
 	Gamemode string
 }
 
-func createTicket(ctx context.Context, req *ticketRequest) (id string, err error) {
-	// TODO: implement
-	return xid.New().String(), nil
+// CreateTicket sends a CreateTicketRequest to Open Match and returns the updated ticket.
+func (fc *omFrontendClient) CreateTicket(ctx context.Context, req ticketRequest) (*ompb.Ticket, error) {
+	client, err := fc.cacher.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: set up ticket extensions and search fields
+	ticket := &ompb.Ticket{
+		SearchFields: &ompb.SearchFields{
+			Tags: []string{fmt.Sprintf("mode.%s", req.Gamemode)},
+		},
+	}
+
+	ticket, err = client.(ompb.FrontendServiceClient).CreateTicket(
+		ctx,
+		&ompb.CreateTicketRequest{
+			Ticket: ticket,
+		},
+	)
+
+	return ticket, err
 }
 
-func deleteTicket(ctx context.Context, id string) error {
-	// TODO: implement
-	return nil
+// GetTicket fetches the ticket from Open Match.
+func (fc *omFrontendClient) GetTicket(ctx context.Context, id string) (*ompb.Ticket, error) {
+	client, err := fc.cacher.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	ticket, err := client.(ompb.FrontendServiceClient).GetTicket(
+		ctx,
+		&ompb.GetTicketRequest{
+			TicketId: id,
+		},
+	)
+
+	return ticket, err
+}
+
+// DeleteTicket removes the ticket from Open Match.
+func (fc *omFrontendClient) DeleteTicket(ctx context.Context, id string) error {
+	client, err := fc.cacher.Get()
+	if err != nil {
+		return err
+	}
+
+	_, err = client.(ompb.FrontendServiceClient).DeleteTicket(
+		ctx,
+		&ompb.DeleteTicketRequest{
+			TicketId: id,
+		},
+	)
+
+	return err
 }

@@ -22,12 +22,14 @@ import (
 type Service struct {
 	store  statestore.Service
 	broker broker.Client
+	omfc   *omFrontendClient
 }
 
 func New(cfg config.View) *Service {
 	return &Service{
 		store:  statestore.New(cfg),
 		broker: broker.NewRedis(cfg),
+		omfc:   newOmFrontendClient(cfg),
 	}
 }
 
@@ -120,7 +122,7 @@ func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*e
 		return nil, status.Error(codes.Aborted, "player is already in game")
 	}
 
-	ticketId, err := createTicket(ctx, &ticketRequest{
+	ticket, err := s.omfc.CreateTicket(ctx, ticketRequest{
 		PlayerId: player.PlayerId,
 		Gamemode: req.Gamemode,
 	})
@@ -129,7 +131,7 @@ func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*e
 	}
 
 	players := []string{player.PlayerId}
-	err = s.store.TrackTicket(ctx, ticketId, players)
+	err = s.store.TrackTicket(ctx, ticket.Id, players)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +170,7 @@ func (s *Service) StopQueue(ctx context.Context, _ *emptypb.Empty) (*emptypb.Emp
 		return &emptypb.Empty{}, nil
 	}
 
-	err = deleteTicket(ctx, *player.TicketId)
+	err = s.omfc.DeleteTicket(ctx, *player.TicketId)
 	if err != nil && status.Code(err) != codes.NotFound {
 		return nil, err
 	}

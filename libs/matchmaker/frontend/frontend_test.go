@@ -9,7 +9,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/GambitLLC/quip/libs/broker"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	statestoreTesting "github.com/GambitLLC/quip/libs/matchmaker/internal/statestore/testing"
@@ -352,9 +351,10 @@ func newContextWithPlayer(t *testing.T, playerId string) context.Context {
 
 func newService(t *testing.T) *Service {
 	cfg := viper.New()
-	store := statestoreTesting.NewService(t, cfg)
-	return &Service{
-		store:  store,
-		broker: broker.NewRedis(cfg),
-	}
+	_ = statestoreTesting.NewService(t, cfg)
+
+	// TODO: spin up minimatch in memory
+	cfg.Set("openmatch.frontend.hostname", "localhost")
+	cfg.Set("openmatch.frontend.port", 50499)
+	return New(cfg)
 }
