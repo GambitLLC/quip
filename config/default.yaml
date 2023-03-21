@@ -2,14 +2,21 @@ auth:
   issuer: http://localhost
   audience: http://localhost
   jwks_uri: http://localhost
-api:
-  matchmaker:
+matchmaker:
+  frontend:
     hostname: localhost
     port: 50051
-  socket_io-server:
+  redis:
+    hostname: localhost
+    port: 6379
+sockets:
+  server:
     hostname: localhost
     port: 3000
-redis:
+  redis:
+    hostname: localhost
+    port: 6379
+broker:
   hostname: localhost
   port: 6379
 openmatch:

@@ -20,7 +20,7 @@ type redisBackend struct {
 func NewRedis(cfg config.View) *redisBackend {
 	client := redis.NewClient(
 		&redis.Options{
-			Addr: fmt.Sprintf("%s:%s", cfg.GetString("redis.hostname"), cfg.GetString("redis.port")),
+			Addr: fmt.Sprintf("%s:%s", cfg.GetString("matchmaker.redis.hostname"), cfg.GetString("matchmaker.redis.port")),
 		},
 	)
 	redsync := rs.New(rsgoredis.NewPool(client))

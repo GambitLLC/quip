@@ -161,8 +161,8 @@ describe('socket listener', () => {
           }
 
           config.util.extendDeep(config, {
-            api: {
-              matchmaker: { hostname: 'localhost', port: port },
+            matchmaker: {
+              frontend: { hostname: 'localhost', port: port },
             },
           });
 
@@ -180,8 +180,8 @@ describe('socket listener', () => {
       httpServer.listen(async () => {
         const { port } = httpServer.address() as AddressInfo;
         config.util.extendDeep(config, {
-          api: {
-            'socket_io-server': { hostname: 'localhost', port: port },
+          sockets: {
+            server: { hostname: 'localhost', port: port },
           },
         });
 

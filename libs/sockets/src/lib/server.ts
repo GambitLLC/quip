@@ -20,11 +20,22 @@ export const Server = (
   httpServer: httpServer | httpsServer
 ): Server => {
   const pubClient = createClient({
-    url: `redis://${config.get('redis.hostname')}:${config.get('redis.port')}`,
+    url: `redis://${config.get('sockets.redis.hostname')}:${config.get(
+      'sockets.redis.port'
+    )}`,
   });
   const subClient = pubClient.duplicate();
+  const broker = createClient({
+    url: `redis://${config.get('broker.hostname')}:${config.get(
+      'broker.port'
+    )}`,
+  });
 
-  Promise.all([pubClient.connect(), subClient.connect()]).then(
+  Promise.all([
+    pubClient.connect(),
+    subClient.connect(),
+    broker.connect(),
+  ]).then(
     () => {
       console.log('redis pub and sub client connected');
     },
@@ -62,7 +73,7 @@ export const Server = (
   });
 
   // listen to broker for status and queue updates
-  subClient
+  broker
     .subscribe(
       'status_update',
       (message) => {
@@ -78,7 +89,7 @@ export const Server = (
       (err) => console.error(err)
     );
 
-  subClient
+  broker
     .subscribe(
       'queue_update',
       (message) => {
@@ -95,8 +106,8 @@ export const Server = (
     );
 
   // create rpc client to send commands to matchmaker
-  const host = config.get('api.matchmaker.hostname');
-  const port = config.get('api.matchmaker.port');
+  const host = config.get('matchmaker.frontend.hostname');
+  const port = config.get('matchmaker.frontend.port');
 
   const rpc = new MatchmakerClient(
     `${host}:${port}`,

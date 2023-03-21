@@ -21,7 +21,7 @@ type redisBroker struct {
 func NewRedis(cfg config.View) *redisBroker {
 	client := redis.NewClient(
 		&redis.Options{
-			Addr: fmt.Sprintf("%s:%s", cfg.GetString("redis.hostname"), cfg.GetString("redis.port")),
+			Addr: fmt.Sprintf("%s:%s", cfg.GetString("broker.hostname"), cfg.GetString("broker.port")),
 		},
 	)
 

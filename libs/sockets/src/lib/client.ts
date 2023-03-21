@@ -13,8 +13,8 @@ export const Client = (
   config: IConfig,
   opts?: Partial<ManagerOptions & SocketOptions>
 ): Client => {
-  const host = config.get('api.socket_io-server.hostname');
-  const port = config.get('api.socket_io-server.port');
+  const host = config.get('sockets.server.hostname');
+  const port = config.get('sockets.server.port');
 
   const client = io(`http://${host}:${port}`, {
     // TODO: set up preferred default options
