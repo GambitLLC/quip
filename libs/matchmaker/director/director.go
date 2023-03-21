@@ -39,7 +39,14 @@ func (s *Service) Start(ctx context.Context) error {
 	defer ticker.Stop()
 
 	// TODO: determine profiles
-	profiles := []*ompb.MatchProfile{}
+	profiles := []*ompb.MatchProfile{
+		{
+			Name: "everything",
+			Pools: []*ompb.Pool{
+				{Name: "all"},
+			},
+		},
+	}
 
 	for {
 		select {
