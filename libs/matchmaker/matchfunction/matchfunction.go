@@ -6,11 +6,13 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rs/xid"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"open-match.dev/open-match/pkg/matchfunction"
 	"open-match.dev/open-match/pkg/pb"
 
+	"github.com/GambitLLC/quip/libs/appmain"
 	"github.com/GambitLLC/quip/libs/config"
 )
 
@@ -22,6 +24,15 @@ func New(cfg config.View) *Service {
 	return &Service{
 		query: newOmQueryClient(cfg),
 	}
+}
+
+func BindService(cfg config.View, b *appmain.GRPCBindings) error {
+	service := New(cfg)
+	b.AddHandler(func(s *grpc.Server) {
+		pb.RegisterMatchFunctionServer(s, service)
+	})
+
+	return nil
 }
 
 func (s *Service) Run(req *pb.RunRequest, stream pb.MatchFunction_RunServer) error {
