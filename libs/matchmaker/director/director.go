@@ -78,7 +78,7 @@ func (s *Service) Start(ctx context.Context) error {
 						return
 					}
 
-					log.Printf("Fetched %d profiles for profile %s", len(matches), profile.Name)
+					log.Printf("Fetched %d matches for profile %s", len(matches), profile.Name)
 
 					for _, match := range matches {
 						s.assignMatch(ctx, match)
