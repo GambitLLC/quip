@@ -60,6 +60,7 @@ func Read() (*viper.Viper, error) {
 // New accessors from Viper should be added here.
 type View interface {
 	IsSet(string) bool
+	Get(string) interface{}
 	GetString(string) string
 	GetInt(string) int
 	GetInt32(string) int32

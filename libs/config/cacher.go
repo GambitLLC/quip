@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -80,6 +81,7 @@ func (c *Cacher) locklessReset() {
 type viewChangeDetector struct {
 	cfg       View
 	isSet     map[string]bool
+	get       map[string]string
 	getString map[string]string
 	getInt    map[string]int
 	getInt32  map[string]int32
@@ -90,6 +92,7 @@ func newViewChangeDetector(cfg View) *viewChangeDetector {
 	return &viewChangeDetector{
 		cfg:       cfg,
 		isSet:     make(map[string]bool),
+		get:       make(map[string]string),
 		getString: make(map[string]string),
 		getInt:    make(map[string]int),
 		getInt32:  make(map[string]int32),
@@ -100,6 +103,13 @@ func newViewChangeDetector(cfg View) *viewChangeDetector {
 func (r *viewChangeDetector) IsSet(k string) bool {
 	v := r.cfg.IsSet(k)
 	r.isSet[k] = v
+	return v
+}
+
+func (r *viewChangeDetector) Get(k string) interface{} {
+	v := r.cfg.Get(k)
+	// some interface types are incomparable: store string representation
+	r.get[k] = fmt.Sprint(v)
 	return v
 }
 
@@ -130,6 +140,13 @@ func (r *viewChangeDetector) GetInt64(k string) int64 {
 func (r *viewChangeDetector) hasChanges() bool {
 	for k, v := range r.isSet {
 		if r.cfg.IsSet(k) != v {
+			return true
+		}
+	}
+
+	for k, v := range r.get {
+		// some interface types are incomparable: check string representation
+		if fmt.Sprint(r.cfg.Get(k)) != v {
 			return true
 		}
 	}
