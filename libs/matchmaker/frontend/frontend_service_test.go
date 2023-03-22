@@ -385,7 +385,7 @@ func newService(t *testing.T) *Service {
 	// override game cache for testing
 	srv.gc = &gameCache{
 		cacher: config.NewViewCacher(cfg, func(cfg config.View) (interface{}, func(), error) {
-			return map[string]interface{}{
+			return gameCacheItem{
 				"test": map[string]interface{}{},
 			}, nil, nil
 		}),

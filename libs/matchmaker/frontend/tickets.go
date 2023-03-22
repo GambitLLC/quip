@@ -17,6 +17,8 @@ type gameCache struct {
 	cacher config.Cacher
 }
 
+type gameCacheItem map[string]map[string]interface{}
+
 func newGameCache() *gameCache {
 	newInstance := func(cfg config.View) (interface{}, func(), error) {
 		games, ok := cfg.Get("games").(map[string]interface{})
@@ -24,7 +26,7 @@ func newGameCache() *gameCache {
 			return nil, nil, errors.New("failed to read 'games' from config")
 		}
 
-		transformed := make(map[string]map[string]interface{}, len(games))
+		transformed := make(gameCacheItem, len(games))
 
 		for k, v := range games {
 			game, ok := v.(map[string]interface{})
@@ -50,10 +52,7 @@ func (gc *gameCache) GameDetails(name string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	// use type assertion	test to avoid panic on nil
-	game, _ := games.(map[string]interface{})[name].(map[string]interface{})
-
-	return game, nil
+	return games.(gameCacheItem)[name], nil
 }
 
 type omFrontendClient struct {
