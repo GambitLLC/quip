@@ -2,12 +2,19 @@ package frontend
 
 import (
 	"context"
+	"net"
+	"sync"
 	"testing"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
@@ -369,8 +376,9 @@ func newService(t *testing.T) *Service {
 	cfg.Set("broker.port", cfg.Get("matchmaker.redis.port"))
 
 	// TODO: spin up minimatch in memory
-	cfg.Set("openmatch.frontend.hostname", "localhost")
-	cfg.Set("openmatch.frontend.port", 50499)
+	// cfg.Set("openmatch.frontend.hostname", "localhost")
+	// cfg.Set("openmatch.frontend.port", 50499)
+	newOMFrontend(t, cfg)
 
 	srv := New(cfg)
 
@@ -384,4 +392,76 @@ func newService(t *testing.T) *Service {
 	}
 
 	return srv
+}
+
+func newOMFrontend(t *testing.T, cfg config.Mutable) {
+	ln, err := net.Listen("tcp", ":0")
+	require.NoError(t, err, "net.Listen failed")
+
+	_, port, err := net.SplitHostPort(ln.Addr().String())
+	require.NoError(t, err, "net.SplitHostPort failed")
+
+	cfg.Set("openmatch.frontend.hostname", "localhost")
+	cfg.Set("openmatch.frontend.port", port)
+
+	s := grpc.NewServer()
+	ompb.RegisterFrontendServiceServer(s, &stubOMFrontendService{})
+
+	go func() {
+		err := s.Serve(ln)
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	t.Cleanup(s.Stop)
+}
+
+type stubOMFrontendService struct {
+	ompb.UnimplementedFrontendServiceServer
+
+	ts sync.Map // map of ticket id to pb.Ticket
+}
+
+func (s *stubOMFrontendService) CreateTicket(ctx context.Context, req *ompb.CreateTicketRequest) (*ompb.Ticket, error) {
+	// Perform input validation.
+	if req.Ticket == nil {
+		return nil, status.Errorf(codes.InvalidArgument, ".ticket is required")
+	}
+	if req.Ticket.Assignment != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "tickets cannot be created with an assignment")
+	}
+	if req.Ticket.CreateTime != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "tickets cannot be created with create time set")
+	}
+
+	if req.Ticket.Id == "" {
+		req.Ticket.Id = xid.New().String()
+	}
+	req.Ticket.CreateTime = timestamppb.Now()
+	s.ts.Store(req.Ticket.Id, req.Ticket)
+	return req.Ticket, nil
+}
+
+func (s *stubOMFrontendService) DeleteTicket(ctx context.Context, req *ompb.DeleteTicketRequest) (*emptypb.Empty, error) {
+	_, ok := s.ts.LoadAndDelete(req.TicketId)
+	if !ok {
+		return nil, status.Errorf(codes.NotFound, "ticket id %s not found", req.TicketId)
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func (s *stubOMFrontendService) GetTicket(ctx context.Context, req *ompb.GetTicketRequest) (*ompb.Ticket, error) {
+	item, ok := s.ts.Load(req.TicketId)
+	if !ok {
+		return nil, status.Errorf(codes.NotFound, "ticket id %s not found", req.TicketId)
+	}
+
+	ticket, ok := item.(*ompb.Ticket)
+	if !ok || ticket == nil {
+		return nil, status.Errorf(codes.NotFound, "ticket id %s not found", req.TicketId)
+	}
+
+	return ticket, nil
 }
