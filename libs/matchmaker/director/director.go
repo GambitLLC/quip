@@ -38,10 +38,7 @@ func (s *Service) Start(ctx context.Context) error {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	pc, err := newProfileCache(s.cfg)
-	if err != nil {
-		return err
-	}
+	pc := newProfileCache(s.cfg)
 
 	for {
 		select {

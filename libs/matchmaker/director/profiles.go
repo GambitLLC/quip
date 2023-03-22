@@ -13,7 +13,7 @@ type profileCache struct {
 	cacher *config.FileCacher
 }
 
-func newProfileCache(cfg config.View) (*profileCache, error) {
+func newProfileCache(cfg config.View) *profileCache {
 	newInstance := func(cfg config.View) (interface{}, func(), error) {
 		games, ok := cfg.Get("games").(map[string]interface{})
 		if !ok {
@@ -46,14 +46,9 @@ func newProfileCache(cfg config.View) (*profileCache, error) {
 		return profiles, nil, nil
 	}
 
-	cacher, err := config.NewFileCacher("games", newInstance)
-	if err != nil {
-		return nil, err
-	}
-
 	return &profileCache{
-		cacher: cacher,
-	}, nil
+		cacher: config.NewFileCacher("games", newInstance),
+	}
 }
 
 func (c *profileCache) Profiles() ([]*ompb.MatchProfile, error) {

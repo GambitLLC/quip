@@ -10,6 +10,7 @@ import (
 // FileCacher is used to cache the construction of an object, but detects when
 // the entire file is changed.
 type FileCacher struct {
+	filename    string
 	cfg         *viper.Viper
 	newInstance NewInstanceFunc
 	m           sync.Mutex
@@ -19,30 +20,35 @@ type FileCacher struct {
 	c     func()
 }
 
-func NewFileCacher(name string, newInstance NewInstanceFunc) (*FileCacher, error) {
-	cfg, err := ReadFile(name)
-	if err != nil {
-		return nil, err
-	}
-
+func NewFileCacher(filename string, newInstance NewInstanceFunc) *FileCacher {
 	c := &FileCacher{
-		cfg:         cfg,
+		filename:    filename,
 		newInstance: newInstance,
 	}
 
-	cfg.OnConfigChange(func(in fsnotify.Event) {
-		c.m.Lock()
-		defer c.m.Unlock()
-
-		c.clean = false
-	})
-
-	return c, nil
+	return c
 }
 
 func (c *FileCacher) Get() (interface{}, error) {
 	c.m.Lock()
 	defer c.m.Unlock()
+
+	if c.cfg == nil {
+		cfg, err := ReadFile(c.filename)
+		if err != nil {
+			return nil, err
+		}
+
+		cfg.WatchConfig()
+		cfg.OnConfigChange(func(in fsnotify.Event) {
+			c.m.Lock()
+			defer c.m.Unlock()
+
+			c.clean = false
+		})
+
+		c.cfg = cfg
+	}
 
 	if !c.clean {
 		c.locklessReset()
