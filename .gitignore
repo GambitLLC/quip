@@ -39,5 +39,7 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# Configuration files
 config/*
 !config/default.yaml
+!config/games-example.yaml
