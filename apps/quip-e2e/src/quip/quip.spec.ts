@@ -3,6 +3,7 @@ import config from 'config';
 import { newToken } from '../auth';
 import { randomBytes } from 'crypto';
 import { StartQueueRequest } from '@quip/pb/quip-matchmaker';
+import { rejects } from 'assert';
 
 describe('socket tests', () => {
   const sockets: Map<string, Client> = new Map();
@@ -47,11 +48,11 @@ describe('socket tests', () => {
   it('should get status', async () => {
     const { client } = await newClient();
 
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       client.emit('getStatus', (err, status) => {
-        expect(err).toBeNull();
-        expect(status).toBeTruthy();
-        resolve();
+        if (err) reject(err);
+        else if (!status) reject('status is undefined/null');
+        else resolve();
       });
     });
   });
@@ -59,11 +60,17 @@ describe('socket tests', () => {
   it('should be able to queue', async () => {
     const { client } = await newClient();
 
-    await new Promise<void>((resolve) => {
-      client.emit('startQueue', StartQueueRequest.create({}), (err) => {
-        expect(err).toBeNull();
-        resolve();
-      });
+    await new Promise<void>((resolve, reject) => {
+      client.emit(
+        'startQueue',
+        StartQueueRequest.create({
+          gamemode: 'test',
+        }),
+        (err) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
     });
   });
 
@@ -75,37 +82,55 @@ describe('socket tests', () => {
         if (update.started) resolve();
       });
 
-      client.emit('startQueue', StartQueueRequest.create({}), (err) => {
-        if (err) reject();
-      });
+      client.emit(
+        'startQueue',
+        StartQueueRequest.create({
+          gamemode: 'test',
+        }),
+        (err) => {
+          if (err) reject(err);
+        }
+      );
     });
   });
 
   it.failing('should not be able to double queue', async () => {
     const { client } = await newClient();
 
-    await new Promise<void>((resolve) => {
-      client.emit('startQueue', StartQueueRequest.create({}), (err) => {
-        expect(err).toBeNull();
-        resolve();
-      });
+    await new Promise<void>((resolve, reject) => {
+      client.emit(
+        'startQueue',
+        StartQueueRequest.create({
+          gamemode: 'test',
+        }),
+        (err) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
     });
 
     await new Promise<void>((resolve, reject) => {
-      client.emit('startQueue', StartQueueRequest.create({}), (err) => {
-        if (err) reject();
-        else resolve();
-      });
+      client.emit(
+        'startQueue',
+        StartQueueRequest.create({
+          gamemode: 'test',
+        }),
+        (err) => {
+          if (err) reject();
+          else resolve();
+        }
+      );
     });
   });
 
   it('should be able to stop queue', async () => {
     const { client } = await newClient();
 
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       client.emit('stopQueue', (err) => {
-        expect(err).toBeNull();
-        resolve();
+        if (err) reject(err);
+        else resolve();
       });
     });
   });

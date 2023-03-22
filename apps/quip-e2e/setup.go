@@ -16,11 +16,24 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 
-	if file, err := os.Open("config/e2e.yaml"); os.IsNotExist(err) {
-		_, _ = os.Create("config/e2e.yaml")
-	} else {
-		_ = file.Close()
+	// override games config for e2e testing
+
+	gameCfg := viper.New()
+	gameCfg.Set("games", map[string]map[string]interface{}{
+		"test": {
+			"players": 2,
+		},
+	})
+	if err := gameCfg.WriteConfigAs("config/games.yaml"); err != nil {
+		panic(err)
 	}
+
+	// create config/e2e.yaml if it doesn't exist
+	f, err := os.OpenFile("config/e2e.yaml", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	_ = f.Close()
 
 	cfg, err := config.Read()
 	if err != nil {
