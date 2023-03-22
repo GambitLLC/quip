@@ -38,14 +38,9 @@ func (s *Service) Start(ctx context.Context) error {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	// TODO: determine profiles
-	profiles := []*ompb.MatchProfile{
-		{
-			Name: "everything",
-			Pools: []*ompb.Pool{
-				{Name: "all"},
-			},
-		},
+	pc, err := newProfileCache(s.cfg)
+	if err != nil {
+		return err
 	}
 
 	for {
@@ -53,6 +48,11 @@ func (s *Service) Start(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
+			profiles, err := pc.Profiles()
+			if err != nil {
+				return err
+			}
+
 			log.Printf("Fetching matches for %d profiles", len(profiles))
 
 			var wg sync.WaitGroup

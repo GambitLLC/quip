@@ -10,37 +10,23 @@ import (
 )
 
 func Read() (*viper.Viper, error) {
-	var err error
-	// read in default config values
-	dcfg := viper.New()
-	dcfg.SetConfigType("yaml")
-	dcfg.AddConfigPath("./config")
-	dcfg.AddConfigPath("/app/config") // config path should math volume mount path in k8s
-	dcfg.SetConfigName("default")
-	err = dcfg.ReadInConfig()
+	dcfg, err := ReadFile("default")
 	if err != nil {
 		return nil, fmt.Errorf("fatal error reading default config file: %s", err.Error())
 	}
 
-	// read any overridden
-	cfg := viper.New()
+	// read any overridden values
+	var cfg *viper.Viper
+	if name := os.Getenv("NODE_CONFIG_ENV"); name != "" {
+		cfg, err = ReadFile(name)
+	} else {
+		cfg, err = ReadFile("production")
+	}
 
 	// set defaults for cfg
 	for k, v := range dcfg.AllSettings() {
 		cfg.SetDefault(k, v)
 	}
-
-	cfg.SetConfigType("yaml")
-	cfg.AddConfigPath("./config")
-	// Config path should be set via volume mount path in k8s
-	cfg.AddConfigPath("/app/config")
-	if name := os.Getenv("NODE_CONFIG_ENV"); name != "" {
-		cfg.SetConfigName(name)
-	} else {
-		cfg.SetConfigName("production")
-	}
-
-	err = cfg.ReadInConfig()
 	if err != nil {
 		return nil, fmt.Errorf("fatal error reading config file: %s", err.Error())
 	}
@@ -52,6 +38,20 @@ func Read() (*viper.Viper, error) {
 		// Log whenever configuration changes.
 		log.Printf("Server configuration changed, operation: %v, filename: %s", event.Op, event.Name)
 	})
+
+	return cfg, nil
+}
+
+func ReadFile(name string) (*viper.Viper, error) {
+	cfg := viper.New()
+	cfg.SetConfigType("yaml")
+	cfg.AddConfigPath("./config")
+	cfg.AddConfigPath("/app/config") // config path should math volume mount path in k8s
+	cfg.SetConfigName(name)
+
+	if err := cfg.ReadInConfig(); err != nil {
+		return nil, err
+	}
 
 	return cfg, nil
 }
