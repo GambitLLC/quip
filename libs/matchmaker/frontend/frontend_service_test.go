@@ -182,6 +182,19 @@ func TestStartQueueBehaviour(t *testing.T) {
 			},
 		},
 		{
+			name:  "expect error with invalid gamemode",
+			setup: nil,
+			args: args{
+				ctx: ctx,
+				req: &pb.StartQueueRequest{
+					Gamemode: "invalid gamemode",
+				},
+			},
+			check: func(t *testing.T, err error) {
+				require.Error(t, err)
+			},
+		},
+		{
 			name: "expect error if already queued",
 			setup: func(t *testing.T, s statestore.Service) {
 				s.CreatePlayer(ctx, &ipb.PlayerInternal{
