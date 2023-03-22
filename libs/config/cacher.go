@@ -146,6 +146,12 @@ func (r *viewChangeDetector) hasChanges() bool {
 		}
 	}
 
+	for k, v := range r.getInt32 {
+		if r.cfg.GetInt32(k) != v {
+			return true
+		}
+	}
+
 	for k, v := range r.getInt64 {
 		if r.cfg.GetInt64(k) != v {
 			return true
