@@ -8,7 +8,7 @@ import (
 )
 
 type omQueryClient struct {
-	cacher *config.Cacher
+	cacher config.Cacher
 }
 
 func newOmQueryClient(cfg config.View) *omQueryClient {
@@ -28,7 +28,7 @@ func newOmQueryClient(cfg config.View) *omQueryClient {
 	}
 
 	return &omQueryClient{
-		cacher: config.NewCacher(cfg, newInstance),
+		cacher: config.NewViewCacher(cfg, newInstance),
 	}
 }
 

@@ -12,7 +12,7 @@ import (
 
 // omBackendClient caches an open match BackendServiceClient.
 type omBackendClient struct {
-	cacher *config.Cacher
+	cacher config.Cacher
 }
 
 func newOMBackendClient(cfg config.View) *omBackendClient {
@@ -31,7 +31,7 @@ func newOMBackendClient(cfg config.View) *omBackendClient {
 	}
 
 	return &omBackendClient{
-		cacher: config.NewCacher(cfg, newInstance),
+		cacher: config.NewViewCacher(cfg, newInstance),
 	}
 }
 

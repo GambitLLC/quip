@@ -13,7 +13,7 @@ import (
 )
 
 type omFrontendClient struct {
-	cacher *config.Cacher
+	cacher config.Cacher
 }
 
 func newOmFrontendClient(cfg config.View) *omFrontendClient {
@@ -33,7 +33,7 @@ func newOmFrontendClient(cfg config.View) *omFrontendClient {
 	}
 
 	return &omFrontendClient{
-		cacher: config.NewCacher(cfg, newInstance),
+		cacher: config.NewViewCacher(cfg, newInstance),
 	}
 }
 

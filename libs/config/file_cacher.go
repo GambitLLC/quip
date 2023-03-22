@@ -1,14 +1,14 @@
 package config
 
 import (
+	"log"
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )
 
-// FileCacher is used to cache the construction of an object, but detects when
-// the entire file is changed.
+// FileCacher is a Cacher that detects whenever the config file changes at all.
 type FileCacher struct {
 	filename    string
 	cfg         *viper.Viper
@@ -41,6 +41,8 @@ func (c *FileCacher) Get() (interface{}, error) {
 
 		cfg.WatchConfig()
 		cfg.OnConfigChange(func(in fsnotify.Event) {
+			log.Printf("Config file %s changed, invalidating config.FileCache", c.filename)
+
 			c.m.Lock()
 			defer c.m.Unlock()
 
@@ -66,7 +68,7 @@ func (c *FileCacher) Get() (interface{}, error) {
 	return c.v, nil
 }
 
-// ForceReset causes Cacher to forget the cached object.  The next call to Get
+// ForceReset causes FileCacher to forget the cached object.  The next call to Get
 // will again use newInstance to create a new object.
 func (c *FileCacher) ForceReset() {
 	c.m.Lock()

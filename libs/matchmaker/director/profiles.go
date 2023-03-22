@@ -10,21 +10,21 @@ import (
 )
 
 type profileCache struct {
-	cacher *config.FileCacher
+	cacher config.Cacher
 }
 
 func newProfileCache(cfg config.View) *profileCache {
 	newInstance := func(cfg config.View) (interface{}, func(), error) {
 		games, ok := cfg.Get("games").(map[string]interface{})
 		if !ok {
-			return nil, nil, errors.New("failed to read 'games' from cfg")
+			return nil, nil, errors.New("failed to read 'games' from config")
 		}
 
 		profiles := make([]*ompb.MatchProfile, 0, len(games))
 		for name, details := range games {
 			details, ok := details.(map[string]interface{})
 			if !ok {
-				return nil, nil, errors.Errorf("games.%s is malformed: should be map", name)
+				return nil, nil, errors.Errorf("config value games.%s is malformed: should be map", name)
 			}
 
 			// TODO: create profile extensions from game details
