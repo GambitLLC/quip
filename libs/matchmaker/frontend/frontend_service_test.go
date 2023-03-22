@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	statestoreTesting "github.com/GambitLLC/quip/libs/matchmaker/internal/statestore/testing"
@@ -118,7 +119,7 @@ func TestStartQueueStatestore(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				req: &pb.StartQueueRequest{
-					Gamemode: "some gamemode",
+					Gamemode: "test",
 				},
 			},
 			check: func(t *testing.T, ctx context.Context, s statestore.Service) {
@@ -173,7 +174,7 @@ func TestStartQueueBehaviour(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				req: &pb.StartQueueRequest{
-					Gamemode: "some gamemode",
+					Gamemode: "test",
 				},
 			},
 			check: func(t *testing.T, err error) {
@@ -191,7 +192,7 @@ func TestStartQueueBehaviour(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				req: &pb.StartQueueRequest{
-					Gamemode: "some gamemode",
+					Gamemode: "test",
 				},
 			},
 			check: func(t *testing.T, err error) {
@@ -209,7 +210,7 @@ func TestStartQueueBehaviour(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				req: &pb.StartQueueRequest{
-					Gamemode: "some gamemode",
+					Gamemode: "test",
 				},
 			},
 			check: func(t *testing.T, err error) {
@@ -262,7 +263,6 @@ func TestStopQueue(t *testing.T) {
 }
 
 func TestQueueUpdate(t *testing.T) {
-	gamemode := "some gamemode"
 	player := xid.New().String()
 	ctx := newContextWithPlayer(t, player)
 
@@ -279,13 +279,13 @@ func TestQueueUpdate(t *testing.T) {
 				Targets: []string{player},
 				Update: &pb.QueueUpdate_Started{
 					Started: &pb.QueueDetails{
-						Gamemode: gamemode,
+						Gamemode: "test",
 					},
 				},
 			},
 			action: func(t *testing.T, ctx context.Context, s *Service) {
 				_, err := s.StartQueue(ctx, &pb.StartQueueRequest{
-					Gamemode: gamemode,
+					Gamemode: "test",
 				})
 				require.NoError(t, err, "StartQueue failed")
 			},
@@ -302,7 +302,7 @@ func TestQueueUpdate(t *testing.T) {
 			action: func(t *testing.T, ctx context.Context, s *Service) {
 				// Queue needs to be started before stop update will be sent
 				_, err := s.StartQueue(ctx, &pb.StartQueueRequest{
-					Gamemode: gamemode,
+					Gamemode: "test",
 				})
 				require.NoError(t, err, "StartQueue failed")
 
@@ -358,5 +358,17 @@ func newService(t *testing.T) *Service {
 	// TODO: spin up minimatch in memory
 	cfg.Set("openmatch.frontend.hostname", "localhost")
 	cfg.Set("openmatch.frontend.port", 50499)
-	return New(cfg)
+
+	srv := New(cfg)
+
+	// override game cache for testing
+	srv.gc = &gameCache{
+		cacher: config.NewViewCacher(cfg, func(cfg config.View) (interface{}, func(), error) {
+			return map[string]interface{}{
+				"test": map[string]interface{}{},
+			}, nil, nil
+		}),
+	}
+
+	return srv
 }

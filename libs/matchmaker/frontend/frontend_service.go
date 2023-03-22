@@ -23,6 +23,7 @@ type Service struct {
 	store  statestore.Service
 	broker broker.Client
 	omfc   *omFrontendClient
+	gc     *gameCache
 }
 
 func New(cfg config.View) *Service {
@@ -30,6 +31,7 @@ func New(cfg config.View) *Service {
 		store:  statestore.New(cfg),
 		broker: broker.NewRedis(cfg),
 		omfc:   newOmFrontendClient(cfg),
+		gc:     newGameCache(),
 	}
 }
 
@@ -115,11 +117,20 @@ func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*e
 	}
 	defer unlock()
 
+	game, err := s.gc.GameDetails(req.Gamemode)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	if game == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid gamemode '%s'", req.Gamemode)
+	}
+
 	switch getStatus(player) {
 	case pb.Status_SEARCHING:
-		return nil, status.Error(codes.Aborted, "player is already in queue")
+		return nil, status.Error(codes.FailedPrecondition, "player is already in queue")
 	case pb.Status_PLAYING:
-		return nil, status.Error(codes.Aborted, "player is already in game")
+		return nil, status.Error(codes.FailedPrecondition, "player is already in game")
 	}
 
 	ticket, err := s.omfc.CreateTicket(ctx, &ipb.TicketInternal{
