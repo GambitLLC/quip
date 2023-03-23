@@ -21,7 +21,8 @@ func main() {
 	gameCfg := viper.New()
 	gameCfg.Set("games", map[string]map[string]interface{}{
 		"test": {
-			"players": 2,
+			"teams":   1,
+			"players": 1,
 		},
 	})
 	if err := gameCfg.WriteConfigAs("config/games.yaml"); err != nil {

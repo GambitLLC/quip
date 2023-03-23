@@ -14,6 +14,7 @@ import (
 
 	"github.com/GambitLLC/quip/libs/appmain"
 	"github.com/GambitLLC/quip/libs/config"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 )
 
 type Service struct {
@@ -64,26 +65,32 @@ func (s *Service) Run(req *pb.RunRequest, stream pb.MatchFunction_RunServer) err
 	return nil
 }
 
-const (
-	TicketsPerMatch int = 2
-)
-
 func makeMatches(p *pb.MatchProfile, poolTickets map[string][]*pb.Ticket) ([]*pb.Match, error) {
+	gameDetails := &ipb.GameDetails{}
+	if err := p.Extensions["details"].UnmarshalTo(gameDetails); err != nil {
+		return nil, errors.WithMessagef(err, "failed to unmarshal game details from MatchProfile")
+	}
+
+	// TODO: tickets are currently assumed to be 1 per player, deal with multi-player tickets
+	ticketsPerMatch := int(gameDetails.Teams * gameDetails.Players)
+	if ticketsPerMatch <= 0 {
+		return nil, errors.Errorf("invalid game details for profile '%s': got 0 tickets per match", p.Name)
+	}
+
 	// TODO: determine how to deal with pools
 	tickets, ok := poolTickets["all"]
 	if !ok {
 		return nil, errors.Errorf("missing required pool named 'all'")
 	}
 
-	// TODO: get TicketsPerMatch from either the match profile or config -- TBD
 	matches := []*pb.Match{}
 	for {
-		if len(tickets) < TicketsPerMatch {
+		if len(tickets) < ticketsPerMatch {
 			break
 		}
 
-		matchTickets := tickets[:TicketsPerMatch]
-		tickets = tickets[TicketsPerMatch:]
+		matchTickets := tickets[:ticketsPerMatch]
+		tickets = tickets[ticketsPerMatch:]
 
 		matches = append(matches, &pb.Match{
 			MatchId:       fmt.Sprintf("profile-%v-%s", p.GetName(), xid.New().String()),

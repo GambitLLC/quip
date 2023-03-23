@@ -10,10 +10,13 @@ module.exports = async function (globalConfig, projectConfig) {
   const authServer = await startServer();
 
   // spin up background procs which also modify config
-  const backgroundProcs = spawn('go', [
-    'run',
-    join(process.cwd(), 'apps/quip-e2e/setup.go'),
-  ]);
+  const backgroundProcs = spawn(
+    'go',
+    ['run', join(process.cwd(), 'apps/quip-e2e/setup.go')],
+    {
+      stdio: [process.stdin, process.stdout, process.stderr],
+    }
+  );
 
   // wait some time for background procs to modify config
   await new Promise((resolve) => setTimeout(resolve, 500));

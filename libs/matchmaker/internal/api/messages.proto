@@ -17,3 +17,15 @@ message TicketInternal {
 
   string gamemode = 2;
 }
+
+// Internal message for holding relevant game information.
+message GameDetails {
+  // Name of the current gamemode.
+  string gamemode = 1;
+
+  // Number of teams in the match.
+  uint32 teams = 2;
+
+  // Number of players per team.
+  uint32 players = 3;
+}

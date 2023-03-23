@@ -17,6 +17,7 @@ import (
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	statestoreTesting "github.com/GambitLLC/quip/libs/matchmaker/internal/statestore/testing"
@@ -383,10 +384,13 @@ func newService(t *testing.T) *Service {
 	srv := New(cfg)
 
 	// override game cache for testing
-	srv.gc = &gameCache{
-		cacher: config.NewViewCacher(cfg, func(cfg config.View) (interface{}, func(), error) {
-			return gameCacheItem{
-				"test": map[string]interface{}{},
+	srv.gc = &games.GameDetailCache{
+		Cacher: config.NewViewCacher(cfg, func(cfg config.View) (interface{}, func(), error) {
+			return map[string]*ipb.GameDetails{
+				"test": {
+					Players: 1,
+					Teams:   1,
+				},
 			}, nil, nil
 		}),
 	}

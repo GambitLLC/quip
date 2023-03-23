@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 	ompb "open-match.dev/open-match/pkg/pb"
 
@@ -12,48 +11,6 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/rpc"
 )
-
-type gameCache struct {
-	cacher config.Cacher
-}
-
-type gameCacheItem map[string]map[string]interface{}
-
-func newGameCache() *gameCache {
-	newInstance := func(cfg config.View) (interface{}, func(), error) {
-		games, ok := cfg.Get("games").(map[string]interface{})
-		if !ok {
-			return nil, nil, errors.New("failed to read 'games' from config")
-		}
-
-		transformed := make(gameCacheItem, len(games))
-
-		for k, v := range games {
-			game, ok := v.(map[string]interface{})
-			if !ok {
-				return nil, nil, errors.Errorf("failed to read 'games.%s' from config, data is malformed", k)
-			}
-
-			transformed[k] = game
-		}
-
-		return transformed, nil, nil
-	}
-
-	return &gameCache{
-		cacher: config.NewFileCacher("games", newInstance),
-	}
-}
-
-// GameDetails returns the configuration for the specified game or nil if not found.
-func (gc *gameCache) GameDetails(name string) (map[string]interface{}, error) {
-	games, err := gc.cacher.Get()
-	if err != nil {
-		return nil, err
-	}
-
-	return games.(gameCacheItem)[name], nil
-}
 
 type omFrontendClient struct {
 	cacher config.Cacher
