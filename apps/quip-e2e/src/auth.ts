@@ -50,11 +50,11 @@ export async function startServer(): Promise<{ kill: () => void }> {
     res.end(JSON.stringify({ keys: [publicJWK] }));
   });
 
-  await new Promise<void>((resolve, reject) => {
+  await new Promise<void>((resolve) => {
     server.listen(() => {
       const { port } = server.address() as AddressInfo;
 
-      fs.writeFile(
+      fs.writeFileSync(
         'config/e2e.yaml',
         yaml.dump(
           config.util.toObject(
@@ -64,13 +64,10 @@ export async function startServer(): Promise<{ kill: () => void }> {
               },
             })
           )
-        ),
-        (err) => {
-          if (err) {
-            reject(err);
-          } else resolve();
-        }
+        )
       );
+
+      resolve();
     });
   });
 

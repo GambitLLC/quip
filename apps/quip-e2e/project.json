@@ -1,8 +1,20 @@
 {
   "name": "quip-e2e",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "implicitDependencies": ["socket-server", "matchmaker-frontend"],
+  "implicitDependencies": [
+    "socket-server",
+    "matchmaker-frontend",
+    "director",
+    "matchfunction"
+  ],
   "targets": {
+    "build-setup": {
+      "executor": "@nx-go/nx-go:build",
+      "options": {
+        "outputPath": "dist/apps/e2e-setup",
+        "main": "apps/quip-e2e/setup.go"
+      }
+    },
     "e2e": {
       "executor": "@nrwl/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
@@ -10,7 +22,8 @@
         "jestConfig": "apps/quip-e2e/jest.config.ts",
         "passWithNoTests": true,
         "silent": false
-      }
+      },
+      "dependsOn": ["build-setup"]
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",

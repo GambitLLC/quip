@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"os/signal"
 	"strings"
@@ -17,7 +18,6 @@ func main() {
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 
 	// override games config for e2e testing
-
 	gameCfg := viper.New()
 	gameCfg.Set("games", map[string]map[string]interface{}{
 		"test": {
@@ -29,13 +29,6 @@ func main() {
 		panic(err)
 	}
 
-	// create config/e2e.yaml if it doesn't exist
-	f, err := os.OpenFile("config/e2e.yaml", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
-	_ = f.Close()
-
 	cfg, err := config.Read()
 	if err != nil {
 		panic(err)
@@ -45,6 +38,7 @@ func main() {
 	if err := mredis.StartAddr(":0"); err != nil {
 		panic(err)
 	}
+	defer mredis.Close()
 
 	updateKey(cfg, "", "redis.hostname", "localhost")
 	updateKey(cfg, "", "redis.port", mredis.Port())
@@ -54,12 +48,12 @@ func main() {
 	// openmatch should be running on minimatch -- everything on port 50499
 	updateKey(cfg, "openmatch", "port", 50499)
 
-	if err := cfg.WriteConfigAs("config/e2e.yaml"); err != nil {
+	if err := cfg.WriteConfig(); err != nil {
 		panic(err)
 	}
 
 	<-c
-	mredis.Close()
+	log.Print("e2e setup ended successfully")
 }
 
 func updateKey(cfg *viper.Viper, prefix, suffix string, val interface{}) {

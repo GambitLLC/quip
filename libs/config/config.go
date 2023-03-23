@@ -22,13 +22,13 @@ func Read() (*viper.Viper, error) {
 	} else {
 		cfg, err = ReadFile("production")
 	}
+	if err != nil {
+		return nil, fmt.Errorf("fatal error reading config file: %s", err.Error())
+	}
 
 	// set defaults for cfg
 	for k, v := range dcfg.AllSettings() {
 		cfg.SetDefault(k, v)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("fatal error reading config file: %s", err.Error())
 	}
 
 	// Watch for updates to the config; in Kubernetes, this is implemented using
