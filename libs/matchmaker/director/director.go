@@ -79,7 +79,9 @@ func (s *Service) Start(ctx context.Context) error {
 					log.Printf("Fetched %d matches for profile %s", len(matches), profile.Name)
 
 					for _, match := range matches {
-						s.assignMatch(ctx, match)
+						if err := s.assignMatch(ctx, match); err != nil {
+							log.Printf("failed to assign match '%s': %s", match.MatchId, err)
+						}
 					}
 				}(&wg, p)
 			}
@@ -97,7 +99,7 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 		details := &ipb.TicketInternal{}
 		err := ticket.Extensions["details"].UnmarshalTo(details)
 		if err != nil {
-			return err
+			return errors.WithMessagef(err, "failed to read details on ticket '%s", ticket.Id)
 		}
 
 		players[i] = details.PlayerId
