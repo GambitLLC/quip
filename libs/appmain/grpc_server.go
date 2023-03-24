@@ -31,7 +31,7 @@ func RunGRPCService(serviceName string, bind BindGRPC) {
 		panic(err)
 	}
 
-	log.Print("Service stopped successfully")
+	log.Printf("Service '%s' stopped successfully", serviceName)
 }
 
 type BindGRPC func(config.View, *GRPCBindings) error

@@ -3,7 +3,6 @@ import config from 'config';
 import { newToken } from '../auth';
 import { randomBytes } from 'crypto';
 import { StartQueueRequest } from '@quip/pb/quip-matchmaker';
-import { rejects } from 'assert';
 
 describe('socket tests', () => {
   const sockets: Map<string, Client> = new Map();
@@ -82,56 +81,73 @@ describe('socket tests', () => {
         if (update.started) resolve();
       });
 
-      client.emit(
-        'startQueue',
-        StartQueueRequest.create({
-          gamemode: 'test',
-        }),
-        (err) => {
-          if (err) reject(err);
-        }
-      );
+      client
+        .emitWithAck(
+          'startQueue',
+          StartQueueRequest.create({
+            gamemode: 'test',
+          })
+        )
+        .then((err) => (err ? reject(err) : null));
     });
+  });
+
+  it.failing('should not queue for an invalid gamemode', async () => {
+    const { client } = await newClient();
+
+    const err = await client.emitWithAck(
+      'startQueue',
+      StartQueueRequest.create({
+        gamemode: 'arbitrary invalid gamemode',
+      })
+    );
+
+    if (err) throw err;
   });
 
   it.failing('should not be able to double queue', async () => {
     const { client } = await newClient();
 
-    await new Promise<void>((resolve, reject) => {
-      client.emit(
-        'startQueue',
-        StartQueueRequest.create({
-          gamemode: 'test',
-        }),
-        (err) => {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
+    let err = await client.emitWithAck(
+      'startQueue',
+      StartQueueRequest.create({
+        gamemode: 'test',
+      })
+    );
+    if (err) throw err;
+
+    err = await client.emitWithAck(
+      'startQueue',
+      StartQueueRequest.create({
+        gamemode: 'test',
+      })
+    );
+    if (err) throw err;
+  });
+
+  it('should get match started', async () => {
+    const { client } = await newClient();
 
     await new Promise<void>((resolve, reject) => {
-      client.emit(
-        'startQueue',
-        StartQueueRequest.create({
-          gamemode: 'test',
-        }),
-        (err) => {
-          if (err) reject();
-          else resolve();
-        }
-      );
+      client.on('queueUpdate', (update) => {
+        if (update.found) resolve();
+      });
+
+      client
+        .emitWithAck(
+          'startQueue',
+          StartQueueRequest.create({
+            gamemode: 'test',
+          })
+        )
+        .then((err) => (err ? reject(err) : null));
     });
-  });
+  }, 20000);
 
   it('should be able to stop queue', async () => {
     const { client } = await newClient();
 
-    await new Promise<void>((resolve, reject) => {
-      client.emit('stopQueue', (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
+    const err = await client.emitWithAck('stopQueue');
+    if (err) throw err;
   });
 });

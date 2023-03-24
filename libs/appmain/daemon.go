@@ -38,5 +38,5 @@ func RunDaemon(daemon func(config.View) Daemon) {
 	<-c
 	cancel()
 
-	log.Print("Service stopped successfully")
+	log.Print("Daemon stopped successfully")
 }

@@ -25,7 +25,7 @@
         "passWithNoTests": true,
         "silent": false
       },
-      "dependsOn": ["build-setup"]
+      "dependsOn": ["^build", "build-setup"]
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
