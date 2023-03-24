@@ -2,7 +2,7 @@ process.env.ALLOW_CONFIG_MUTATIONS = 'true';
 process.env.NODE_CONFIG_ENV = 'e2e';
 
 import { join } from 'path';
-import { spawn } from 'child_process';
+import { execSync, spawn } from 'child_process';
 import { startServer } from './auth';
 
 module.exports = async function (globalConfig, projectConfig) {
@@ -14,8 +14,15 @@ module.exports = async function (globalConfig, projectConfig) {
     stdio: [process.stdin, process.stdout, process.stderr],
   });
 
-  // wait some time for background procs to modify config
-  await new Promise((resolve) => setTimeout(resolve, 750));
+  try {
+    // wait for validator to confirm config values have been set
+    execSync(join(process.cwd(), 'dist/apps/e2e-validate'));
+  } catch (err) {
+    // make sure to end background procs if validate fails
+    authServer.kill();
+    backgroundProcs.kill();
+    throw err;
+  }
 
   const socketServerProc = spawn(
     'node',

@@ -1,6 +1,9 @@
+//go:build setup
+
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -29,9 +32,25 @@ func main() {
 		panic(err)
 	}
 
-	cfg, err := config.Read()
+	cfg, err := config.ReadFile("e2e")
 	if err != nil {
 		panic(err)
+	}
+
+	// create a copy so only select values are written and not all default values
+	// this is because AllSettings() includes default settings
+	copy := viper.New()
+	for key, val := range cfg.AllSettings() {
+		copy.Set(key, val)
+	}
+
+	cfg, err = config.Read()
+	if err != nil {
+		panic(err)
+	}
+
+	if !strings.HasSuffix(cfg.ConfigFileUsed(), "e2e.yaml") {
+		panic(fmt.Sprintf("expected e2e.yaml file to be read, got '%s'", cfg.ConfigFileUsed()))
 	}
 
 	mredis := miniredis.NewMiniRedis()
@@ -40,15 +59,16 @@ func main() {
 	}
 	defer mredis.Close()
 
-	updateKey(cfg, "", "redis.hostname", "localhost")
-	updateKey(cfg, "", "redis.port", mredis.Port())
-	updateKey(cfg, "", "broker.hostname", "localhost")
-	updateKey(cfg, "", "broker.port", mredis.Port())
+	updateKey(cfg, copy, "", "redis.hostname", "localhost")
+	updateKey(cfg, copy, "", "redis.port", mredis.Port())
+	updateKey(cfg, copy, "", "broker.hostname", "localhost")
+	updateKey(cfg, copy, "", "broker.port", mredis.Port())
 
 	// openmatch should be running on minimatch -- everything on port 50499
-	updateKey(cfg, "openmatch", "port", 50499)
+	updateKey(cfg, copy, "openmatch", "hostname", "localhost")
+	updateKey(cfg, copy, "openmatch", "port", 50499)
 
-	if err := cfg.WriteConfig(); err != nil {
+	if err := copy.WriteConfigAs(cfg.ConfigFileUsed()); err != nil {
 		panic(err)
 	}
 
@@ -56,10 +76,10 @@ func main() {
 	log.Print("e2e setup ended successfully")
 }
 
-func updateKey(cfg *viper.Viper, prefix, suffix string, val interface{}) {
+func updateKey(cfg, copy *viper.Viper, prefix, suffix string, val interface{}) {
 	for _, key := range cfg.AllKeys() {
 		if strings.HasPrefix(key, prefix) && strings.HasSuffix(key, suffix) {
-			cfg.Set(key, val)
+			copy.Set(key, val)
 		}
 	}
 }

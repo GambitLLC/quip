@@ -56,15 +56,12 @@ export async function startServer(): Promise<{ kill: () => void }> {
 
       fs.writeFileSync(
         'config/e2e.yaml',
-        yaml.dump(
-          config.util.toObject(
-            config.util.extendDeep(config, {
-              auth: {
-                jwks_uri: `http://localhost:${port}/`,
-              },
-            })
-          )
-        )
+        yaml.dump({
+          auth: {
+            issuer: 'http://localhost',
+            jwks_uri: `http://localhost:${port}/`,
+          },
+        })
       );
 
       resolve();

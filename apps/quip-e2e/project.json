@@ -9,10 +9,12 @@
   ],
   "targets": {
     "build-setup": {
-      "executor": "@nx-go/nx-go:build",
+      "executor": "nx:run-commands",
       "options": {
-        "outputPath": "dist/apps/e2e-setup",
-        "main": "apps/quip-e2e/setup.go"
+        "commands": [
+          "go build -o dist/apps/e2e-setup -tags setup apps/quip-e2e/setup.go",
+          "go build -o dist/apps/e2e-validate -tags validate apps/quip-e2e/validate.go"
+        ]
       }
     },
     "e2e": {
