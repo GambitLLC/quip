@@ -36,6 +36,9 @@ var expectedKeys = []string{
 
 	"openmatch.query.hostname",
 	"openmatch.query.port",
+
+	"agones.hostname",
+	"agones.port",
 }
 
 func main() {

@@ -36,3 +36,7 @@ openmatch:
   query:
     hostname: localhost
     port: 50503
+
+agones:
+  hostname: localhost
+  port:

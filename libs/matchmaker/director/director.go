@@ -21,16 +21,20 @@ import (
 type Service struct {
 	cfg     config.View
 	backend *omBackendClient
+	agones  *agonesAllocationClient
 	store   statestore.Service
 	broker  broker.Client
+	pc      *games.MatchProfileCache
 }
 
 func New(cfg config.View) appmain.Daemon {
 	return &Service{
 		cfg:     cfg,
 		backend: newOMBackendClient(cfg),
+		agones:  newAgonesAllocationClient(cfg),
 		store:   statestore.New(cfg),
 		broker:  broker.NewRedis(cfg),
+		pc:      games.NewMatchProfileCache(),
 	}
 }
 
@@ -39,14 +43,12 @@ func (s *Service) Start(ctx context.Context) error {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	pc := games.NewMatchProfileCache()
-
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			profiles, err := pc.Profiles()
+			profiles, err := s.pc.Profiles()
 			if err != nil {
 				return err
 			}
@@ -110,16 +112,22 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 		return errors.WithMessage(err, "failed to track match")
 	}
 
-	// TODO: allocate a gameserver
-	// if !allocated {
-	// 	return errors.WithMessage(err, "failed to allocate gameserver")
-	// }
+	ip, err := s.agones.Allocate(ctx, match)
+	if err != nil {
+		// lazily untrack match and release tickets
+		go func() {
+			// TODO: handle error
+			_ = s.store.UntrackMatch(ctx, players)
+			// TODO: release tickets
+		}()
+		return errors.WithMessage(err, "failed to allocate gameserver")
+	}
 
 	go s.broker.PublishQueueUpdate(ctx, &pb.QueueUpdate{
 		Targets: players,
 		Update: &pb.QueueUpdate_Found{
 			Found: &pb.MatchDetails{
-				Connection: "unimplemented",
+				Connection: ip,
 			},
 		},
 	})
@@ -134,7 +142,7 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 			{
 				TicketIds: ticketIds,
 				Assignment: &ompb.Assignment{
-					Connection: "unimplemented",
+					Connection: ip,
 				},
 			},
 		},

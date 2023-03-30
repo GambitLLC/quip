@@ -3,15 +3,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 
+	agones "agones.dev/agones/pkg/allocation/go"
 	"github.com/alicebob/miniredis/v2"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/GambitLLC/quip/libs/config"
 )
@@ -59,10 +63,35 @@ func main() {
 	}
 	defer mredis.Close()
 
+	ln, err := net.Listen("tcp", ":0")
+	if err != nil {
+		panic(err)
+	}
+
+	_, port, err := net.SplitHostPort(ln.Addr().String())
+	if err != nil {
+		panic(err)
+	}
+
+	s := grpc.NewServer()
+	agones.RegisterAllocationServiceServer(s, &stubAgonesService{})
+
+	go func() {
+		err := s.Serve(ln)
+		if err != nil {
+			panic(err)
+		}
+	}()
+	defer s.Stop()
+
+	copy.Set("agones.hostname", "localhost")
+	copy.Set("agones.port", port)
+
 	updateKey(cfg, copy, "", "redis.hostname", "localhost")
 	updateKey(cfg, copy, "", "redis.port", mredis.Port())
-	updateKey(cfg, copy, "", "broker.hostname", "localhost")
-	updateKey(cfg, copy, "", "broker.port", mredis.Port())
+
+	copy.Set("broker.hostname", "localhost")
+	copy.Set("broker.port", mredis.Port())
 
 	// openmatch should be running on minimatch -- everything on port 50499
 	updateKey(cfg, copy, "openmatch", "hostname", "localhost")
@@ -82,4 +111,12 @@ func updateKey(cfg, copy *viper.Viper, prefix, suffix string, val interface{}) {
 			copy.Set(key, val)
 		}
 	}
+}
+
+type stubAgonesService struct {
+	agones.UnimplementedAllocationServiceServer
+}
+
+func (s *stubAgonesService) Allocate(context.Context, *agones.AllocationRequest) (*agones.AllocationResponse, error) {
+	return &agones.AllocationResponse{Address: "127.0.0.1", Ports: []*agones.AllocationResponse_GameServerStatusPort{{Port: 51383}}}, nil
 }
