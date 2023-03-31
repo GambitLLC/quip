@@ -31,6 +31,10 @@ func main() {
 			"teams":   1,
 			"players": 1,
 		},
+		"test_100x1": {
+			"teams":   100,
+			"players": 1,
+		},
 	})
 	if err := gameCfg.WriteConfigAs("config/games.yaml"); err != nil {
 		panic(err)
