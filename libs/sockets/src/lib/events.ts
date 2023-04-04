@@ -1,5 +1,6 @@
 import { QueueUpdate, StatusUpdate } from '@quip/pb/quip-messages';
 import { StartQueueRequest, StatusResponse } from '@quip/pb/quip-matchmaker';
+import { ServiceError } from '@grpc/grpc-js';
 
 export interface ServerToClientEvents {
   queueUpdate: (update: QueueUpdate) => void;
@@ -9,7 +10,7 @@ export interface ServerToClientEvents {
 // ClientToServerEvents just match all RPC calls clients can make.
 // Allows the socket.io server to authenticate the users.
 export interface ClientToServerEvents {
-  getStatus: (cb: (err: Error, resp: StatusResponse) => void) => void;
-  startQueue: (req: StartQueueRequest, cb: (err: Error) => void) => void;
-  stopQueue: (cb: (err: Error) => void) => void;
+  getStatus: (cb: (err: ServiceError, resp: StatusResponse) => void) => void;
+  startQueue: (req: StartQueueRequest, cb: (err: ServiceError) => void) => void;
+  stopQueue: (cb: (err: ServiceError) => void) => void;
 }

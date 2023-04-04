@@ -15,6 +15,7 @@ import { QueueUpdate, StatusUpdate } from '@quip/pb/quip-messages';
 
 export type Server = SocketIoServer<ClientToServerEvents, ServerToClientEvents>;
 
+// TODO: modify function signature to be promise so that broker connection errors throw
 export const Server = (
   config: IConfig,
   httpServer: httpServer | httpsServer

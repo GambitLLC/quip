@@ -4,6 +4,7 @@ import { newToken } from '../auth';
 import { randomBytes } from 'crypto';
 import { StartQueueRequest, StatusResponse } from '@quip/pb/quip-matchmaker';
 import { QueueUpdate, Status } from '@quip/pb/quip-messages';
+import * as grpc from '@grpc/grpc-js';
 
 const sockets: Map<string, Client> = new Map();
 
@@ -68,7 +69,7 @@ describe('queueing', () => {
         gamemode: 'invalid gamemode zzz',
       })
     );
-    expect(err).not.toBeNull();
+    expect(err?.code).toBe(grpc.status.INVALID_ARGUMENT);
   });
 
   describe('valid start queue', () => {
@@ -123,7 +124,7 @@ describe('queueing', () => {
         })
       );
 
-      expect(err).not.toBeNull();
+      expect(err?.code).toBe(grpc.status.FAILED_PRECONDITION);
     });
 
     describe('stopping queue', () => {
@@ -199,5 +200,16 @@ describe('match tests', () => {
     });
 
     expect(status?.status).toBe(Status.PLAYING);
+  });
+
+  it('should be unable to queue', async () => {
+    const err = await client.emitWithAck(
+      'startQueue',
+      StartQueueRequest.create({
+        gamemode: 'test',
+      })
+    );
+
+    expect(err?.code).toBe(grpc.status.FAILED_PRECONDITION);
   });
 });
