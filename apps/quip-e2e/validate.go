@@ -29,6 +29,7 @@ var expectedKeys = map[string]string{
 	"matchmaker.redis.port":             "",
 
 	"sockets.server.hostname": "localhost",
+	"sockets.server.port":     "3001",
 	"sockets.redis.hostname":  "localhost",
 	"sockets.redis.port":      "",
 

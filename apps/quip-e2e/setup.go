@@ -110,6 +110,7 @@ func createE2EConfig(redisPort, agonesPort string) error {
 	overrideKey(cfg, dcfg, "openmatch", "port", 50499)
 
 	cfg.Set("sockets.server.hostname", "localhost")
+	cfg.Set("sockets.server.port", 3001)
 
 	// spin up matchmaker services on another port as well
 	cfg.Set("matchmaker.frontend.hostname", "localhost")

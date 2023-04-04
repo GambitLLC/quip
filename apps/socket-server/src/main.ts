@@ -5,7 +5,7 @@ import config from 'config';
 const httpServer = createServer();
 Server(config, httpServer);
 
-const PORT = 3000;
+const PORT = config.get('sockets.server.port');
 httpServer.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
