@@ -3,9 +3,7 @@ import config from 'config';
 import { newToken } from '../auth';
 import { randomBytes } from 'crypto';
 import { StartQueueRequest, StatusResponse } from '@quip/pb/quip-matchmaker';
-import { QueueUpdate, Status, statusToJSON } from '@quip/pb/quip-messages';
-import { isObject } from 'util';
-import { isUint16Array } from 'util/types';
+import { QueueUpdate, Status } from '@quip/pb/quip-messages';
 
 const sockets: Map<string, Client> = new Map();
 
