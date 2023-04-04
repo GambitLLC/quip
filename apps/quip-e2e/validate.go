@@ -33,7 +33,7 @@ var expectedKeys = map[string]string{
 	"sockets.redis.hostname":  "localhost",
 	"sockets.redis.port":      "",
 
-	"broker.hostname": "",
+	"broker.hostname": "localhost",
 	"broker.port":     "",
 
 	// should be connected to minimatch
