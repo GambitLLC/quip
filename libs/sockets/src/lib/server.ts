@@ -32,6 +32,10 @@ export const Server = (
     )}`,
   });
 
+  pubClient.on('error', console.error);
+  subClient.on('error', console.error);
+  broker.on('error', console.error);
+
   Promise.all([
     pubClient.connect(),
     subClient.connect(),
@@ -114,6 +118,16 @@ export const Server = (
     `${host}:${port}`,
     credentials.createInsecure()
   );
+
+  // overwrite close to cleanup redis and matchmaker connections
+  const close = io.close.bind(io);
+  io.close = (fn?: (err?: Error) => void) => {
+    pubClient.disconnect();
+    subClient.disconnect();
+    broker.disconnect();
+    rpc.close();
+    close(fn);
+  };
 
   io.on('connection', (socket) => {
     const md = new Metadata();

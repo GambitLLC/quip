@@ -39,6 +39,7 @@
     "jest-environment-node": "^29.4.1",
     "nx": "15.8.3",
     "prettier": "^2.6.2",
+    "redis-memory-server": "^0.6.0",
     "ts-jest": "^29.0.5",
     "ts-node": "10.9.1",
     "ts-proto": "^1.140.0",

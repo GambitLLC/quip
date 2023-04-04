@@ -6,6 +6,7 @@ import {
   ServerStatusResponse,
   ServerSurfaceCall,
 } from '@grpc/grpc-js/build/src/server-call';
+import { RedisMemoryServer } from 'redis-memory-server';
 process.env.ALLOW_CONFIG_MUTATIONS = 'true';
 import config from 'config';
 
@@ -119,6 +120,7 @@ beforeAll(async () => {
 describe('socket listener', () => {
   let io: Server,
     grpc: grpcServer,
+    redis: RedisMemoryServer,
     sockets: Client[] = [];
 
   async function getClient(player: string): Promise<Client> {
@@ -147,6 +149,25 @@ describe('socket listener', () => {
   }
 
   beforeAll(async () => {
+    // spin up in memory redis to act as broker
+    redis = new RedisMemoryServer();
+
+    const host = await redis.getHost();
+    const port = await redis.getPort();
+
+    config.util.extendDeep(config, {
+      sockets: {
+        redis: {
+          hostname: host,
+          port: port,
+        },
+      },
+      broker: {
+        hostname: host,
+        port: port,
+      },
+    });
+
     // wait for matchmaker service to start so that config is set with proper values
     await new Promise<void>((resolve, reject) => {
       grpc = new grpcServer();
@@ -191,11 +212,26 @@ describe('socket listener', () => {
     });
   });
 
-  afterAll(() => {
-    io.close();
+  afterAll(async () => {
     // clientSocket?.close();
     sockets.forEach((client) => client.close());
     sockets = [];
+
+    await new Promise<void>((resolve) => {
+      io.close((err) => {
+        if (err) console.warn(err);
+        resolve();
+      });
+    });
+
+    await new Promise<void>((resolve) => {
+      grpc.tryShutdown((err) => {
+        if (err) console.warn(err);
+        resolve();
+      });
+    });
+
+    await redis.stop();
   });
 
   test('should receive status', async () => {
