@@ -17,30 +17,34 @@ import (
 )
 
 // list of keys which setup must have updated
-var expectedKeys = []string{
-	"auth.issuer",
-	"auth.jwks_uri",
+var expectedKeys = map[string]string{
+	"auth.issuer":   "http://localhost",
+	"auth.jwks_uri": "",
 
-	"matchmaker.redis.hostname",
-	"matchmaker.redis.port",
+	"matchmaker.frontend.hostname":      "localhost",
+	"matchmaker.frontend.port":          "",
+	"matchmaker.matchfunction.hostname": "localhost",
+	"matchmaker.matchfunction.port":     "",
+	"matchmaker.redis.hostname":         "localhost",
+	"matchmaker.redis.port":             "",
 
-	"sockets.redis.hostname",
-	"sockets.redis.port",
+	"sockets.server.hostname": "localhost",
+	"sockets.redis.hostname":  "localhost",
+	"sockets.redis.port":      "",
 
-	"broker.hostname",
-	"broker.port",
+	"broker.hostname": "",
+	"broker.port":     "",
 
-	"openmatch.backend.hostname",
-	"openmatch.backend.port",
+	// should be connected to minimatch
+	"openmatch.backend.hostname":  "localhost",
+	"openmatch.backend.port":      "50499",
+	"openmatch.frontend.hostname": "localhost",
+	"openmatch.frontend.port":     "50499",
+	"openmatch.query.hostname":    "localhost",
+	"openmatch.query.port":        "50499",
 
-	"openmatch.frontend.hostname",
-	"openmatch.frontend.port",
-
-	"openmatch.query.hostname",
-	"openmatch.query.port",
-
-	"agones.hostname",
-	"agones.port",
+	"agones.hostname": "localhost",
+	"agones.port":     "",
 }
 
 func main() {
@@ -61,10 +65,17 @@ func main() {
 	closeOnce := sync.Once{}
 
 	checkConfig := func() {
-		for _, key := range expectedKeys {
-			if !cfg.IsSet(key) {
-				log.Printf("key '%s' is not set, waiting for change", key)
-				return
+		for key, expected := range expectedKeys {
+			if expected == "" {
+				if !cfg.IsSet(key) {
+					log.Printf("key '%s' is not set, waiting for change", key)
+					return
+				}
+			} else {
+				if cfg.GetString(key) != expected {
+					log.Printf("key '%s' is not '%s', waiting for change", key, expected)
+					return
+				}
 			}
 		}
 

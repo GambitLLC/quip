@@ -37,6 +37,8 @@ module.exports = async function (globalConfig, projectConfig) {
     // make sure to end background procs if validate fails
     authServer.kill();
     backgroundProcs.kill();
+    outputStream.close();
+    errorStream.close();
     throw err;
   }
 

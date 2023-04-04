@@ -1,42 +1,42 @@
 auth:
-  issuer: http://localhost
-  audience: http://localhost
-  jwks_uri: http://localhost
+  issuer: http://quip.gg
+  audience: http://quip.gg
+  jwks_uri: http://quip.gg
 
 matchmaker:
   frontend:
-    hostname: localhost
+    hostname:
     port: 50051
   matchfunction:
-    hostname: localhost
+    hostname:
     port: 50052
   redis:
-    hostname: localhost
+    hostname:
     port: 6379
 
 sockets:
   server:
-    hostname: localhost
+    hostname:
     port: 3000
   redis:
-    hostname: localhost
+    hostname:
     port: 6379
 
 broker:
-  hostname: localhost
+  hostname:
   port: 6379
 
 openmatch:
   backend:
-    hostname: localhost
+    hostname:
     port: 50505
   frontend:
-    hostname: localhost
+    hostname:
     port: 50504
   query:
-    hostname: localhost
+    hostname:
     port: 50503
 
 agones:
-  hostname: localhost
+  hostname:
   port:
