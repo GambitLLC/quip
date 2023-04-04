@@ -49,21 +49,19 @@ describe('socket connection', () => {
 
   it('should have idle connection', async () => {
     const { client } = await newClient();
-
-    await new Promise<void>((resolve, reject) => {
+    const status = await new Promise<StatusResponse>((resolve, reject) => {
       client.emit('getStatus', (err, status) => {
         if (err) reject(err);
-        else if (!status) reject('status is undefined/null');
-        else if (status.status != Status.IDLE)
-          reject(`status is ${statusToJSON(status.status)}, expected IDLE`);
-        else resolve();
+        resolve(status);
       });
     });
+
+    expect(status?.status).toBe(Status.IDLE);
   });
 });
 
 describe('queueing', () => {
-  it.failing('should fail to start queue for invalid gamemode', async () => {
+  it('should fail to start queue for invalid gamemode', async () => {
     const { client } = await newClient();
 
     const err = await client.emitWithAck(
@@ -72,7 +70,7 @@ describe('queueing', () => {
         gamemode: 'invalid gamemode zzz',
       })
     );
-    if (err) throw err;
+    expect(err).not.toBeNull();
   });
 
   describe('valid start queue', () => {
@@ -100,8 +98,8 @@ describe('queueing', () => {
       );
     });
 
-    it('should have not received an error', () => {
-      if (err) throw err;
+    it('should not have received an error', () => {
+      expect(err).toBeNull();
     });
 
     it('should have received queue started update', async () => {
@@ -109,27 +107,25 @@ describe('queueing', () => {
     });
 
     it('should have searching status', async () => {
-      await new Promise<void>((resolve, reject) => {
+      const status = await new Promise<StatusResponse>((resolve, reject) => {
         client.emit('getStatus', (err, status) => {
-          if (err) return reject(err);
-          if (!status) return reject('status is undefined/null');
-          if (status.status != Status.SEARCHING)
-            return reject(
-              `status is ${statusToJSON(status.status)}, expected SEARCHING`
-            );
-          resolve();
+          if (err) reject(err);
+          resolve(status);
         });
       });
+
+      expect(status?.status).toBe(Status.SEARCHING);
     });
 
-    it.failing('should not be able to start queue again', async () => {
+    it('should not be able to start queue again', async () => {
       const err = await client.emitWithAck(
         'startQueue',
         StartQueueRequest.create({
           gamemode: 'test',
         })
       );
-      if (err) throw err;
+
+      expect(err).not.toBeNull();
     });
 
     describe('stopping queue', () => {
@@ -149,7 +145,7 @@ describe('queueing', () => {
       });
 
       it('should not have errored', () => {
-        if (err) throw err;
+        expect(err).toBeNull();
       });
 
       it('should have received queue stopped update', async () => {
@@ -157,17 +153,14 @@ describe('queueing', () => {
       });
 
       it('should be status idle', async () => {
-        await new Promise<void>((resolve, reject) => {
+        const status = await new Promise<StatusResponse>((resolve, reject) => {
           client.emit('getStatus', (err, status) => {
-            if (err) return reject(err);
-            if (!status) return reject('status is undefined/null');
-            if (status.status != Status.IDLE)
-              return reject(
-                `status is ${statusToJSON(status.status)}, expected IDLE`
-              );
-            resolve();
+            if (err) reject(err);
+            resolve(status);
           });
         });
+
+        expect(status?.status).toBe(Status.IDLE);
       });
     });
   });
