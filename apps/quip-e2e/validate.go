@@ -3,9 +3,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -45,9 +47,14 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 
-	cfg, err := config.ReadFile("e2e")
+	cfg, err := config.Read()
 	if err != nil {
 		panic(err)
+	}
+
+	// make sure e2e config file is being read
+	if !strings.HasSuffix(cfg.ConfigFileUsed(), "e2e.yaml") {
+		panic(fmt.Sprintf("expected e2e.yaml file to be read, got '%s'", cfg.ConfigFileUsed()))
 	}
 
 	done := make(chan struct{})

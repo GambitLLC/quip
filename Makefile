@@ -74,6 +74,25 @@ build/toolchain/bin/protoc-gen-openapiv2$(EXE_EXTENSION):
 	mkdir -p $(TOOLCHAIN_BIN)
 	cd $(TOOLCHAIN_BIN) && $(GO) get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 && $(GO) build -pkgdir . github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
 
+# make module because there are conflicting module versions (prometheus)
+build/e2e/bin/: build/e2e/bin/minimatch build/e2e/bin/default-evaluator build/e2e/bin/synchronizer
+
+build/e2e/bin/minimatch:
+	mkdir -p $(BUILD_DIR)/e2e/bin
+	-cd $(BUILD_DIR)/e2e/bin && $(GO) mod init derp
+	cd $(BUILD_DIR)/e2e/bin && $(GO) get open-match.dev/open-match/cmd/minimatch && $(GO) build -pkgdir . open-match.dev/open-match/cmd/minimatch
+
+build/e2e/bin/default-evaluator:
+	mkdir -p $(BUILD_DIR)/e2e/bin
+	-cd $(BUILD_DIR)/e2e/bin && $(GO) mod init derp
+	cd $(BUILD_DIR)/e2e/bin && $(GO) get open-match.dev/open-match/cmd/default-evaluator && $(GO) build -pkgdir . open-match.dev/open-match/cmd/default-evaluator
+
+build/e2e/bin/synchronizer:
+	mkdir -p $(BUILD_DIR)/e2e/bin
+	-cd $(BUILD_DIR)/e2e/bin && $(GO) mod init derp
+	cd $(BUILD_DIR)/e2e/bin && $(GO) get open-match.dev/open-match/cmd/synchronizer && $(GO) build -pkgdir . open-match.dev/open-match/cmd/synchronizer
+
+
 api/third-party/: api/third-party/google/api api/third-party/protoc-gen-openapiv2/options
 
 GOOGLE_API_FILES := http annotations

@@ -12,8 +12,9 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "go build -o dist/apps/e2e-setup -tags setup apps/quip-e2e/setup.go",
-          "go build -o dist/apps/e2e-validate -tags validate apps/quip-e2e/validate.go"
+          "go build -o build/e2e/bin/e2e-setup -tags setup apps/quip-e2e/setup.go",
+          "go build -o build/e2e/bin/e2e-validate -tags validate apps/quip-e2e/validate.go",
+          "make build/e2e/bin/"
         ]
       }
     },
