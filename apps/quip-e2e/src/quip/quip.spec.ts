@@ -2,8 +2,10 @@ import { Client } from '@quip/sockets';
 import config from 'config';
 import { newToken } from '../auth';
 import { randomBytes } from 'crypto';
-import { StartQueueRequest } from '@quip/pb/quip-matchmaker';
+import { StartQueueRequest, StatusResponse } from '@quip/pb/quip-matchmaker';
 import { QueueUpdate, Status, statusToJSON } from '@quip/pb/quip-messages';
+import { isObject } from 'util';
+import { isUint16Array } from 'util/types';
 
 const sockets: Map<string, Client> = new Map();
 
@@ -172,22 +174,39 @@ describe('queueing', () => {
 });
 
 describe('match tests', () => {
-  it('should get match started', async () => {
-    const { client } = await newClient();
+  let client: Client, player: string;
+  let matchFoundUpdate: Promise<QueueUpdate>;
 
-    await new Promise<void>((resolve, reject) => {
+  beforeAll(async () => {
+    ({ client, player } = await newClient());
+
+    matchFoundUpdate = new Promise<QueueUpdate>((resolve) => {
       client.on('queueUpdate', (update) => {
-        if (update.found) resolve();
+        if (update.targets.includes(player) && update.found) resolve(update);
       });
-
-      client
-        .emitWithAck(
-          'startQueue',
-          StartQueueRequest.create({
-            gamemode: 'test',
-          })
-        )
-        .then((err) => (err ? reject(err) : null));
     });
+
+    const err = await client.emitWithAck(
+      'startQueue',
+      StartQueueRequest.create({
+        gamemode: 'test',
+      })
+    );
+    expect(err).toBeNull();
+  });
+
+  it('should get match found', async () => {
+    await matchFoundUpdate;
   }, 20000);
+
+  it('should have status playing', async () => {
+    const status = await new Promise<StatusResponse>((resolve, reject) => {
+      client.emit('getStatus', (err, status) => {
+        if (err) reject(err);
+        resolve(status);
+      });
+    });
+
+    expect(status?.status).toBe(Status.PLAYING);
+  });
 });
