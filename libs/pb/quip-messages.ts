@@ -4,6 +4,48 @@ import { Timestamp } from "./google/protobuf/timestamp";
 
 export const protobufPackage = "quip";
 
+export enum MatchState {
+  /** MATCH_PENDING - Match has been allocated and is waiting for connections. */
+  MATCH_PENDING = 0,
+  /** MATCH_PLAYING - Match is in progress. */
+  MATCH_PLAYING = 1,
+  /** MATCH_FINISHED - Match has completed. */
+  MATCH_FINISHED = 2,
+  UNRECOGNIZED = -1,
+}
+
+export function matchStateFromJSON(object: any): MatchState {
+  switch (object) {
+    case 0:
+    case "MATCH_PENDING":
+      return MatchState.MATCH_PENDING;
+    case 1:
+    case "MATCH_PLAYING":
+      return MatchState.MATCH_PLAYING;
+    case 2:
+    case "MATCH_FINISHED":
+      return MatchState.MATCH_FINISHED;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return MatchState.UNRECOGNIZED;
+  }
+}
+
+export function matchStateToJSON(object: MatchState): string {
+  switch (object) {
+    case MatchState.MATCH_PENDING:
+      return "MATCH_PENDING";
+    case MatchState.MATCH_PLAYING:
+      return "MATCH_PLAYING";
+    case MatchState.MATCH_FINISHED:
+      return "MATCH_FINISHED";
+    case MatchState.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 export enum Status {
   OFFLINE = 0,
   IDLE = 1,
@@ -59,12 +101,15 @@ export interface QueueUpdate {
 }
 
 export interface QueueDetails {
+  id: string;
   gamemode: string;
   startTime: Date | undefined;
 }
 
 export interface MatchDetails {
+  id: string;
   connection: string;
+  state: MatchState;
 }
 
 /** Indicates change in status. */
@@ -162,16 +207,19 @@ export const QueueUpdate = {
 };
 
 function createBaseQueueDetails(): QueueDetails {
-  return { gamemode: "", startTime: undefined };
+  return { id: "", gamemode: "", startTime: undefined };
 }
 
 export const QueueDetails = {
   encode(message: QueueDetails, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
     if (message.gamemode !== "") {
-      writer.uint32(10).string(message.gamemode);
+      writer.uint32(18).string(message.gamemode);
     }
     if (message.startTime !== undefined) {
-      Timestamp.encode(toTimestamp(message.startTime), writer.uint32(18).fork()).ldelim();
+      Timestamp.encode(toTimestamp(message.startTime), writer.uint32(26).fork()).ldelim();
     }
     return writer;
   },
@@ -184,9 +232,12 @@ export const QueueDetails = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.gamemode = reader.string();
+          message.id = reader.string();
           break;
         case 2:
+          message.gamemode = reader.string();
+          break;
+        case 3:
           message.startTime = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
           break;
         default:
@@ -199,6 +250,7 @@ export const QueueDetails = {
 
   fromJSON(object: any): QueueDetails {
     return {
+      id: isSet(object.id) ? String(object.id) : "",
       gamemode: isSet(object.gamemode) ? String(object.gamemode) : "",
       startTime: isSet(object.startTime) ? fromJsonTimestamp(object.startTime) : undefined,
     };
@@ -206,6 +258,7 @@ export const QueueDetails = {
 
   toJSON(message: QueueDetails): unknown {
     const obj: any = {};
+    message.id !== undefined && (obj.id = message.id);
     message.gamemode !== undefined && (obj.gamemode = message.gamemode);
     message.startTime !== undefined && (obj.startTime = message.startTime.toISOString());
     return obj;
@@ -217,6 +270,7 @@ export const QueueDetails = {
 
   fromPartial<I extends Exact<DeepPartial<QueueDetails>, I>>(object: I): QueueDetails {
     const message = createBaseQueueDetails();
+    message.id = object.id ?? "";
     message.gamemode = object.gamemode ?? "";
     message.startTime = object.startTime ?? undefined;
     return message;
@@ -224,13 +278,19 @@ export const QueueDetails = {
 };
 
 function createBaseMatchDetails(): MatchDetails {
-  return { connection: "" };
+  return { id: "", connection: "", state: 0 };
 }
 
 export const MatchDetails = {
   encode(message: MatchDetails, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
     if (message.connection !== "") {
-      writer.uint32(10).string(message.connection);
+      writer.uint32(18).string(message.connection);
+    }
+    if (message.state !== 0) {
+      writer.uint32(24).int32(message.state);
     }
     return writer;
   },
@@ -243,7 +303,13 @@ export const MatchDetails = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          message.id = reader.string();
+          break;
+        case 2:
           message.connection = reader.string();
+          break;
+        case 3:
+          message.state = reader.int32() as any;
           break;
         default:
           reader.skipType(tag & 7);
@@ -254,12 +320,18 @@ export const MatchDetails = {
   },
 
   fromJSON(object: any): MatchDetails {
-    return { connection: isSet(object.connection) ? String(object.connection) : "" };
+    return {
+      id: isSet(object.id) ? String(object.id) : "",
+      connection: isSet(object.connection) ? String(object.connection) : "",
+      state: isSet(object.state) ? matchStateFromJSON(object.state) : 0,
+    };
   },
 
   toJSON(message: MatchDetails): unknown {
     const obj: any = {};
+    message.id !== undefined && (obj.id = message.id);
     message.connection !== undefined && (obj.connection = message.connection);
+    message.state !== undefined && (obj.state = matchStateToJSON(message.state));
     return obj;
   },
 
@@ -269,7 +341,9 @@ export const MatchDetails = {
 
   fromPartial<I extends Exact<DeepPartial<MatchDetails>, I>>(object: I): MatchDetails {
     const message = createBaseMatchDetails();
+    message.id = object.id ?? "";
     message.connection = object.connection ?? "";
+    message.state = object.state ?? 0;
     return message;
   },
 };

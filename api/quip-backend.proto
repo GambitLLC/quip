@@ -1,0 +1,22 @@
+syntax = "proto3";
+package quip;
+option go_package="github.com/GambitLLC/quip/libs/pb";
+
+import "quip-messages.proto";
+import "google/protobuf/empty.proto";
+
+message GetMatchRequest {
+	string id = 1;
+}
+
+message UpdateMatchRequest {
+	string id = 1;
+
+	MatchState state = 2;
+}
+
+service Backend {
+	rpc GetMatch(GetMatchRequest) returns (MatchDetails);
+
+	rpc UpdateMatch(UpdateMatchRequest) returns (google.protobuf.Empty);
+}

@@ -22,7 +22,16 @@ message QueueDetails {
 }
 
 message MatchDetails {
-  string connection = 1;
+  string id = 1;
+  string connection = 2;
+
+  MatchState state = 3;
+}
+
+enum MatchState {
+  MATCH_PENDING = 0;  // Match has been allocated and is waiting for connections.
+  MATCH_PLAYING = 1;  // Match is in progress.
+  MATCH_FINISHED = 2; // Match has completed.
 }
 
 enum Status {

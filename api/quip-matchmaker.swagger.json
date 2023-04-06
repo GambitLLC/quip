@@ -48,8 +48,39 @@
     "quipMatchDetails": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string"
+        },
         "connection": {
           "type": "string"
+        },
+        "state": {
+          "$ref": "#/definitions/quipMatchState"
+        }
+      }
+    },
+    "quipMatchState": {
+      "type": "string",
+      "enum": [
+        "MATCH_PENDING",
+        "MATCH_PLAYING",
+        "MATCH_FINISHED"
+      ],
+      "default": "MATCH_PENDING",
+      "description": " - MATCH_PENDING: Match has been allocated and is waiting for connections.\n - MATCH_PLAYING: Match is in progress.\n - MATCH_FINISHED: Match has completed."
+    },
+    "quipQueueDetails": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "gamemode": {
+          "type": "string"
+        },
+        "start_time": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -68,6 +99,10 @@
       "properties": {
         "status": {
           "$ref": "#/definitions/quipStatus"
+        },
+        "queue": {
+          "$ref": "#/definitions/quipQueueDetails",
+          "description": "Details about current queue status."
         },
         "match": {
           "$ref": "#/definitions/quipMatchDetails",

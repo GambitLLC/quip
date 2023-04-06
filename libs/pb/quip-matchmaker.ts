@@ -13,7 +13,7 @@ import {
 } from "@grpc/grpc-js";
 import _m0 from "protobufjs/minimal";
 import { Empty } from "./google/protobuf/empty";
-import { MatchDetails, Status, statusFromJSON, statusToJSON } from "./quip-messages";
+import { MatchDetails, QueueDetails, Status, statusFromJSON, statusToJSON } from "./quip-messages";
 
 export const protobufPackage = "quip";
 
@@ -23,6 +23,10 @@ export interface StartQueueRequest {
 
 export interface StatusResponse {
   status: Status;
+  /** Details about current queue status. */
+  queue?:
+    | QueueDetails
+    | undefined;
   /** Details about the match the user is currently playing in. */
   match?: MatchDetails | undefined;
 }
@@ -79,7 +83,7 @@ export const StartQueueRequest = {
 };
 
 function createBaseStatusResponse(): StatusResponse {
-  return { status: 0, match: undefined };
+  return { status: 0, queue: undefined, match: undefined };
 }
 
 export const StatusResponse = {
@@ -87,8 +91,11 @@ export const StatusResponse = {
     if (message.status !== 0) {
       writer.uint32(8).int32(message.status);
     }
+    if (message.queue !== undefined) {
+      QueueDetails.encode(message.queue, writer.uint32(18).fork()).ldelim();
+    }
     if (message.match !== undefined) {
-      MatchDetails.encode(message.match, writer.uint32(18).fork()).ldelim();
+      MatchDetails.encode(message.match, writer.uint32(26).fork()).ldelim();
     }
     return writer;
   },
@@ -104,6 +111,9 @@ export const StatusResponse = {
           message.status = reader.int32() as any;
           break;
         case 2:
+          message.queue = QueueDetails.decode(reader, reader.uint32());
+          break;
+        case 3:
           message.match = MatchDetails.decode(reader, reader.uint32());
           break;
         default:
@@ -117,6 +127,7 @@ export const StatusResponse = {
   fromJSON(object: any): StatusResponse {
     return {
       status: isSet(object.status) ? statusFromJSON(object.status) : 0,
+      queue: isSet(object.queue) ? QueueDetails.fromJSON(object.queue) : undefined,
       match: isSet(object.match) ? MatchDetails.fromJSON(object.match) : undefined,
     };
   },
@@ -124,6 +135,7 @@ export const StatusResponse = {
   toJSON(message: StatusResponse): unknown {
     const obj: any = {};
     message.status !== undefined && (obj.status = statusToJSON(message.status));
+    message.queue !== undefined && (obj.queue = message.queue ? QueueDetails.toJSON(message.queue) : undefined);
     message.match !== undefined && (obj.match = message.match ? MatchDetails.toJSON(message.match) : undefined);
     return obj;
   },
@@ -135,6 +147,9 @@ export const StatusResponse = {
   fromPartial<I extends Exact<DeepPartial<StatusResponse>, I>>(object: I): StatusResponse {
     const message = createBaseStatusResponse();
     message.status = object.status ?? 0;
+    message.queue = (object.queue !== undefined && object.queue !== null)
+      ? QueueDetails.fromPartial(object.queue)
+      : undefined;
     message.match = (object.match !== undefined && object.match !== null)
       ? MatchDetails.fromPartial(object.match)
       : undefined;
