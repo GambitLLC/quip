@@ -21,7 +21,7 @@ async function newClient(): Promise<{ client: Client; player: string }> {
     client.on('connect_error', reject);
   });
 
-  sockets[player] = client;
+  sockets.set(player, client);
 
   return { client, player };
 }
