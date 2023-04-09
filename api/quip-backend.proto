@@ -9,6 +9,19 @@ message GetMatchRequest {
 	string id = 1;
 }
 
+message MatchDetails {
+	string id = 1;
+  string connection = 2;
+
+  MatchState state = 3;
+}
+
+enum MatchState {
+  MATCH_PENDING = 0;  // Match has been allocated and is waiting for connections.
+  MATCH_PLAYING = 1;  // Match is in progress.
+  MATCH_FINISHED = 2; // Match has completed.
+}
+
 message UpdateMatchRequest {
 	string id = 1;
 

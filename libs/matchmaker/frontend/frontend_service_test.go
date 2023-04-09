@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	ompb "open-match.dev/open-match/pkg/pb"
@@ -45,47 +44,54 @@ func TestService(t *testing.T) {
 
 func TestGetStatus(t *testing.T) {
 	playerId := xid.New().String()
-	ctx := newContextWithPlayer(t, playerId)
-	randomId := xid.New().String()
 
 	tests := []struct {
 		name  string
-		setup func(*testing.T, statestore.Service)
-		ctx   context.Context
+		setup func(context.Context, *testing.T, *Service)
 		check func(*testing.T, *pb.StatusResponse, error)
 	}{
 		{
 			name:  "expect IDLE status",
 			setup: nil,
-			ctx:   ctx,
 			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
 				require.NoError(t, err)
 				require.Equal(t, pb.Status_IDLE, sr.Status, "expected status to be IDLE")
 			},
 		},
 		{
-			name: "expect SEARCHING status",
-			setup: func(t *testing.T, s statestore.Service) {
-				s.CreatePlayer(ctx, &ipb.PlayerInternal{
+			name: "expect SEARCHING status with queue information",
+			setup: func(ctx context.Context, t *testing.T, s *Service) {
+				// CreateTicket in open match so it can be found
+				ticket, err := s.omfc.CreateTicket(ctx, &ipb.TicketInternal{
 					PlayerId: playerId,
-					TicketId: &randomId,
+					Gamemode: "test",
 				})
+				require.NoError(t, err, "omfc.CreateTicket failed")
+
+				// set ticket id in statestore
+				err = s.store.CreatePlayer(ctx, &ipb.PlayerInternal{
+					PlayerId: playerId,
+					TicketId: &ticket.Id,
+				})
+				require.NoError(t, err, "store.CreatePlayer failed")
+
 			},
-			ctx: ctx,
 			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
 				require.NoError(t, err)
-				require.Equal(t, pb.Status_SEARCHING, sr.Status, "expected status to be SEARCHING")
+				require.Equal(t, pb.Status_SEARCHING, sr.GetStatus(), "expected status to be SEARCHING")
+				require.NotNil(t, sr.GetQueue(), "expected queue details")
+				require.Equal(t, "test", sr.Queue.Gamemode, "expected gamemode to be set")
 			},
 		},
 		{
 			name: "expect PLAYING status",
-			setup: func(t *testing.T, s statestore.Service) {
-				s.CreatePlayer(ctx, &ipb.PlayerInternal{
+			setup: func(ctx context.Context, t *testing.T, s *Service) {
+				randomId := xid.New().String()
+				s.store.CreatePlayer(ctx, &ipb.PlayerInternal{
 					PlayerId: playerId,
 					MatchId:  &randomId,
 				})
 			},
-			ctx: ctx,
 			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
 				require.NoError(t, err)
 				require.Equal(t, pb.Status_PLAYING, sr.Status, "expected status to be PLAYING")
@@ -96,11 +102,14 @@ func TestGetStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := newService(t)
 
+			ctx, cancel := context.WithTimeout(newContextWithPlayer(t, playerId), 5*time.Second)
+			defer cancel()
+
 			if tt.setup != nil {
-				tt.setup(t, s.store)
+				tt.setup(ctx, t, s)
 			}
 
-			got, err := s.GetStatus(tt.ctx, &emptypb.Empty{})
+			got, err := s.GetStatus(ctx, &emptypb.Empty{})
 			tt.check(t, got, err)
 		})
 	}
@@ -290,19 +299,17 @@ func TestQueueUpdate(t *testing.T) {
 	tests := []struct {
 		name     string
 		ctx      context.Context
-		expected *pb.QueueUpdate
+		expected func(*pb.QueueUpdate) bool
 		action   func(*testing.T, context.Context, *Service)
 	}{
 		{
 			name: "expect queue started after start queue",
 			ctx:  ctx,
-			expected: &pb.QueueUpdate{
-				Targets: []string{player},
-				Update: &pb.QueueUpdate_Started{
-					Started: &pb.QueueDetails{
-						Gamemode: "test",
-					},
-				},
+			expected: func(qu *pb.QueueUpdate) bool {
+				return len(qu.Targets) == 1 &&
+					qu.Targets[0] == player &&
+					qu.GetStarted() != nil &&
+					qu.GetStarted().Gamemode == "test"
 			},
 			action: func(t *testing.T, ctx context.Context, s *Service) {
 				_, err := s.StartQueue(ctx, &pb.StartQueueRequest{
@@ -314,11 +321,10 @@ func TestQueueUpdate(t *testing.T) {
 		{
 			name: "expect queue stopped after stop queue",
 			ctx:  ctx,
-			expected: &pb.QueueUpdate{
-				Targets: []string{player},
-				Update: &pb.QueueUpdate_Stopped{
-					Stopped: player,
-				},
+			expected: func(qu *pb.QueueUpdate) bool {
+				return len(qu.Targets) == 1 &&
+					qu.Targets[0] == player &&
+					qu.GetStopped() != nil
 			},
 			action: func(t *testing.T, ctx context.Context, s *Service) {
 				// Queue needs to be started before stop update will be sent
@@ -353,8 +359,13 @@ func TestQueueUpdate(t *testing.T) {
 					t.Fatal("test timed out without receiving expected update")
 				case update, ok := <-updates:
 					require.True(t, ok, "update channel closed")
-					if proto.Equal(update, tt.expected) {
-						// received expected update
+
+					/*
+						return len(qu.Targets) == 1 &&
+						qu.Targets[0] == player &&
+						qu.GetStopped() == "player"
+					*/
+					if tt.expected(update) {
 						return
 					}
 				}
@@ -376,9 +387,6 @@ func newService(t *testing.T) *Service {
 	cfg.Set("broker.hostname", cfg.Get("matchmaker.redis.hostname"))
 	cfg.Set("broker.port", cfg.Get("matchmaker.redis.port"))
 
-	// TODO: spin up minimatch in memory
-	// cfg.Set("openmatch.frontend.hostname", "localhost")
-	// cfg.Set("openmatch.frontend.port", 50499)
 	newOMFrontend(t, cfg)
 
 	srv := New(cfg)

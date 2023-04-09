@@ -126,7 +126,7 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 	go s.broker.PublishQueueUpdate(ctx, &pb.QueueUpdate{
 		Targets: players,
 		Update: &pb.QueueUpdate_Found{
-			Found: &pb.MatchDetails{
+			Found: &pb.MatchFound{
 				Connection: ip,
 			},
 		},

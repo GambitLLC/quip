@@ -10,28 +10,23 @@ message QueueUpdate {
   repeated string targets = 1;
 
   oneof update {
-    QueueDetails started = 2;
-    string stopped = 3;
-    MatchDetails found = 4;
+    QueueStarted started = 2;
+    QueueStopped stopped = 3;
+    MatchFound found = 4;
   }
 }
 
-message QueueDetails {
+message QueueStarted {
   string gamemode = 1;
   google.protobuf.Timestamp start_time = 2;
 }
 
-message MatchDetails {
-  string id = 1;
-  string connection = 2;
-
-  MatchState state = 3;
+message QueueStopped {
+  optional string reason = 1;
 }
 
-enum MatchState {
-  MATCH_PENDING = 0;  // Match has been allocated and is waiting for connections.
-  MATCH_PLAYING = 1;  // Match is in progress.
-  MATCH_FINISHED = 2; // Match has completed.
+message MatchFound {
+  string connection = 1;
 }
 
 enum Status {

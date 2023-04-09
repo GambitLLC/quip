@@ -13,10 +13,10 @@ message StatusResponse {
   Status status = 1;
 
   // Details about current queue status.
-  optional QueueDetails queue = 2;
+  optional QueueStarted queue = 2;
 
   // Details about the match the user is currently playing in.
-  optional MatchDetails match = 3;
+  optional MatchFound match = 3;
 }
 
 service Matchmaker {

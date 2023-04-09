@@ -56,6 +56,8 @@ describe('socket connection', () => {
     });
 
     expect(status?.status).toBe(Status.IDLE);
+    expect(status.queue).toBeUndefined();
+    expect(status.match).toBeUndefined();
   });
 });
 
@@ -73,6 +75,7 @@ describe('queueing', () => {
   });
 
   describe('valid start queue', () => {
+    const gamemode = 'test_100x1';
     let err: Error, client: Client, player: string;
     let queueStartedUpdate: Promise<QueueUpdate>;
 
@@ -92,7 +95,7 @@ describe('queueing', () => {
       err = await client.emitWithAck(
         'startQueue',
         StartQueueRequest.create({
-          gamemode: 'test_100x1',
+          gamemode,
         })
       );
     });
@@ -114,6 +117,8 @@ describe('queueing', () => {
       });
 
       expect(status?.status).toBe(Status.SEARCHING);
+      expect(status?.queue?.gamemode).toBe(gamemode);
+      expect(status.match).toBeUndefined();
     });
 
     it('should not be able to start queue again', async () => {
@@ -160,6 +165,8 @@ describe('queueing', () => {
         });
 
         expect(status?.status).toBe(Status.IDLE);
+        expect(status.queue).toBeUndefined();
+        expect(status.match).toBeUndefined();
       });
     });
   });
@@ -200,6 +207,8 @@ describe('match tests', () => {
     });
 
     expect(status?.status).toBe(Status.PLAYING);
+    // TODO: actually expect more match details
+    expect(status.match).not.toBeUndefined();
   });
 
   it('should be unable to queue', async () => {
