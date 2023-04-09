@@ -101,7 +101,6 @@ export interface QueueUpdate {
 }
 
 export interface QueueDetails {
-  id: string;
   gamemode: string;
   startTime: Date | undefined;
 }
@@ -207,19 +206,16 @@ export const QueueUpdate = {
 };
 
 function createBaseQueueDetails(): QueueDetails {
-  return { id: "", gamemode: "", startTime: undefined };
+  return { gamemode: "", startTime: undefined };
 }
 
 export const QueueDetails = {
   encode(message: QueueDetails, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
     if (message.gamemode !== "") {
-      writer.uint32(18).string(message.gamemode);
+      writer.uint32(10).string(message.gamemode);
     }
     if (message.startTime !== undefined) {
-      Timestamp.encode(toTimestamp(message.startTime), writer.uint32(26).fork()).ldelim();
+      Timestamp.encode(toTimestamp(message.startTime), writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -232,12 +228,9 @@ export const QueueDetails = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.id = reader.string();
-          break;
-        case 2:
           message.gamemode = reader.string();
           break;
-        case 3:
+        case 2:
           message.startTime = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
           break;
         default:
@@ -250,7 +243,6 @@ export const QueueDetails = {
 
   fromJSON(object: any): QueueDetails {
     return {
-      id: isSet(object.id) ? String(object.id) : "",
       gamemode: isSet(object.gamemode) ? String(object.gamemode) : "",
       startTime: isSet(object.startTime) ? fromJsonTimestamp(object.startTime) : undefined,
     };
@@ -258,7 +250,6 @@ export const QueueDetails = {
 
   toJSON(message: QueueDetails): unknown {
     const obj: any = {};
-    message.id !== undefined && (obj.id = message.id);
     message.gamemode !== undefined && (obj.gamemode = message.gamemode);
     message.startTime !== undefined && (obj.startTime = message.startTime.toISOString());
     return obj;
@@ -270,7 +261,6 @@ export const QueueDetails = {
 
   fromPartial<I extends Exact<DeepPartial<QueueDetails>, I>>(object: I): QueueDetails {
     const message = createBaseQueueDetails();
-    message.id = object.id ?? "";
     message.gamemode = object.gamemode ?? "";
     message.startTime = object.startTime ?? undefined;
     return message;
