@@ -207,8 +207,8 @@ describe('match tests', () => {
     });
 
     expect(status?.status).toBe(Status.PLAYING);
-    // TODO: actually expect more match details
     expect(status.match).not.toBeUndefined();
+    expect(status.match.connection).toBeTruthy();
   });
 
   it('should be unable to queue', async () => {

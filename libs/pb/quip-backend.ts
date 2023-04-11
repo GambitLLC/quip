@@ -60,142 +60,10 @@ export function matchStateToJSON(object: MatchState): string {
   }
 }
 
-export interface GetMatchRequest {
-  id: string;
-}
-
-export interface MatchDetails {
-  id: string;
-  connection: string;
-  state: MatchState;
-}
-
 export interface UpdateMatchRequest {
   id: string;
   state: MatchState;
 }
-
-function createBaseGetMatchRequest(): GetMatchRequest {
-  return { id: "" };
-}
-
-export const GetMatchRequest = {
-  encode(message: GetMatchRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetMatchRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetMatchRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.id = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): GetMatchRequest {
-    return { id: isSet(object.id) ? String(object.id) : "" };
-  },
-
-  toJSON(message: GetMatchRequest): unknown {
-    const obj: any = {};
-    message.id !== undefined && (obj.id = message.id);
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GetMatchRequest>, I>>(base?: I): GetMatchRequest {
-    return GetMatchRequest.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<GetMatchRequest>, I>>(object: I): GetMatchRequest {
-    const message = createBaseGetMatchRequest();
-    message.id = object.id ?? "";
-    return message;
-  },
-};
-
-function createBaseMatchDetails(): MatchDetails {
-  return { id: "", connection: "", state: 0 };
-}
-
-export const MatchDetails = {
-  encode(message: MatchDetails, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.connection !== "") {
-      writer.uint32(18).string(message.connection);
-    }
-    if (message.state !== 0) {
-      writer.uint32(24).int32(message.state);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): MatchDetails {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseMatchDetails();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.id = reader.string();
-          break;
-        case 2:
-          message.connection = reader.string();
-          break;
-        case 3:
-          message.state = reader.int32() as any;
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): MatchDetails {
-    return {
-      id: isSet(object.id) ? String(object.id) : "",
-      connection: isSet(object.connection) ? String(object.connection) : "",
-      state: isSet(object.state) ? matchStateFromJSON(object.state) : 0,
-    };
-  },
-
-  toJSON(message: MatchDetails): unknown {
-    const obj: any = {};
-    message.id !== undefined && (obj.id = message.id);
-    message.connection !== undefined && (obj.connection = message.connection);
-    message.state !== undefined && (obj.state = matchStateToJSON(message.state));
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<MatchDetails>, I>>(base?: I): MatchDetails {
-    return MatchDetails.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<MatchDetails>, I>>(object: I): MatchDetails {
-    const message = createBaseMatchDetails();
-    message.id = object.id ?? "";
-    message.connection = object.connection ?? "";
-    message.state = object.state ?? 0;
-    return message;
-  },
-};
 
 function createBaseUpdateMatchRequest(): UpdateMatchRequest {
   return { id: "", state: 0 };
@@ -261,15 +129,6 @@ export const UpdateMatchRequest = {
 
 export type BackendService = typeof BackendService;
 export const BackendService = {
-  getMatch: {
-    path: "/quip.Backend/GetMatch",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: GetMatchRequest) => Buffer.from(GetMatchRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer) => GetMatchRequest.decode(value),
-    responseSerialize: (value: MatchDetails) => Buffer.from(MatchDetails.encode(value).finish()),
-    responseDeserialize: (value: Buffer) => MatchDetails.decode(value),
-  },
   updateMatch: {
     path: "/quip.Backend/UpdateMatch",
     requestStream: false,
@@ -282,26 +141,10 @@ export const BackendService = {
 } as const;
 
 export interface BackendServer extends UntypedServiceImplementation {
-  getMatch: handleUnaryCall<GetMatchRequest, MatchDetails>;
   updateMatch: handleUnaryCall<UpdateMatchRequest, Empty>;
 }
 
 export interface BackendClient extends Client {
-  getMatch(
-    request: GetMatchRequest,
-    callback: (error: ServiceError | null, response: MatchDetails) => void,
-  ): ClientUnaryCall;
-  getMatch(
-    request: GetMatchRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: MatchDetails) => void,
-  ): ClientUnaryCall;
-  getMatch(
-    request: GetMatchRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: MatchDetails) => void,
-  ): ClientUnaryCall;
   updateMatch(
     request: UpdateMatchRequest,
     callback: (error: ServiceError | null, response: Empty) => void,

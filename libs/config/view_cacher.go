@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 // ViewCacher is used to cache the construction of an object, such as a connection.
@@ -74,24 +75,26 @@ func (c *ViewCacher) locklessReset() {
 // Remember each value as it is read, and can detect if a value has been changed
 // since it was last read.
 type viewChangeDetector struct {
-	cfg       View
-	isSet     map[string]bool
-	get       map[string]string
-	getString map[string]string
-	getInt    map[string]int
-	getInt32  map[string]int32
-	getInt64  map[string]int64
+	cfg         View
+	isSet       map[string]bool
+	get         map[string]string
+	getString   map[string]string
+	getInt      map[string]int
+	getInt32    map[string]int32
+	getInt64    map[string]int64
+	getDuration map[string]time.Duration
 }
 
 func newViewChangeDetector(cfg View) *viewChangeDetector {
 	return &viewChangeDetector{
-		cfg:       cfg,
-		isSet:     make(map[string]bool),
-		get:       make(map[string]string),
-		getString: make(map[string]string),
-		getInt:    make(map[string]int),
-		getInt32:  make(map[string]int32),
-		getInt64:  make(map[string]int64),
+		cfg:         cfg,
+		isSet:       make(map[string]bool),
+		get:         make(map[string]string),
+		getString:   make(map[string]string),
+		getInt:      make(map[string]int),
+		getInt32:    make(map[string]int32),
+		getInt64:    make(map[string]int64),
+		getDuration: make(map[string]time.Duration),
 	}
 }
 
@@ -129,6 +132,12 @@ func (r *viewChangeDetector) GetInt32(k string) int32 {
 func (r *viewChangeDetector) GetInt64(k string) int64 {
 	v := r.cfg.GetInt64(k)
 	r.getInt64[k] = v
+	return v
+}
+
+func (r *viewChangeDetector) GetDuration(k string) time.Duration {
+	v := r.cfg.GetDuration(k)
+	r.getDuration[k] = v
 	return v
 }
 

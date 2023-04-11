@@ -4,17 +4,6 @@ option go_package="github.com/GambitLLC/quip/libs/pb";
 
 import "google/protobuf/empty.proto";
 
-message GetMatchRequest {
-	string id = 1;
-}
-
-message MatchDetails {
-	string id = 1;
-  string connection = 2;
-
-  MatchState state = 3;
-}
-
 enum MatchState {
   MATCH_STATE_UNSPECIFIED = 0;
   MATCH_STATE_PENDING = 1;      // Match has been allocated and is waiting for connections.
@@ -29,7 +18,5 @@ message UpdateMatchRequest {
 }
 
 service Backend {
-	rpc GetMatch(GetMatchRequest) returns (MatchDetails);
-
 	rpc UpdateMatch(UpdateMatchRequest) returns (google.protobuf.Empty);
 }

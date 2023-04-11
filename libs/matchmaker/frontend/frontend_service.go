@@ -88,11 +88,27 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 	defer unlock()
 
 	if player.MatchId != nil {
+		match, err := s.store.GetMatch(ctx, *player.MatchId)
+		if err != nil {
+			if status.Code(err) == codes.NotFound {
+				go func() {
+					// TODO: handle error
+					_ = s.store.UntrackMatch(context.Background(), []string{player.PlayerId})
+				}()
+
+				return &pb.StatusResponse{
+					Status: pb.Status_STATUS_IDLE,
+				}, nil
+			}
+
+			// TODO: handle err instead of propagating
+			return nil, err
+		}
+
 		return &pb.StatusResponse{
 			Status: pb.Status_STATUS_PLAYING,
-			// TODO: get match details
 			Match: &pb.MatchFound{
-				Connection: "some ip",
+				Connection: match.MatchId,
 			},
 		}, nil
 	}
@@ -100,6 +116,17 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 	if player.TicketId != nil {
 		ticket, err := s.omfc.GetTicket(ctx, *player.TicketId)
 		if err != nil {
+			if status.Code(err) == codes.NotFound {
+				go func() {
+					// TODO: handle error
+					_ = s.store.UntrackTicket(context.Background(), []string{player.PlayerId})
+				}()
+
+				return &pb.StatusResponse{
+					Status: pb.Status_STATUS_IDLE,
+				}, nil
+			}
+
 			// TODO: handle err instead of propagating
 			return nil, err
 		}

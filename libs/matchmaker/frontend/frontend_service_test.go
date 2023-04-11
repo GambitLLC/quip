@@ -87,10 +87,17 @@ func TestGetStatus(t *testing.T) {
 			name: "expect PLAYING status",
 			setup: func(ctx context.Context, t *testing.T, s *Service) {
 				randomId := xid.New().String()
-				s.store.CreatePlayer(ctx, &ipb.PlayerInternal{
+				err := s.store.CreateMatch(ctx, &ipb.MatchInternal{
+					MatchId:    randomId,
+					Connection: "some connection",
+				})
+				require.NoError(t, err, "store.CreateMatch failed")
+
+				err = s.store.CreatePlayer(ctx, &ipb.PlayerInternal{
 					PlayerId: playerId,
 					MatchId:  &randomId,
 				})
+				require.NoError(t, err, "store.CreatePlayer failed")
 			},
 			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
 				require.NoError(t, err)

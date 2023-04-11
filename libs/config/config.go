@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
@@ -65,6 +66,7 @@ type View interface {
 	GetInt(string) int
 	GetInt32(string) int32
 	GetInt64(string) int64
+	GetDuration(string) time.Duration
 }
 
 type Mutable interface {

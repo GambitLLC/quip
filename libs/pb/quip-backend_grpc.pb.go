@@ -20,7 +20,6 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Backend_GetMatch_FullMethodName    = "/quip.Backend/GetMatch"
 	Backend_UpdateMatch_FullMethodName = "/quip.Backend/UpdateMatch"
 )
 
@@ -28,7 +27,6 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BackendClient interface {
-	GetMatch(ctx context.Context, in *GetMatchRequest, opts ...grpc.CallOption) (*MatchDetails, error)
 	UpdateMatch(ctx context.Context, in *UpdateMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -38,15 +36,6 @@ type backendClient struct {
 
 func NewBackendClient(cc grpc.ClientConnInterface) BackendClient {
 	return &backendClient{cc}
-}
-
-func (c *backendClient) GetMatch(ctx context.Context, in *GetMatchRequest, opts ...grpc.CallOption) (*MatchDetails, error) {
-	out := new(MatchDetails)
-	err := c.cc.Invoke(ctx, Backend_GetMatch_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *backendClient) UpdateMatch(ctx context.Context, in *UpdateMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
@@ -62,7 +51,6 @@ func (c *backendClient) UpdateMatch(ctx context.Context, in *UpdateMatchRequest,
 // All implementations should embed UnimplementedBackendServer
 // for forward compatibility
 type BackendServer interface {
-	GetMatch(context.Context, *GetMatchRequest) (*MatchDetails, error)
 	UpdateMatch(context.Context, *UpdateMatchRequest) (*emptypb.Empty, error)
 }
 
@@ -70,9 +58,6 @@ type BackendServer interface {
 type UnimplementedBackendServer struct {
 }
 
-func (UnimplementedBackendServer) GetMatch(context.Context, *GetMatchRequest) (*MatchDetails, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetMatch not implemented")
-}
 func (UnimplementedBackendServer) UpdateMatch(context.Context, *UpdateMatchRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateMatch not implemented")
 }
@@ -86,24 +71,6 @@ type UnsafeBackendServer interface {
 
 func RegisterBackendServer(s grpc.ServiceRegistrar, srv BackendServer) {
 	s.RegisterService(&Backend_ServiceDesc, srv)
-}
-
-func _Backend_GetMatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetMatchRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BackendServer).GetMatch(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Backend_GetMatch_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BackendServer).GetMatch(ctx, req.(*GetMatchRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Backend_UpdateMatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -131,10 +98,6 @@ var Backend_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "quip.Backend",
 	HandlerType: (*BackendServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetMatch",
-			Handler:    _Backend_GetMatch_Handler,
-		},
 		{
 			MethodName: "UpdateMatch",
 			Handler:    _Backend_UpdateMatch_Handler,

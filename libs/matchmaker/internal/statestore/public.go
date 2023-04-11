@@ -30,6 +30,14 @@ type Service interface {
 	TrackMatch(ctx context.Context, matchId string, playerIds []string) error
 
 	UntrackMatch(ctx context.Context, playerIds []string) error
+
+	// Matches
+
+	CreateMatch(ctx context.Context, match *ipb.MatchInternal) error
+
+	GetMatch(ctx context.Context, id string) (*ipb.MatchInternal, error)
+
+	UpdateMatchState(ctx context.Context, id string, state ipb.MatchInternal_State) error
 }
 
 func New(cfg config.View) Service {

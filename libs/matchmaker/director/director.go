@@ -123,6 +123,21 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 		return errors.WithMessage(err, "failed to allocate gameserver")
 	}
 
+	err = s.store.CreateMatch(ctx, &ipb.MatchInternal{
+		MatchId:    match.MatchId,
+		Connection: ip,
+		State:      ipb.MatchInternal_STATE_PENDING,
+	})
+	if err != nil {
+		// lazily untrack match and release tickets
+		go func() {
+			// TODO: handle error
+			_ = s.store.UntrackMatch(ctx, players)
+			// TODO: release tickets
+		}()
+		return errors.WithMessage(err, "failed to store match in statestore")
+	}
+
 	go s.broker.PublishQueueUpdate(ctx, &pb.QueueUpdate{
 		Targets: players,
 		Update: &pb.QueueUpdate_Found{
