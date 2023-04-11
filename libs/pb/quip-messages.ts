@@ -9,43 +9,39 @@ export enum Status {
   IDLE = 1,
   SEARCHING = 2,
   PLAYING = 3,
-  UNRECOGNIZED = -1,
 }
 
 export function statusFromJSON(object: any): Status {
   switch (object) {
     case 0:
-    case "OFFLINE":
+    case "STATUS_OFFLINE":
       return Status.OFFLINE;
     case 1:
-    case "IDLE":
+    case "STATUS_IDLE":
       return Status.IDLE;
     case 2:
-    case "SEARCHING":
+    case "STATUS_SEARCHING":
       return Status.SEARCHING;
     case 3:
-    case "PLAYING":
+    case "STATUS_PLAYING":
       return Status.PLAYING;
-    case -1:
-    case "UNRECOGNIZED":
     default:
-      return Status.UNRECOGNIZED;
+      throw new tsProtoGlobalThis.Error("Unrecognized enum value " + object + " for enum Status");
   }
 }
 
 export function statusToJSON(object: Status): string {
   switch (object) {
     case Status.OFFLINE:
-      return "OFFLINE";
+      return "STATUS_OFFLINE";
     case Status.IDLE:
-      return "IDLE";
+      return "STATUS_IDLE";
     case Status.SEARCHING:
-      return "SEARCHING";
+      return "STATUS_SEARCHING";
     case Status.PLAYING:
-      return "PLAYING";
-    case Status.UNRECOGNIZED:
+      return "STATUS_PLAYING";
     default:
-      return "UNRECOGNIZED";
+      throw new tsProtoGlobalThis.Error("Unrecognized enum value " + object + " for enum Status");
   }
 }
 
@@ -396,6 +392,25 @@ export const StatusUpdate = {
     return message;
   },
 };
+
+declare var self: any | undefined;
+declare var window: any | undefined;
+declare var global: any | undefined;
+var tsProtoGlobalThis: any = (() => {
+  if (typeof globalThis !== "undefined") {
+    return globalThis;
+  }
+  if (typeof self !== "undefined") {
+    return self;
+  }
+  if (typeof window !== "undefined") {
+    return window;
+  }
+  if (typeof global !== "undefined") {
+    return global;
+  }
+  throw "Unable to locate global object";
+})();
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 

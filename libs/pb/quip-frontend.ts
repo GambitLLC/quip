@@ -157,11 +157,11 @@ export const StatusResponse = {
   },
 };
 
-export type MatchmakerService = typeof MatchmakerService;
-export const MatchmakerService = {
+export type FrontendService = typeof FrontendService;
+export const FrontendService = {
   /** GetStatus returns the current matchmaking status. */
   getStatus: {
-    path: "/quip.Matchmaker/GetStatus",
+    path: "/quip.Frontend/GetStatus",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
@@ -171,7 +171,7 @@ export const MatchmakerService = {
   },
   /** StartQueue starts searching for a match with the given parameters. */
   startQueue: {
-    path: "/quip.Matchmaker/StartQueue",
+    path: "/quip.Frontend/StartQueue",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: StartQueueRequest) => Buffer.from(StartQueueRequest.encode(value).finish()),
@@ -181,7 +181,7 @@ export const MatchmakerService = {
   },
   /** StopQueue stops searching for a match. Idempotent. */
   stopQueue: {
-    path: "/quip.Matchmaker/StopQueue",
+    path: "/quip.Frontend/StopQueue",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
@@ -191,7 +191,7 @@ export const MatchmakerService = {
   },
 } as const;
 
-export interface MatchmakerServer extends UntypedServiceImplementation {
+export interface FrontendServer extends UntypedServiceImplementation {
   /** GetStatus returns the current matchmaking status. */
   getStatus: handleUnaryCall<Empty, StatusResponse>;
   /** StartQueue starts searching for a match with the given parameters. */
@@ -200,7 +200,7 @@ export interface MatchmakerServer extends UntypedServiceImplementation {
   stopQueue: handleUnaryCall<Empty, Empty>;
 }
 
-export interface MatchmakerClient extends Client {
+export interface FrontendClient extends Client {
   /** GetStatus returns the current matchmaking status. */
   getStatus(request: Empty, callback: (error: ServiceError | null, response: StatusResponse) => void): ClientUnaryCall;
   getStatus(
@@ -245,9 +245,9 @@ export interface MatchmakerClient extends Client {
   ): ClientUnaryCall;
 }
 
-export const MatchmakerClient = makeGenericClientConstructor(MatchmakerService, "quip.Matchmaker") as unknown as {
-  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): MatchmakerClient;
-  service: typeof MatchmakerService;
+export const FrontendClient = makeGenericClientConstructor(FrontendService, "quip.Frontend") as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): FrontendClient;
+  service: typeof FrontendService;
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

@@ -134,7 +134,7 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 
 	go s.broker.PublishStatusUpdate(ctx, &pb.StatusUpdate{
 		Targets: players,
-		Status:  pb.Status_PLAYING,
+		Status:  pb.Status_STATUS_PLAYING,
 	})
 
 	res, err := s.backend.AssignTickets(ctx, &ompb.AssignTicketsRequest{

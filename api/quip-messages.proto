@@ -30,10 +30,10 @@ message MatchFound {
 }
 
 enum Status {
-  OFFLINE = 0;
-  IDLE = 1;
-  SEARCHING = 2;
-  PLAYING = 3;
+  STATUS_OFFLINE = 0;
+  STATUS_IDLE = 1;
+  STATUS_SEARCHING = 2;
+  STATUS_PLAYING = 3;
 }
 
 // Indicates change in status.

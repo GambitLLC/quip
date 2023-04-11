@@ -2,7 +2,7 @@ import { Client } from '@quip/sockets';
 import config from 'config';
 import { newToken } from '../auth';
 import { randomBytes } from 'crypto';
-import { StartQueueRequest, StatusResponse } from '@quip/pb/quip-matchmaker';
+import { StartQueueRequest, StatusResponse } from '@quip/pb/quip-frontend';
 import { QueueUpdate, Status } from '@quip/pb/quip-messages';
 import * as grpc from '@grpc/grpc-js';
 

@@ -66,7 +66,7 @@ func TestStatusUpdate(t *testing.T) {
 
 	msg := &pb.StatusUpdate{
 		Targets: []string{xid.New().String()},
-		Status:  pb.Status_PLAYING,
+		Status:  pb.Status_STATUS_PLAYING,
 	}
 	err = client.PublishStatusUpdate(ctx, msg)
 	require.NoError(t, err, "PublishStatusUpdate failed")

@@ -2,7 +2,6 @@ syntax = "proto3";
 package quip;
 option go_package="github.com/GambitLLC/quip/libs/pb";
 
-import "quip-messages.proto";
 import "google/protobuf/empty.proto";
 
 message GetMatchRequest {
@@ -17,9 +16,10 @@ message MatchDetails {
 }
 
 enum MatchState {
-  MATCH_PENDING = 0;  // Match has been allocated and is waiting for connections.
-  MATCH_PLAYING = 1;  // Match is in progress.
-  MATCH_FINISHED = 2; // Match has completed.
+  MATCH_STATE_UNSPECIFIED = 0;
+  MATCH_STATE_PENDING = 1;      // Match has been allocated and is waiting for connections.
+  MATCH_STATE_PLAYING = 2;      // Match is in progress.
+  MATCH_STATE_FINISHED = 3;     // Match has completed.
 }
 
 message UpdateMatchRequest {

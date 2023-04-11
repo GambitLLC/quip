@@ -78,7 +78,7 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return &pb.StatusResponse{
-				Status: pb.Status_IDLE,
+				Status: pb.Status_STATUS_IDLE,
 			}, nil
 		}
 
@@ -89,7 +89,7 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 
 	if player.MatchId != nil {
 		return &pb.StatusResponse{
-			Status: pb.Status_PLAYING,
+			Status: pb.Status_STATUS_PLAYING,
 			// TODO: get match details
 			Match: &pb.MatchFound{
 				Connection: "some ip",
@@ -112,7 +112,7 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 		}
 
 		return &pb.StatusResponse{
-			Status: pb.Status_SEARCHING,
+			Status: pb.Status_STATUS_SEARCHING,
 			Queue: &pb.QueueStarted{
 				Gamemode:  details.Gamemode,
 				StartTime: ticket.CreateTime,
@@ -121,7 +121,7 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 	}
 
 	return &pb.StatusResponse{
-		Status: pb.Status_IDLE,
+		Status: pb.Status_STATUS_IDLE,
 	}, nil
 }
 
@@ -176,7 +176,7 @@ func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*e
 
 	go s.publish(&pb.StatusUpdate{
 		Targets: players,
-		Status:  pb.Status_SEARCHING,
+		Status:  pb.Status_STATUS_SEARCHING,
 	})
 
 	return &emptypb.Empty{}, nil
@@ -223,7 +223,7 @@ func (s *Service) StopQueue(ctx context.Context, _ *emptypb.Empty) (*emptypb.Emp
 
 	go s.publish(&pb.StatusUpdate{
 		Targets: players,
-		Status:  pb.Status_IDLE,
+		Status:  pb.Status_STATUS_IDLE,
 	})
 
 	return &emptypb.Empty{}, nil

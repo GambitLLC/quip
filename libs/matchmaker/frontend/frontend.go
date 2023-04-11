@@ -11,7 +11,7 @@ import (
 func BindService(cfg config.View, b *appmain.GRPCBindings) error {
 	service := New(cfg)
 	b.AddHandler(func(s *grpc.Server) {
-		pb.RegisterMatchmakerServer(s, service)
+		pb.RegisterFrontendServer(s, service)
 	})
 	b.AddCloser(service.broker.Close)
 	b.AddCloser(service.store.Close)

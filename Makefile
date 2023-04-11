@@ -34,13 +34,16 @@ endif
 
 PROTOC_INCLUDES := api/third-party
 
-TYPESCRIPT_API_PROTOS = libs/pb/quip-matchmaker.ts libs/pb/quip-messages.ts
-GOLANG_API_PROTOS = libs/pb/quip-matchmaker.pb.go libs/pb/quip-messages.pb.go
+PROTO_NAMES = quip-frontend quip-backend quip-messages
+TYPESCRIPT_API_PROTOS = $(foreach proto,$(PROTO_NAMES), libs/pb/$(proto).ts)
+GOLANG_API_PROTOS = $(foreach proto,$(PROTO_NAMES), libs/pb/$(proto).pb.go)
 API_PROTOS = $(GOLANG_API_PROTOS) $(TYPESCRIPT_API_PROTOS)
 
-SWAGGER_JSON_DOCS = api/quip-matchmaker.swagger.json
+SWAGGER_JSON_DOCS = api/quip-frontend.swagger.json
 
 MATCHMAKER_INTERNAL_PROTOS = libs/matchmaker/internal/ipb/messages.pb.go
+
+ALL_PROTOS = $(API_PROTOS) $(MATCHMAKER_INTERNAL_PROTOS) $(SWAGGER_JSON_DOCS)
 
 help:
 	@cat Makefile | grep ^\#\# | grep -v ^\#\#\# |cut -c 4-
@@ -117,6 +120,7 @@ api/third-party/protoc-gen-openapiv2/options:
 ##
 
 ## # Build protobuf definitions
+## all-protos
 ## api-protos
 ## matchmaker-internal-protos
 ##
@@ -124,6 +128,7 @@ api/third-party/protoc-gen-openapiv2/options:
 ## api-docs
 ##
 
+all-protos: $(ALL_PROTOS)
 api-protos: $(API_PROTOS)
 api-docs: $(SWAGGER_JSON_DOCS)
 
@@ -143,7 +148,8 @@ libs/pb/%.pb.go: api/%.proto api/third-party/ $(GO_PROTOC_DEPS)
 		--go-grpc_opt=module=$(GO_MODULE)/libs/pb
 
 # Include proto structure for dependency chain to run properly.
-libs/pb/quip-matchmaker.pb.go: libs/pb/quip-messages.pb.go
+libs/pb/quip-frontend.pb.go: libs/pb/quip-messages.pb.go
+libs/pb/quip-backend.pb.go: libs/pb/quip-messages.pb.go
 
 libs/matchmaker/internal/ipb/%.pb.go: libs/matchmaker/internal/api/%.proto $(GO_PROTOC_DEPS)
 	mkdir -p $(REPOSITORY_ROOT)/libs/matchmaker/internal/ipb
@@ -159,12 +165,18 @@ libs/pb/%.ts: api/%.proto api/third-party/
 		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
 		--ts_proto_out=$(REPOSITORY_ROOT)/libs/pb \
 		--ts_proto_opt=esModuleInterop=true \
-		--ts_proto_opt=outputServices=grpc-js
+		--ts_proto_opt=outputServices=grpc-js \
+		--ts_proto_opt=removeEnumPrefix=true \
+		--ts_proto_opt=unrecognizedEnum=false 
 
 # Include proto structure for dependency chain to run properly.
-libs/pb/quip-matchmaker.ts: libs/pb/quip-messages.ts
+libs/pb/quip-frontend.ts: libs/pb/quip-messages.ts
+libs/pb/quip-backend.ts: libs/pb/quip-messages.ts
 
 api/%.swagger.json: api/%.proto api/third-party/ build/toolchain/bin/protoc$(EXE_EXTENSION) build/toolchain/bin/protoc-gen-openapiv2$(EXE_EXTENSION)
 	$(PROTOC) $(*F).proto \
 		-I $(REPOSITORY_ROOT)/api -I $(PROTOC_INCLUDES) \
 		--openapiv2_out=json_names_for_fields=false,logtostderr=true,allow_delete_body=true:$(REPOSITORY_ROOT)/api
+
+clean-protos:
+	-rm $(foreach proto,$(ALL_PROTOS), $(proto))

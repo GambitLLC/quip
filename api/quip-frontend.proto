@@ -19,7 +19,7 @@ message StatusResponse {
   optional MatchFound match = 3;
 }
 
-service Matchmaker {
+service Frontend {
   // GetStatus returns the current matchmaking status.
   rpc GetStatus(google.protobuf.Empty) returns (StatusResponse);
 

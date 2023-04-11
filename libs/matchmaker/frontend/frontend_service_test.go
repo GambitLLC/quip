@@ -55,7 +55,7 @@ func TestGetStatus(t *testing.T) {
 			setup: nil,
 			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
 				require.NoError(t, err)
-				require.Equal(t, pb.Status_IDLE, sr.Status, "expected status to be IDLE")
+				require.Equal(t, pb.Status_STATUS_IDLE, sr.Status, "expected status to be IDLE")
 			},
 		},
 		{
@@ -78,7 +78,7 @@ func TestGetStatus(t *testing.T) {
 			},
 			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
 				require.NoError(t, err)
-				require.Equal(t, pb.Status_SEARCHING, sr.GetStatus(), "expected status to be SEARCHING")
+				require.Equal(t, pb.Status_STATUS_SEARCHING, sr.GetStatus(), "expected status to be SEARCHING")
 				require.NotNil(t, sr.GetQueue(), "expected queue details")
 				require.Equal(t, "test", sr.Queue.Gamemode, "expected gamemode to be set")
 			},
@@ -94,7 +94,7 @@ func TestGetStatus(t *testing.T) {
 			},
 			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
 				require.NoError(t, err)
-				require.Equal(t, pb.Status_PLAYING, sr.Status, "expected status to be PLAYING")
+				require.Equal(t, pb.Status_STATUS_PLAYING, sr.Status, "expected status to be PLAYING")
 			},
 		},
 	}

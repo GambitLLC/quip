@@ -8,7 +8,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 
-import { MatchmakerClient } from '@quip/pb/quip-matchmaker';
+import { FrontendClient } from '@quip/pb/quip-frontend';
 import { Empty } from '@quip/pb/google/protobuf/empty';
 import { ClientToServerEvents, ServerToClientEvents } from './events';
 import { QueueUpdate, StatusUpdate } from '@quip/pb/quip-messages';
@@ -114,7 +114,7 @@ export const Server = (
   const host = config.get('matchmaker.frontend.hostname');
   const port = config.get('matchmaker.frontend.port');
 
-  const rpc = new MatchmakerClient(
+  const rpc = new FrontendClient(
     `${host}:${port}`,
     credentials.createInsecure()
   );

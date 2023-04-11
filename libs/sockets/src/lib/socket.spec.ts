@@ -11,10 +11,10 @@ process.env.ALLOW_CONFIG_MUTATIONS = 'true';
 import config from 'config';
 
 import {
-  MatchmakerService,
-  MatchmakerServer,
+  FrontendService,
+  FrontendServer,
   StatusResponse,
-} from '@quip/pb/quip-matchmaker';
+} from '@quip/pb/quip-frontend';
 import { Empty } from '@quip/pb/google/protobuf/empty';
 import Server from './server';
 import Client from './client';
@@ -56,7 +56,7 @@ function gotCall(call: Call): boolean {
   );
 }
 
-const mockMatchmaker: MatchmakerServer = {
+const mockFrontend: FrontendServer = {
   getStatus: function (call, cb) {
     const err = trackCall(call, 'getStatus');
     if (err) {
@@ -171,7 +171,7 @@ describe('socket listener', () => {
     // wait for matchmaker service to start so that config is set with proper values
     await new Promise<void>((resolve, reject) => {
       grpc = new grpcServer();
-      grpc.addService(MatchmakerService, mockMatchmaker);
+      grpc.addService(FrontendService, mockFrontend);
       grpc.bindAsync(
         'localhost:0',
         ServerCredentials.createInsecure(),

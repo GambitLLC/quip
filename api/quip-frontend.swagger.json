@@ -1,0 +1,95 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "quip-frontend.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "Frontend"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "googlerpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "quipMatchFound": {
+      "type": "object",
+      "properties": {
+        "connection": {
+          "type": "string"
+        }
+      }
+    },
+    "quipQueueStarted": {
+      "type": "object",
+      "properties": {
+        "gamemode": {
+          "type": "string"
+        },
+        "start_time": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "quipStatus": {
+      "type": "string",
+      "enum": [
+        "STATUS_OFFLINE",
+        "STATUS_IDLE",
+        "STATUS_SEARCHING",
+        "STATUS_PLAYING"
+      ],
+      "default": "STATUS_OFFLINE"
+    },
+    "quipStatusResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/quipStatus"
+        },
+        "queue": {
+          "$ref": "#/definitions/quipQueueStarted",
+          "description": "Details about current queue status."
+        },
+        "match": {
+          "$ref": "#/definitions/quipMatchFound",
+          "description": "Details about the match the user is currently playing in."
+        }
+      }
+    }
+  }
+}
