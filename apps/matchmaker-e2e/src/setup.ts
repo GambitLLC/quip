@@ -60,7 +60,12 @@ module.exports = async function (globalConfig, projectConfig) {
   );
 
   // launch all matchmaker processes
-  const apps = ['matchmaker-frontend', 'matchfunction', 'director'];
+  const apps = [
+    'matchmaker-frontend',
+    'matchmaker-backend',
+    'matchfunction',
+    'director',
+  ];
   const procs = apps.map((app) =>
     spawn(join(process.cwd(), `dist/apps/${app}`), {
       stdio: ['pipe', outputStream, errorStream],

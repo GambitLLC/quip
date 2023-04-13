@@ -1,9 +1,10 @@
 {
-  "name": "quip-e2e",
+  "name": "matchmaker-e2e",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "implicitDependencies": [
     "socket-server",
     "matchmaker-frontend",
+    "matchmaker-backend",
     "director",
     "matchfunction"
   ],
@@ -12,8 +13,8 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "go build -o build/e2e/bin/e2e-setup -tags setup apps/quip-e2e/setup.go",
-          "go build -o build/e2e/bin/e2e-validate -tags validate apps/quip-e2e/validate.go",
+          "go build -o build/e2e/bin/e2e-setup -tags setup apps/matchmaker-e2e/setup.go",
+          "go build -o build/e2e/bin/e2e-validate -tags validate apps/matchmaker-e2e/validate.go",
           "make build/e2e/bin/"
         ]
       }
@@ -22,7 +23,7 @@
       "executor": "@nrwl/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
       "options": {
-        "jestConfig": "apps/quip-e2e/jest.config.ts",
+        "jestConfig": "apps/matchmaker-e2e/jest.config.ts",
         "passWithNoTests": true,
         "silent": false
       },
@@ -32,7 +33,7 @@
       "executor": "@nrwl/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["apps/quip-e2e/**/*.{js,ts}"]
+        "lintFilePatterns": ["apps/matchmaker-e2e/**/*.{js,ts}"]
       }
     }
   }

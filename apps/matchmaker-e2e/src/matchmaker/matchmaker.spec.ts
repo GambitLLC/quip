@@ -3,7 +3,7 @@ import config from 'config';
 import { newToken } from '../auth';
 import { randomBytes } from 'crypto';
 import { StartQueueRequest, StatusResponse } from '@quip/pb/quip-frontend';
-import { QueueUpdate, Status } from '@quip/pb/quip-messages';
+import { QueueUpdate, Status, StatusUpdate } from '@quip/pb/quip-messages';
 import * as grpc from '@grpc/grpc-js';
 
 const sockets: Map<string, Client> = new Map();
@@ -46,7 +46,7 @@ describe('socket connection', () => {
     });
   });
 
-  it('should have idle connection', async () => {
+  it('should get status idle response', async () => {
     const { client } = await newClient();
     const status = await new Promise<StatusResponse>((resolve, reject) => {
       client.emit('getStatus', (err, status) => {
@@ -78,6 +78,7 @@ describe('queueing', () => {
     const gamemode = 'test_100x1';
     let err: Error, client: Client, player: string;
     let queueStartedUpdate: Promise<QueueUpdate>;
+    let statusUpdate: Promise<StatusUpdate>;
 
     beforeAll(async () => {
       ({ client, player } = await newClient());
@@ -86,6 +87,14 @@ describe('queueing', () => {
       queueStartedUpdate = new Promise<QueueUpdate>((resolve) => {
         client.on('queueUpdate', (update) => {
           if (update.targets.includes(player) && update.started) {
+            resolve(update);
+          }
+        });
+      });
+
+      statusUpdate = new Promise<StatusUpdate>((resolve) => {
+        client.on('statusUpdate', (update) => {
+          if (update.targets.includes(player)) {
             resolve(update);
           }
         });
@@ -108,7 +117,12 @@ describe('queueing', () => {
       await queueStartedUpdate;
     });
 
-    it('should have searching status', async () => {
+    it('should receive status searching update', async () => {
+      const update = await statusUpdate;
+      expect(update?.status).toBe(Status.SEARCHING);
+    });
+
+    it('should get status searching response', async () => {
       const status = await new Promise<StatusResponse>((resolve, reject) => {
         client.emit('getStatus', (err, status) => {
           if (err) reject(err);
@@ -145,6 +159,14 @@ describe('queueing', () => {
           });
         });
 
+        statusUpdate = new Promise<StatusUpdate>((resolve) => {
+          client.on('statusUpdate', (update) => {
+            if (update.targets.includes(player)) {
+              resolve(update);
+            }
+          });
+        });
+
         err = await client.emitWithAck('stopQueue');
       });
 
@@ -152,11 +174,16 @@ describe('queueing', () => {
         expect(err).toBeNull();
       });
 
-      it('should have received queue stopped update', async () => {
+      it('should receive queue stopped update', async () => {
         await queueStoppedUpdate;
       });
 
-      it('should be status idle', async () => {
+      it('should receive status idle update', async () => {
+        const update = await statusUpdate;
+        expect(update?.status).toBe(Status.IDLE);
+      });
+
+      it('should get status idle response', async () => {
         const status = await new Promise<StatusResponse>((resolve, reject) => {
           client.emit('getStatus', (err, status) => {
             if (err) reject(err);
@@ -175,6 +202,7 @@ describe('queueing', () => {
 describe('match tests', () => {
   let client: Client, player: string;
   let matchFoundUpdate: Promise<QueueUpdate>;
+  let statusUpdate: Promise<StatusUpdate>;
 
   beforeAll(async () => {
     ({ client, player } = await newClient());
@@ -182,6 +210,18 @@ describe('match tests', () => {
     matchFoundUpdate = new Promise<QueueUpdate>((resolve) => {
       client.on('queueUpdate', (update) => {
         if (update.targets.includes(player) && update.found) resolve(update);
+      });
+    });
+
+    statusUpdate = new Promise<StatusUpdate>((resolve) => {
+      client.on('statusUpdate', (update) => {
+        // check status here because Status.SEARCHING is also sent out once
+        if (
+          update.targets.includes(player) &&
+          update.status == Status.PLAYING
+        ) {
+          resolve(update);
+        }
       });
     });
 
@@ -198,7 +238,11 @@ describe('match tests', () => {
     await matchFoundUpdate;
   }, 20000);
 
-  it('should have status playing', async () => {
+  it('should receive status playing update', async () => {
+    await statusUpdate;
+  });
+
+  it('should get status playing response', async () => {
     const status = await new Promise<StatusResponse>((resolve, reject) => {
       client.emit('getStatus', (err, status) => {
         if (err) reject(err);
@@ -220,5 +264,10 @@ describe('match tests', () => {
     );
 
     expect(err?.code).toBe(grpc.status.FAILED_PRECONDITION);
+  });
+
+  describe('match ending', () => {
+    it.todo('should receive status idle update');
+    it.todo('should get status idle response');
   });
 });

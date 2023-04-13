@@ -1,21 +1,21 @@
 {
-  "name": "director",
+  "name": "matchmaker-backend",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "sourceRoot": "apps/director",
+  "sourceRoot": "apps/matchmaker-backend",
   "targets": {
     "build": {
       "executor": "@nx-go/nx-go:build",
       "options": {
-        "outputPath": "dist/apps/director",
-        "main": "apps/director/main.go"
+        "outputPath": "dist/apps/matchmaker-backend",
+        "main": "apps/matchmaker-backend/main.go"
       }
     },
     "serve": {
       "executor": "@nx-go/nx-go:serve",
       "options": {
         "cwd": ".",
-        "main": "apps/director/main.go"
+        "main": "apps/matchmaker-backend/main.go"
       }
     },
     "lint": {

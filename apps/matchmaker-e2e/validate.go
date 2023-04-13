@@ -23,6 +23,8 @@ var expectedKeys = map[string]string{
 
 	"matchmaker.frontend.hostname":      "localhost",
 	"matchmaker.frontend.port":          "",
+	"matchmaker.backend.hostname":       "localhost",
+	"matchmaker.backend.port":           "",
 	"matchmaker.matchfunction.hostname": "localhost",
 	"matchmaker.matchfunction.port":     "",
 	"matchmaker.redis.hostname":         "localhost",

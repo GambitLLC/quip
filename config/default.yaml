@@ -7,9 +7,12 @@ matchmaker:
   frontend:
     hostname:
     port: 50051
-  matchfunction:
+  backend:
     hostname:
     port: 50052
+  matchfunction:
+    hostname:
+    port: 50059
   redis:
     hostname:
     port: 6379
