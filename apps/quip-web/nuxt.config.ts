@@ -22,6 +22,9 @@ export default defineNuxtConfig({
 
         //Lexend font; styles: 300
         { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Lexend:wght@300&display=swap' },
+        
+        //Rubik font; styles: 400, 700
+        {rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap'}
       ]
     }
   }
