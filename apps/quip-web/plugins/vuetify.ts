@@ -1,0 +1,36 @@
+import { createVuetify, ThemeDefinition } from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
+
+const quipThemeLight: ThemeDefinition = {
+  dark: false,
+  colors: {
+    primary: '#AE50FD',
+    background: '#F0F9FF',
+    white: '#FFFFFF',
+    black: '#000000',
+    jetblack: '#14171F',
+    green: '#AAE9AB',
+    'green-light': '#C7F4C2',
+    purple: '#C6C3FC',
+    'purple-light': '#ECEBFF',
+    blue: '#9BE9F2',
+    'blue-light': '#C2F1F4',
+  }
+}
+
+export default defineNuxtPlugin(nuxtApp => {
+  const vuetify = createVuetify({
+    components,
+    directives,
+    theme: {
+      defaultTheme: 'quipThemeLight',
+      themes: {
+        quipThemeLight
+      }
+
+    }
+  })
+
+  nuxtApp.vueApp.use(vuetify)
+})
