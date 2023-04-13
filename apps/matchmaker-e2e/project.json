@@ -4,6 +4,7 @@
   "implicitDependencies": [
     "socket-server",
     "matchmaker-frontend",
+    "matchmaker-backend",
     "director",
     "matchfunction"
   ],

@@ -18,9 +18,6 @@
         "main": "apps/matchmaker-frontend/main.go"
       }
     },
-    "test": {
-      "executor": "@nx-go/nx-go:test"
-    },
     "lint": {
       "executor": "@nx-go/nx-go:lint"
     }
