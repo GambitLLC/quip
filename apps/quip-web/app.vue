@@ -11,6 +11,7 @@ import {isMobile} from "~/util/utils";
     }"
   >
     <Topbar />
+    <QuipLandingHero />
   </div>
 </template>
 
