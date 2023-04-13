@@ -1,8 +1,15 @@
 <script setup lang="ts">
+import {isMobile} from "~/util/utils";
 </script>
 
 <template>
-  <div class="bg-background h-100 w-100 px-16 py-6">
+  <div
+    class="bg-background h-100 w-100"
+    :class="{
+      'px-16 py-6': !isMobile,
+      'mobilePadding': isMobile
+    }"
+  >
     <Topbar />
   </div>
 </template>
@@ -27,5 +34,9 @@ body {
   height: 100%;
   padding: 0;
   margin: 0;
+}
+
+.mobilePadding {
+  padding: 18px 24px;
 }
 </style>

@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import {useDisplay} from "vuetify";
+import {isMobile} from "~/util/utils";
+
+const display = useDisplay()
 </script>
 
 <template>
-  <div class="topbar">
+  <div v-if="!isMobile" class="topbar">
     <img draggable="false" class="logo unselectable" src="/logo.svg" alt="Quip Logo" />
     <div class="buttons">
       <button class="hover-underline-animation">
@@ -28,14 +32,18 @@
       <QuipButton icon="material-symbols:download-rounded" class="bg-primary mr-3">
         Download App
       </QuipButton>
-      <QuipButton :width="129" class="login text-jetblack">
+      <QuipButton :width="130" class="login text-jetblack">
         Login
       </QuipButton>
     </div>
   </div>
+  <div class="mobileTopbar" v-else>
+    <img draggable="false" class="mobileLogo unselectable" src="/mobileLogo.svg" alt="Quip Logo" />
+  </div>
 </template>
 
 <style scoped>
+/*desktop topbar*/
 .topbar {
   display: flex;
   flex-direction: row;
@@ -58,6 +66,7 @@ button {
 button > h3 {
   font-size: 18px;
   font-weight: normal;
+  line-height: 22px;
 }
 
 .buttons {
@@ -68,5 +77,18 @@ button > h3 {
 
 .login {
   border: solid 2px;
+}
+
+/*mobile topbar*/
+.mobileTopbar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  height: 48px;
+}
+
+.mobileLogo {
+  height: 48px;
 }
 </style>
