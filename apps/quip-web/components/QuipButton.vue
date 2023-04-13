@@ -16,7 +16,7 @@ const props = defineProps({
   color: {
     type: String,
     optional: true
-  }
+  },
 })
 
 const computedWidth = computed(() => {

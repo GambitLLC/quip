@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import {isMobile} from "~/util/utils";
+import {useDisplay} from "vuetify";
+const display = useDisplay()
 </script>
 
 <template>
   <div
-    class="bg-background h-100 w-100"
+    class="bg-background h-100 w-100 px-md-8"
     :class="{
-      'px-16 py-6': !isMobile,
+      'px-lg-16 py-6': !isMobile,
       'mobilePadding': isMobile
     }"
   >

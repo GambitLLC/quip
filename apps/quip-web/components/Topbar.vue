@@ -39,6 +39,10 @@ const display = useDisplay()
   </div>
   <div class="mobileTopbar" v-else>
     <img draggable="false" class="mobileLogo unselectable" src="/mobileLogo.svg" alt="Quip Logo" />
+    <div class="buttons">
+      <IconButton icon="ic:outline-file-download" class="bg-primary mr-2" />
+      <IconButton icon="material-symbols:menu" class="login text-jetblack"/>
+    </div>
   </div>
 </template>
 
