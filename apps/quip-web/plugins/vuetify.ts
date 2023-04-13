@@ -21,6 +21,7 @@ const quipThemeLight: ThemeDefinition = {
 
 export default defineNuxtPlugin(nuxtApp => {
   const vuetify = createVuetify({
+    ssr: true,
     components,
     directives,
     theme: {
@@ -28,7 +29,9 @@ export default defineNuxtPlugin(nuxtApp => {
       themes: {
         quipThemeLight
       }
-
+    },
+    display: {
+      mobileBreakpoint: 'sm',
     }
   })
 
