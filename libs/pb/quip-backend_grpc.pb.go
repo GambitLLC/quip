@@ -20,14 +20,16 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Backend_UpdateMatch_FullMethodName = "/quip.Backend/UpdateMatch"
+	Backend_CreateMatch_FullMethodName      = "/quip.Backend/CreateMatch"
+	Backend_UpdateMatchState_FullMethodName = "/quip.Backend/UpdateMatchState"
 )
 
 // BackendClient is the client API for Backend service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BackendClient interface {
-	UpdateMatch(ctx context.Context, in *UpdateMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreateMatch(ctx context.Context, in *CreateMatchRequest, opts ...grpc.CallOption) (*CreateMatchResponse, error)
+	UpdateMatchState(ctx context.Context, in *UpdateMatchStateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type backendClient struct {
@@ -38,9 +40,18 @@ func NewBackendClient(cc grpc.ClientConnInterface) BackendClient {
 	return &backendClient{cc}
 }
 
-func (c *backendClient) UpdateMatch(ctx context.Context, in *UpdateMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *backendClient) CreateMatch(ctx context.Context, in *CreateMatchRequest, opts ...grpc.CallOption) (*CreateMatchResponse, error) {
+	out := new(CreateMatchResponse)
+	err := c.cc.Invoke(ctx, Backend_CreateMatch_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *backendClient) UpdateMatchState(ctx context.Context, in *UpdateMatchStateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Backend_UpdateMatch_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Backend_UpdateMatchState_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,15 +62,19 @@ func (c *backendClient) UpdateMatch(ctx context.Context, in *UpdateMatchRequest,
 // All implementations should embed UnimplementedBackendServer
 // for forward compatibility
 type BackendServer interface {
-	UpdateMatch(context.Context, *UpdateMatchRequest) (*emptypb.Empty, error)
+	CreateMatch(context.Context, *CreateMatchRequest) (*CreateMatchResponse, error)
+	UpdateMatchState(context.Context, *UpdateMatchStateRequest) (*emptypb.Empty, error)
 }
 
 // UnimplementedBackendServer should be embedded to have forward compatible implementations.
 type UnimplementedBackendServer struct {
 }
 
-func (UnimplementedBackendServer) UpdateMatch(context.Context, *UpdateMatchRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateMatch not implemented")
+func (UnimplementedBackendServer) CreateMatch(context.Context, *CreateMatchRequest) (*CreateMatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateMatch not implemented")
+}
+func (UnimplementedBackendServer) UpdateMatchState(context.Context, *UpdateMatchStateRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateMatchState not implemented")
 }
 
 // UnsafeBackendServer may be embedded to opt out of forward compatibility for this service.
@@ -73,20 +88,38 @@ func RegisterBackendServer(s grpc.ServiceRegistrar, srv BackendServer) {
 	s.RegisterService(&Backend_ServiceDesc, srv)
 }
 
-func _Backend_UpdateMatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateMatchRequest)
+func _Backend_CreateMatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateMatchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BackendServer).UpdateMatch(ctx, in)
+		return srv.(BackendServer).CreateMatch(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Backend_UpdateMatch_FullMethodName,
+		FullMethod: Backend_CreateMatch_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BackendServer).UpdateMatch(ctx, req.(*UpdateMatchRequest))
+		return srv.(BackendServer).CreateMatch(ctx, req.(*CreateMatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Backend_UpdateMatchState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMatchStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BackendServer).UpdateMatchState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Backend_UpdateMatchState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BackendServer).UpdateMatchState(ctx, req.(*UpdateMatchStateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -99,8 +132,12 @@ var Backend_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*BackendServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "UpdateMatch",
-			Handler:    _Backend_UpdateMatch_Handler,
+			MethodName: "CreateMatch",
+			Handler:    _Backend_CreateMatch_Handler,
+		},
+		{
+			MethodName: "UpdateMatchState",
+			Handler:    _Backend_UpdateMatchState_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

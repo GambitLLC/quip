@@ -13,32 +13,32 @@ import {
 } from "@grpc/grpc-js";
 import _m0 from "protobufjs/minimal";
 import { Empty } from "./google/protobuf/empty";
-import { MatchFound, QueueStarted, Status, statusFromJSON, statusToJSON } from "./quip-messages";
+import { GameConfiguration, MatchFound, QueueSearching, Status, statusFromJSON, statusToJSON } from "./quip-messages";
 
 export const protobufPackage = "quip";
 
 export interface StartQueueRequest {
-  gamemode: string;
+  config: GameConfiguration | undefined;
 }
 
 export interface StatusResponse {
   status: Status;
   /** Details about current queue status. */
   queue?:
-    | QueueStarted
+    | QueueSearching
     | undefined;
   /** Details about the match the user is currently playing in. */
   match?: MatchFound | undefined;
 }
 
 function createBaseStartQueueRequest(): StartQueueRequest {
-  return { gamemode: "" };
+  return { config: undefined };
 }
 
 export const StartQueueRequest = {
   encode(message: StartQueueRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.gamemode !== "") {
-      writer.uint32(10).string(message.gamemode);
+    if (message.config !== undefined) {
+      GameConfiguration.encode(message.config, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
@@ -51,7 +51,7 @@ export const StartQueueRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.gamemode = reader.string();
+          message.config = GameConfiguration.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -62,12 +62,13 @@ export const StartQueueRequest = {
   },
 
   fromJSON(object: any): StartQueueRequest {
-    return { gamemode: isSet(object.gamemode) ? String(object.gamemode) : "" };
+    return { config: isSet(object.config) ? GameConfiguration.fromJSON(object.config) : undefined };
   },
 
   toJSON(message: StartQueueRequest): unknown {
     const obj: any = {};
-    message.gamemode !== undefined && (obj.gamemode = message.gamemode);
+    message.config !== undefined &&
+      (obj.config = message.config ? GameConfiguration.toJSON(message.config) : undefined);
     return obj;
   },
 
@@ -77,7 +78,9 @@ export const StartQueueRequest = {
 
   fromPartial<I extends Exact<DeepPartial<StartQueueRequest>, I>>(object: I): StartQueueRequest {
     const message = createBaseStartQueueRequest();
-    message.gamemode = object.gamemode ?? "";
+    message.config = (object.config !== undefined && object.config !== null)
+      ? GameConfiguration.fromPartial(object.config)
+      : undefined;
     return message;
   },
 };
@@ -92,7 +95,7 @@ export const StatusResponse = {
       writer.uint32(8).int32(message.status);
     }
     if (message.queue !== undefined) {
-      QueueStarted.encode(message.queue, writer.uint32(18).fork()).ldelim();
+      QueueSearching.encode(message.queue, writer.uint32(18).fork()).ldelim();
     }
     if (message.match !== undefined) {
       MatchFound.encode(message.match, writer.uint32(26).fork()).ldelim();
@@ -111,7 +114,7 @@ export const StatusResponse = {
           message.status = reader.int32() as any;
           break;
         case 2:
-          message.queue = QueueStarted.decode(reader, reader.uint32());
+          message.queue = QueueSearching.decode(reader, reader.uint32());
           break;
         case 3:
           message.match = MatchFound.decode(reader, reader.uint32());
@@ -127,7 +130,7 @@ export const StatusResponse = {
   fromJSON(object: any): StatusResponse {
     return {
       status: isSet(object.status) ? statusFromJSON(object.status) : 0,
-      queue: isSet(object.queue) ? QueueStarted.fromJSON(object.queue) : undefined,
+      queue: isSet(object.queue) ? QueueSearching.fromJSON(object.queue) : undefined,
       match: isSet(object.match) ? MatchFound.fromJSON(object.match) : undefined,
     };
   },
@@ -135,7 +138,7 @@ export const StatusResponse = {
   toJSON(message: StatusResponse): unknown {
     const obj: any = {};
     message.status !== undefined && (obj.status = statusToJSON(message.status));
-    message.queue !== undefined && (obj.queue = message.queue ? QueueStarted.toJSON(message.queue) : undefined);
+    message.queue !== undefined && (obj.queue = message.queue ? QueueSearching.toJSON(message.queue) : undefined);
     message.match !== undefined && (obj.match = message.match ? MatchFound.toJSON(message.match) : undefined);
     return obj;
   },
@@ -148,7 +151,7 @@ export const StatusResponse = {
     const message = createBaseStatusResponse();
     message.status = object.status ?? 0;
     message.queue = (object.queue !== undefined && object.queue !== null)
-      ? QueueStarted.fromPartial(object.queue)
+      ? QueueSearching.fromPartial(object.queue)
       : undefined;
     message.match = (object.match !== undefined && object.match !== null)
       ? MatchFound.fromPartial(object.match)
