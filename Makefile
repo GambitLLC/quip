@@ -48,9 +48,24 @@ ALL_PROTOS = $(API_PROTOS) $(MATCHMAKER_INTERNAL_PROTOS) $(SWAGGER_JSON_DOCS)
 help:
 	@cat Makefile | grep ^\#\# | grep -v ^\#\#\# |cut -c 4-
 
-## # Install toolchain. Short for installing protoc tools.
-## install-toolchain
+## ####################################
+## # Install
 ##
+
+## # Install npm dependencies and protoc tools.
+## install
+##
+## install-npm
+## install-toolchain
+## 
+
+install: install-npm install-toolchain
+
+install-npm: node_modules
+
+# Add dependency on package.json so recipe runs on any dependency changes.
+node_modules: package.json
+	npm install
 
 install-toolchain: install-protoc-tools
 
@@ -116,6 +131,16 @@ api/third-party/protoc-gen-openapiv2/options:
 	rm -rf $(TOOLCHAIN_DIR)/grpc-gateway-temp
 
 ## ####################################
+## # Testing
+##
+## test
+##
+
+.PHONY: test
+test: install-npm
+	npx nx run-many --target=test --all
+
+## ####################################
 ## # Protobuf
 ##
 
@@ -177,6 +202,14 @@ api/%.swagger.json: api/%.proto api/third-party/ build/toolchain/bin/protoc$(EXE
 	$(PROTOC) $(*F).proto \
 		-I $(REPOSITORY_ROOT)/api -I $(PROTOC_INCLUDES) \
 		--openapiv2_out=json_names_for_fields=false,logtostderr=true,allow_delete_body=true:$(REPOSITORY_ROOT)/api
+
+## ####################################
+## # Cleaning
+##
+
+## # clean generated proto files
+## clean-protos
+##
 
 clean-protos:
 	-rm $(foreach proto,$(ALL_PROTOS), $(proto))
