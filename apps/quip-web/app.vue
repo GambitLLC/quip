@@ -3,7 +3,7 @@ import Topbar from "~/components/Topbar.vue";
 </script>
 
 <template>
-  <div class="bg bg-background">
+  <div class="bg-background h-100 w-100 px-16 py-6">
     <Topbar />
   </div>
 </template>
@@ -28,10 +28,5 @@ body {
   height: 100%;
   padding: 0;
   margin: 0;
-}
-
-.bg {
-  width: 100%;
-  height: 100%;
 }
 </style>
