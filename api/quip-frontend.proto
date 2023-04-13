@@ -6,14 +6,14 @@ import "quip-messages.proto";
 import "google/protobuf/empty.proto";
 
 message StartQueueRequest {
-  string gamemode = 1;
+  GameConfiguration config = 1;
 }
 
 message StatusResponse {
   Status status = 1;
 
   // Details about current queue status.
-  optional QueueStarted queue = 2;
+  optional QueueSearching queue = 2;
 
   // Details about the match the user is currently playing in.
   optional MatchFound match = 3;

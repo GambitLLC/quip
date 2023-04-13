@@ -112,6 +112,7 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 		return errors.WithMessage(err, "failed to track match")
 	}
 
+	// TODO: remove all agones references from director -- director shall call backend.CreateMatch
 	ip, err := s.agones.Allocate(ctx, match)
 	if err != nil {
 		// lazily untrack match and release tickets

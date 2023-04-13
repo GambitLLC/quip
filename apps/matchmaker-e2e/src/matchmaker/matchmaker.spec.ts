@@ -68,7 +68,9 @@ describe('queueing', () => {
     const err = await client.emitWithAck(
       'startQueue',
       StartQueueRequest.create({
-        gamemode: 'invalid gamemode zzz',
+        config: {
+          gamemode: 'invalid gamemode zzz',
+        },
       })
     );
     expect(err?.code).toBe(grpc.status.INVALID_ARGUMENT);
@@ -104,7 +106,9 @@ describe('queueing', () => {
       err = await client.emitWithAck(
         'startQueue',
         StartQueueRequest.create({
-          gamemode,
+          config: {
+            gamemode,
+          },
         })
       );
     });
@@ -139,7 +143,9 @@ describe('queueing', () => {
       const err = await client.emitWithAck(
         'startQueue',
         StartQueueRequest.create({
-          gamemode: 'test',
+          config: {
+            gamemode: 'test',
+          },
         })
       );
 
@@ -153,7 +159,7 @@ describe('queueing', () => {
       beforeAll(async () => {
         queueStoppedUpdate = new Promise<QueueUpdate>((resolve) => {
           client.on('queueUpdate', (update) => {
-            if (update.targets.includes(player) && update.stopped) {
+            if (update.targets.includes(player) && update.finished) {
               resolve(update);
             }
           });
@@ -228,7 +234,9 @@ describe('match tests', () => {
     const err = await client.emitWithAck(
       'startQueue',
       StartQueueRequest.create({
-        gamemode: 'test',
+        config: {
+          gamemode: 'test',
+        },
       })
     );
     expect(err).toBeNull();
@@ -259,7 +267,9 @@ describe('match tests', () => {
     const err = await client.emitWithAck(
       'startQueue',
       StartQueueRequest.create({
-        gamemode: 'test',
+        config: {
+          gamemode: 'test',
+        },
       })
     );
 

@@ -21,11 +21,20 @@ func New(cfg config.View) *Service {
 	}
 }
 
-func (s *Service) UpdateMatch(ctx context.Context, req *pb.UpdateMatchRequest) (*emptypb.Empty, error) {
+func (s *Service) CreateMatch(_ context.Context, _ *pb.CreateMatchRequest) (*pb.CreateMatchResponse, error) {
+	panic("not implemented") // TODO: Implement
+	// CreateMatch should allocate a match from Agones and start tracking the gameservers (health checks)
+}
+
+func (s *Service) UpdateMatchState(ctx context.Context, req *pb.UpdateMatchStateRequest) (*emptypb.Empty, error) {
 	err := s.store.UpdateMatchState(ctx, req.Id, ipb.MatchInternal_State(req.State))
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: handle match finishing
+	// if req.State == pb.MatchState_MATCH_STATE_FINISHED {
+	// }
 
 	return &emptypb.Empty{}, nil
 }
