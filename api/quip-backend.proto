@@ -13,8 +13,6 @@ enum MatchState {
 }
 
 message MatchDetails {
-  string match_id = 1;
-
   message Team {
     repeated string players = 1;
   }
@@ -23,8 +21,10 @@ message MatchDetails {
 }
 
 message CreateMatchRequest {
-  GameConfiguration game_config = 1;
-  MatchDetails match_details = 2;
+  string match_id = 1;
+
+  GameConfiguration game_config = 2;
+  MatchDetails match_details = 3;
 }
 
 message CreateMatchResponse {

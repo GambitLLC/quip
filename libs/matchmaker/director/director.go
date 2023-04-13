@@ -12,29 +12,28 @@ import (
 	"github.com/GambitLLC/quip/libs/broker"
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	"github.com/GambitLLC/quip/libs/pb"
 	"github.com/pkg/errors"
 )
 
 type Service struct {
-	cfg     config.View
-	backend *omBackendClient
-	agones  *agonesAllocationClient
-	store   statestore.Service
-	broker  broker.Client
-	pc      *games.MatchProfileCache
+	cfg       config.View
+	store     statestore.Service
+	omBackend *omBackendClient
+	backend   *backendClient
+	broker    broker.Client
+	pc        *games.MatchProfileCache
 }
 
 func New(cfg config.View) appmain.Daemon {
 	return &Service{
-		cfg:     cfg,
-		backend: newOMBackendClient(cfg),
-		agones:  newAgonesAllocationClient(cfg),
-		store:   statestore.New(cfg),
-		broker:  broker.NewRedis(cfg),
-		pc:      games.NewMatchProfileCache(),
+		cfg:       cfg,
+		store:     statestore.New(cfg),
+		omBackend: newOMBackendClient(cfg),
+		backend:   newBackendClient(cfg),
+		broker:    broker.NewRedis(cfg),
+		pc:        games.NewMatchProfileCache(),
 	}
 }
 
@@ -64,7 +63,7 @@ func (s *Service) Start(ctx context.Context) error {
 					ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 					defer cancel()
 
-					matches, err := s.backend.FetchMatches(ctx, &ompb.FetchMatchesRequest{
+					matches, err := s.omBackend.FetchMatches(ctx, &ompb.FetchMatchesRequest{
 						Config: &ompb.FunctionConfig{
 							Host: s.cfg.GetString("matchmaker.matchfunction.hostname"),
 							Port: s.cfg.GetInt32("matchmaker.matchfunction.port"),
@@ -94,56 +93,44 @@ func (s *Service) Start(ctx context.Context) error {
 }
 
 func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
-	players := make([]string, len(match.Tickets))
+	gameCfg := &pb.GameConfiguration{}
+	err := match.Extensions["game_config"].UnmarshalTo(gameCfg)
+	if err != nil {
+		return errors.WithMessage(err, "failed to parse game config")
+	}
+
+	matchDetails := &pb.MatchDetails{}
+	err = match.Extensions["match_details"].UnmarshalTo(matchDetails)
+	if err != nil {
+		return errors.WithMessage(err, "failed to parse match details")
+	}
+
+	resp, err := s.backend.CreateMatch(ctx, &pb.CreateMatchRequest{
+		MatchId:      match.MatchId,
+		GameConfig:   gameCfg,
+		MatchDetails: matchDetails,
+	})
+
+	if err != nil {
+		// TODO: release tickets
+		return err
+	}
+
 	ticketIds := make([]string, len(match.Tickets))
 	for i, ticket := range match.Tickets {
 		ticketIds[i] = ticket.Id
-		details := &ipb.TicketInternal{}
-		err := ticket.Extensions["details"].UnmarshalTo(details)
-		if err != nil {
-			return errors.WithMessagef(err, "failed to read details on ticket '%s", ticket.Id)
-		}
-
-		players[i] = details.PlayerId
 	}
 
-	err := s.store.TrackMatch(ctx, match.MatchId, players)
-	if err != nil {
-		return errors.WithMessage(err, "failed to track match")
-	}
-
-	// TODO: remove all agones references from director -- director shall call backend.CreateMatch
-	ip, err := s.agones.Allocate(ctx, match)
-	if err != nil {
-		// lazily untrack match and release tickets
-		go func() {
-			// TODO: handle error
-			_ = s.store.UntrackMatch(ctx, players)
-			// TODO: release tickets
-		}()
-		return errors.WithMessage(err, "failed to allocate gameserver")
-	}
-
-	err = s.store.CreateMatch(ctx, &ipb.MatchInternal{
-		MatchId:    match.MatchId,
-		Connection: ip,
-		State:      ipb.MatchInternal_STATE_PENDING,
-	})
-	if err != nil {
-		// lazily untrack match and release tickets
-		go func() {
-			// TODO: handle error
-			_ = s.store.UntrackMatch(ctx, players)
-			// TODO: release tickets
-		}()
-		return errors.WithMessage(err, "failed to store match in statestore")
+	players := make([]string, 0, len(matchDetails.Teams))
+	for _, team := range matchDetails.Teams {
+		players = append(players, team.Players...)
 	}
 
 	go s.broker.PublishQueueUpdate(ctx, &pb.QueueUpdate{
 		Targets: players,
 		Update: &pb.QueueUpdate_Found{
 			Found: &pb.MatchFound{
-				Connection: ip,
+				Connection: resp.Connection,
 			},
 		},
 	})
@@ -153,12 +140,12 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 		Status:  pb.Status_STATUS_PLAYING,
 	})
 
-	res, err := s.backend.AssignTickets(ctx, &ompb.AssignTicketsRequest{
+	res, err := s.omBackend.AssignTickets(ctx, &ompb.AssignTicketsRequest{
 		Assignments: []*ompb.AssignmentGroup{
 			{
 				TicketIds: ticketIds,
 				Assignment: &ompb.Assignment{
-					Connection: ip,
+					Connection: resp.Connection,
 				},
 			},
 		},

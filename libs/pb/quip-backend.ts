@@ -62,7 +62,6 @@ export function matchStateToJSON(object: MatchState): string {
 }
 
 export interface MatchDetails {
-  matchId: string;
   teams: MatchDetails_Team[];
 }
 
@@ -71,6 +70,7 @@ export interface MatchDetails_Team {
 }
 
 export interface CreateMatchRequest {
+  matchId: string;
   gameConfig: GameConfiguration | undefined;
   matchDetails: MatchDetails | undefined;
 }
@@ -85,14 +85,11 @@ export interface UpdateMatchStateRequest {
 }
 
 function createBaseMatchDetails(): MatchDetails {
-  return { matchId: "", teams: [] };
+  return { teams: [] };
 }
 
 export const MatchDetails = {
   encode(message: MatchDetails, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.matchId !== "") {
-      writer.uint32(10).string(message.matchId);
-    }
     for (const v of message.teams) {
       MatchDetails_Team.encode(v!, writer.uint32(18).fork()).ldelim();
     }
@@ -106,9 +103,6 @@ export const MatchDetails = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        case 1:
-          message.matchId = reader.string();
-          break;
         case 2:
           message.teams.push(MatchDetails_Team.decode(reader, reader.uint32()));
           break;
@@ -121,15 +115,11 @@ export const MatchDetails = {
   },
 
   fromJSON(object: any): MatchDetails {
-    return {
-      matchId: isSet(object.matchId) ? String(object.matchId) : "",
-      teams: Array.isArray(object?.teams) ? object.teams.map((e: any) => MatchDetails_Team.fromJSON(e)) : [],
-    };
+    return { teams: Array.isArray(object?.teams) ? object.teams.map((e: any) => MatchDetails_Team.fromJSON(e)) : [] };
   },
 
   toJSON(message: MatchDetails): unknown {
     const obj: any = {};
-    message.matchId !== undefined && (obj.matchId = message.matchId);
     if (message.teams) {
       obj.teams = message.teams.map((e) => e ? MatchDetails_Team.toJSON(e) : undefined);
     } else {
@@ -144,7 +134,6 @@ export const MatchDetails = {
 
   fromPartial<I extends Exact<DeepPartial<MatchDetails>, I>>(object: I): MatchDetails {
     const message = createBaseMatchDetails();
-    message.matchId = object.matchId ?? "";
     message.teams = object.teams?.map((e) => MatchDetails_Team.fromPartial(e)) || [];
     return message;
   },
@@ -206,16 +195,19 @@ export const MatchDetails_Team = {
 };
 
 function createBaseCreateMatchRequest(): CreateMatchRequest {
-  return { gameConfig: undefined, matchDetails: undefined };
+  return { matchId: "", gameConfig: undefined, matchDetails: undefined };
 }
 
 export const CreateMatchRequest = {
   encode(message: CreateMatchRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.matchId !== "") {
+      writer.uint32(10).string(message.matchId);
+    }
     if (message.gameConfig !== undefined) {
-      GameConfiguration.encode(message.gameConfig, writer.uint32(10).fork()).ldelim();
+      GameConfiguration.encode(message.gameConfig, writer.uint32(18).fork()).ldelim();
     }
     if (message.matchDetails !== undefined) {
-      MatchDetails.encode(message.matchDetails, writer.uint32(18).fork()).ldelim();
+      MatchDetails.encode(message.matchDetails, writer.uint32(26).fork()).ldelim();
     }
     return writer;
   },
@@ -228,9 +220,12 @@ export const CreateMatchRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.gameConfig = GameConfiguration.decode(reader, reader.uint32());
+          message.matchId = reader.string();
           break;
         case 2:
+          message.gameConfig = GameConfiguration.decode(reader, reader.uint32());
+          break;
+        case 3:
           message.matchDetails = MatchDetails.decode(reader, reader.uint32());
           break;
         default:
@@ -243,6 +238,7 @@ export const CreateMatchRequest = {
 
   fromJSON(object: any): CreateMatchRequest {
     return {
+      matchId: isSet(object.matchId) ? String(object.matchId) : "",
       gameConfig: isSet(object.gameConfig) ? GameConfiguration.fromJSON(object.gameConfig) : undefined,
       matchDetails: isSet(object.matchDetails) ? MatchDetails.fromJSON(object.matchDetails) : undefined,
     };
@@ -250,6 +246,7 @@ export const CreateMatchRequest = {
 
   toJSON(message: CreateMatchRequest): unknown {
     const obj: any = {};
+    message.matchId !== undefined && (obj.matchId = message.matchId);
     message.gameConfig !== undefined &&
       (obj.gameConfig = message.gameConfig ? GameConfiguration.toJSON(message.gameConfig) : undefined);
     message.matchDetails !== undefined &&
@@ -263,6 +260,7 @@ export const CreateMatchRequest = {
 
   fromPartial<I extends Exact<DeepPartial<CreateMatchRequest>, I>>(object: I): CreateMatchRequest {
     const message = createBaseCreateMatchRequest();
+    message.matchId = object.matchId ?? "";
     message.gameConfig = (object.gameConfig !== undefined && object.gameConfig !== null)
       ? GameConfiguration.fromPartial(object.gameConfig)
       : undefined;

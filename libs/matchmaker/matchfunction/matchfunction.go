@@ -9,12 +9,14 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 	"open-match.dev/open-match/pkg/matchfunction"
-	"open-match.dev/open-match/pkg/pb"
+	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/appmain"
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
+	"github.com/GambitLLC/quip/libs/pb"
 )
 
 type Service struct {
@@ -30,13 +32,13 @@ func New(cfg config.View) *Service {
 func BindService(cfg config.View, b *appmain.GRPCBindings) error {
 	service := New(cfg)
 	b.AddHandler(func(s *grpc.Server) {
-		pb.RegisterMatchFunctionServer(s, service)
+		ompb.RegisterMatchFunctionServer(s, service)
 	})
 
 	return nil
 }
 
-func (s *Service) Run(req *pb.RunRequest, stream pb.MatchFunction_RunServer) error {
+func (s *Service) Run(req *ompb.RunRequest, stream ompb.MatchFunction_RunServer) error {
 	log.Printf("Generating proposals for function %v", req.GetProfile().GetName())
 
 	client, err := s.query.GetClient()
@@ -57,7 +59,7 @@ func (s *Service) Run(req *pb.RunRequest, stream pb.MatchFunction_RunServer) err
 
 	log.Printf("Streaming %v proposals to Open Match", len(proposals))
 	for _, proposal := range proposals {
-		if err := stream.Send(&pb.RunResponse{Proposal: proposal}); err != nil {
+		if err := stream.Send(&ompb.RunResponse{Proposal: proposal}); err != nil {
 			return status.Errorf(codes.Unknown, "stream proposals to Open Match failed: %s", err)
 		}
 	}
@@ -65,7 +67,7 @@ func (s *Service) Run(req *pb.RunRequest, stream pb.MatchFunction_RunServer) err
 	return nil
 }
 
-func makeMatches(p *pb.MatchProfile, poolTickets map[string][]*pb.Ticket) ([]*pb.Match, error) {
+func makeMatches(p *ompb.MatchProfile, poolTickets map[string][]*ompb.Ticket) ([]*ompb.Match, error) {
 	gameDetails := &ipb.GameDetails{}
 	if err := p.Extensions["details"].UnmarshalTo(gameDetails); err != nil {
 		return nil, errors.WithMessagef(err, "failed to unmarshal game details from MatchProfile")
@@ -83,7 +85,15 @@ func makeMatches(p *pb.MatchProfile, poolTickets map[string][]*pb.Ticket) ([]*pb
 		return nil, errors.Errorf("missing required pool named 'all'")
 	}
 
-	matches := []*pb.Match{}
+	gameCfg := &pb.GameConfiguration{
+		Gamemode: gameDetails.Gamemode,
+	}
+	gameCfgAny, err := anypb.New(gameCfg)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create anypb from game config: %s", err.Error())
+	}
+
+	matches := []*ompb.Match{}
 	for {
 		if len(tickets) < ticketsPerMatch {
 			break
@@ -92,13 +102,47 @@ func makeMatches(p *pb.MatchProfile, poolTickets map[string][]*pb.Ticket) ([]*pb
 		matchTickets := tickets[:ticketsPerMatch]
 		tickets = tickets[ticketsPerMatch:]
 
-		matches = append(matches, &pb.Match{
+		matchDetails, err := CreateMatchDetails(matchTickets)
+		if err != nil {
+			return nil, err
+		}
+
+		matchDetailsAny, err := anypb.New(matchDetails)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to create anypb from match details: %s", err.Error())
+		}
+
+		matches = append(matches, &ompb.Match{
 			MatchId:       fmt.Sprintf("profile-%v-%s", p.GetName(), xid.New().String()),
 			MatchProfile:  p.GetName(),
 			MatchFunction: "basic-matchfunction",
-			Tickets:       matchTickets,
+			Extensions: map[string]*anypb.Any{
+				"game_config":   gameCfgAny,
+				"match_details": matchDetailsAny,
+			},
 		})
 	}
 
 	return matches, nil
+}
+
+func CreateMatchDetails(tickets []*ompb.Ticket) (*pb.MatchDetails, error) {
+	teams := make([]*pb.MatchDetails_Team, len(tickets))
+	for i, ticket := range tickets {
+		details := &ipb.TicketInternal{}
+		err := ticket.Extensions["details"].UnmarshalTo(details)
+		if err != nil {
+			return nil, errors.WithMessagef(err, "failed to read details on ticket '%s", ticket.Id)
+		}
+
+		teams[i] = &pb.MatchDetails_Team{
+			Players: []string{details.PlayerId},
+		}
+	}
+
+	matchDetails := &pb.MatchDetails{
+		Teams: teams,
+	}
+
+	return matchDetails, nil
 }
