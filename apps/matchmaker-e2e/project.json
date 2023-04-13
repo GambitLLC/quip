@@ -8,7 +8,7 @@
     "matchfunction"
   ],
   "targets": {
-    "build-setup": {
+    "build": {
       "executor": "nx:run-commands",
       "options": {
         "commands": [
@@ -26,7 +26,7 @@
         "passWithNoTests": true,
         "silent": false
       },
-      "dependsOn": ["^build", "build-setup"]
+      "dependsOn": ["build"]
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
