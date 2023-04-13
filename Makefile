@@ -138,7 +138,7 @@ api/third-party/protoc-gen-openapiv2/options:
 
 .PHONY: test
 test: install-npm
-	npx nx run-many --target=test --all
+	npx nx run-many --targets=test,e2e --all
 
 ## ####################################
 ## # Protobuf
