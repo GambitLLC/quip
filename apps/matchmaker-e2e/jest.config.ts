@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-  displayName: 'quip-e2e',
+  displayName: 'matchmaker-e2e',
   preset: '../..//jest.preset.js',
   setupFiles: ['<rootDir>/src/test-setup.ts'],
   globalSetup: '<rootDir>/src/setup.ts',
@@ -15,5 +15,5 @@ export default {
     ],
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
-  // coverageDirectory: '../../coverage/quip-e2e',
+  // coverageDirectory: '../../coverage/matchmaker-e2e',
 };
