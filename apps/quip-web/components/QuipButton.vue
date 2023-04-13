@@ -30,6 +30,7 @@ const computedWidth = computed(() => {
     :style="{
       width: computedWidth
     }"
+    class="co-headline font-weight-bold"
   >
     <div>
       <Icon class="icon mr-2" v-if="props.icon !== undefined" :icon="props.icon ?? ''"/>
@@ -46,8 +47,7 @@ button {
   border-radius: 70px;
   padding: 12px 24px;
   height: 48px;
-  font-family: 'co-headline';
-  font-weight: bold;
+  font-size: 18px;
 }
 
 button > div {

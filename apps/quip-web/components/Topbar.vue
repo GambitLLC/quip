@@ -3,12 +3,28 @@
 
 <template>
   <div class="topbar">
-    <img class="logo" src="/logo.svg" alt="Quip Logo" />
+    <img draggable="false" class="logo unselectable" src="/logo.svg" alt="Quip Logo" />
     <div class="buttons">
-      <button>Home</button>
-      <button>About</button>
-      <button>Games</button>
-      <button class="mr-3">FAQ</button>
+      <button class="hover-underline-animation">
+        <h3>
+          Home
+        </h3>
+      </button>
+      <button class="hover-underline-animation">
+        <h3>
+          About
+        </h3>
+      </button>
+      <button class="hover-underline-animation">
+        <h3>
+          Games
+        </h3>
+      </button>
+      <button class="mr-3 hover-underline-animation">
+        <h3>
+          FAQ
+        </h3>
+      </button>
       <QuipButton icon="material-symbols:download-rounded" class="bg-primary mr-3">
         Download App
       </QuipButton>
@@ -37,7 +53,10 @@ button {
   border: none;
   cursor: pointer;
   padding: 13px 20px;
-  font-family: 'co-headline';
+}
+
+button > h3 {
+  font-size: 18px;
   font-weight: normal;
 }
 
