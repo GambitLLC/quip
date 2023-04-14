@@ -126,16 +126,17 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 		players = append(players, team.Players...)
 	}
 
-	go s.broker.PublishQueueUpdate(ctx, &pb.QueueUpdate{
+	go s.broker.PublishQueueUpdate(context.Background(), &pb.QueueUpdate{
 		Targets: players,
 		Update: &pb.QueueUpdate_Found{
 			Found: &pb.MatchFound{
+				MatchId:    match.MatchId,
 				Connection: resp.Connection,
 			},
 		},
 	})
 
-	go s.broker.PublishStatusUpdate(ctx, &pb.StatusUpdate{
+	go s.broker.PublishStatusUpdate(context.Background(), &pb.StatusUpdate{
 		Targets: players,
 		Status:  pb.Status_STATUS_PLAYING,
 	})

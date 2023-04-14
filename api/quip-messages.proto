@@ -35,7 +35,8 @@ message QueueFinished {
 }
 
 message MatchFound {
-  string connection = 1;
+  string match_id = 1;
+  string connection = 2;
 }
 
 enum Status {

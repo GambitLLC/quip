@@ -31,14 +31,12 @@ message CreateMatchResponse {
   string connection = 1;
 }
 
-message UpdateMatchStateRequest {
-	string id = 1;
-
-	MatchState state = 2;
+message DeleteMatchRequest {
+  string match_id = 1;
 }
 
 service Backend {
   rpc CreateMatch(CreateMatchRequest) returns (CreateMatchResponse);
 
-	rpc UpdateMatchState(UpdateMatchStateRequest) returns (google.protobuf.Empty);
+  rpc DeleteMatch(DeleteMatchRequest) returns (google.protobuf.Empty);
 }

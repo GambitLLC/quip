@@ -2,11 +2,13 @@ package backend
 
 import (
 	"context"
+	"log"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/GambitLLC/quip/libs/broker"
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
@@ -16,12 +18,14 @@ import (
 type Service struct {
 	store  statestore.Service
 	agones *agonesAllocationClient
+	broker broker.Client
 }
 
 func New(cfg config.View) *Service {
 	return &Service{
 		store:  statestore.New(cfg),
 		agones: newAgonesAllocationClient(cfg),
+		broker: broker.NewRedis(cfg),
 	}
 }
 
@@ -74,7 +78,7 @@ func (s *Service) CreateMatch(ctx context.Context, req *pb.CreateMatchRequest) (
 	err = s.store.CreateMatch(ctx, &ipb.MatchInternal{
 		MatchId:    req.MatchId,
 		Connection: ip,
-		State:      ipb.MatchInternal_STATE_PENDING,
+		Players:    players,
 	})
 	if err != nil {
 		return nil, err
@@ -87,15 +91,38 @@ func (s *Service) CreateMatch(ctx context.Context, req *pb.CreateMatchRequest) (
 	}, nil
 }
 
-func (s *Service) UpdateMatchState(ctx context.Context, req *pb.UpdateMatchStateRequest) (*emptypb.Empty, error) {
-	err := s.store.UpdateMatchState(ctx, req.Id, ipb.MatchInternal_State(req.State))
+func (s *Service) DeleteMatch(ctx context.Context, req *pb.DeleteMatchRequest) (*emptypb.Empty, error) {
+	match, err := s.store.GetMatch(ctx, req.MatchId)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: handle match finishing
-	// if req.State == pb.MatchState_MATCH_STATE_FINISHED {
-	// }
+	err = s.store.UntrackMatch(ctx, match.Players)
+	if err != nil {
+		return nil, err
+	}
+
+	reason := "match has finished"
+	go s.broker.PublishQueueUpdate(context.Background(), &pb.QueueUpdate{
+		Targets: match.Players,
+		Update: &pb.QueueUpdate_Finished{
+			Finished: &pb.QueueFinished{
+				Reason: &reason,
+			},
+		},
+	})
+
+	go s.broker.PublishStatusUpdate(context.Background(), &pb.StatusUpdate{
+		Targets: match.Players,
+		Status:  pb.Status_STATUS_IDLE,
+	})
+
+	err = s.store.DeleteMatch(ctx, req.MatchId)
+	if err != nil {
+		// DeleteMatch failing is not very important because match has been untracked
+		// Match will eventually expire in statestore
+		log.Printf("DeleteMatch failed: %s", err.Error())
+	}
 
 	return &emptypb.Empty{}, nil
 }

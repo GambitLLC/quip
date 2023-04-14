@@ -58,46 +58,8 @@ func (rb *redisBackend) GetMatch(ctx context.Context, id string) (*ipb.MatchInte
 	return match, nil
 }
 
-func (rb *redisBackend) UpdateMatchState(ctx context.Context, id string, state ipb.MatchInternal_State) error {
-	bs, err := rb.redisClient.Get(ctx, id).Bytes()
-	if err != nil {
-		if err == redis.Nil {
-			return status.Errorf(codes.NotFound, "match %s not found", id)
-		}
-
-		err = errors.Wrapf(err, "failed to get match %s", id)
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	if bs == nil {
-		return status.Errorf(codes.NotFound, "match %s not found", id)
-	}
-
-	match := &ipb.MatchInternal{}
-	err = proto.Unmarshal(bs, match)
-	if err != nil {
-		err = errors.Wrap(err, "failed to unmarshal match proto")
-		return status.Errorf(codes.Internal, err.Error())
-	}
-
-	match.State = state
-
-	bs, err = proto.Marshal(match)
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to marshal match: %s", err.Error())
-	}
-
-	if bs == nil {
-		return status.Errorf(codes.Internal, "failed to marshal match proto, marshal called with nil")
-	}
-
-	err = rb.redisClient.Set(ctx, id, bs, getMatchExpirationTime(rb.cfg)).Err()
-	if err != nil {
-		err = errors.Wrapf(err, "failed to set value for player %s", match.GetMatchId())
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	return nil
+func (rb *redisBackend) DeleteMatch(ctx context.Context, id string) error {
+	return rb.redisClient.Del(ctx, id).Err()
 }
 
 func getMatchExpirationTime(cfg config.View) time.Duration {

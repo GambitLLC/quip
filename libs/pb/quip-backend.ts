@@ -79,9 +79,8 @@ export interface CreateMatchResponse {
   connection: string;
 }
 
-export interface UpdateMatchStateRequest {
-  id: string;
-  state: MatchState;
+export interface DeleteMatchRequest {
+  matchId: string;
 }
 
 function createBaseMatchDetails(): MatchDetails {
@@ -322,33 +321,27 @@ export const CreateMatchResponse = {
   },
 };
 
-function createBaseUpdateMatchStateRequest(): UpdateMatchStateRequest {
-  return { id: "", state: 0 };
+function createBaseDeleteMatchRequest(): DeleteMatchRequest {
+  return { matchId: "" };
 }
 
-export const UpdateMatchStateRequest = {
-  encode(message: UpdateMatchStateRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.state !== 0) {
-      writer.uint32(16).int32(message.state);
+export const DeleteMatchRequest = {
+  encode(message: DeleteMatchRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.matchId !== "") {
+      writer.uint32(10).string(message.matchId);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): UpdateMatchStateRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): DeleteMatchRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseUpdateMatchStateRequest();
+    const message = createBaseDeleteMatchRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.id = reader.string();
-          break;
-        case 2:
-          message.state = reader.int32() as any;
+          message.matchId = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -358,28 +351,23 @@ export const UpdateMatchStateRequest = {
     return message;
   },
 
-  fromJSON(object: any): UpdateMatchStateRequest {
-    return {
-      id: isSet(object.id) ? String(object.id) : "",
-      state: isSet(object.state) ? matchStateFromJSON(object.state) : 0,
-    };
+  fromJSON(object: any): DeleteMatchRequest {
+    return { matchId: isSet(object.matchId) ? String(object.matchId) : "" };
   },
 
-  toJSON(message: UpdateMatchStateRequest): unknown {
+  toJSON(message: DeleteMatchRequest): unknown {
     const obj: any = {};
-    message.id !== undefined && (obj.id = message.id);
-    message.state !== undefined && (obj.state = matchStateToJSON(message.state));
+    message.matchId !== undefined && (obj.matchId = message.matchId);
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<UpdateMatchStateRequest>, I>>(base?: I): UpdateMatchStateRequest {
-    return UpdateMatchStateRequest.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<DeleteMatchRequest>, I>>(base?: I): DeleteMatchRequest {
+    return DeleteMatchRequest.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<UpdateMatchStateRequest>, I>>(object: I): UpdateMatchStateRequest {
-    const message = createBaseUpdateMatchStateRequest();
-    message.id = object.id ?? "";
-    message.state = object.state ?? 0;
+  fromPartial<I extends Exact<DeepPartial<DeleteMatchRequest>, I>>(object: I): DeleteMatchRequest {
+    const message = createBaseDeleteMatchRequest();
+    message.matchId = object.matchId ?? "";
     return message;
   },
 };
@@ -395,12 +383,12 @@ export const BackendService = {
     responseSerialize: (value: CreateMatchResponse) => Buffer.from(CreateMatchResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => CreateMatchResponse.decode(value),
   },
-  updateMatchState: {
-    path: "/quip.Backend/UpdateMatchState",
+  deleteMatch: {
+    path: "/quip.Backend/DeleteMatch",
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: UpdateMatchStateRequest) => Buffer.from(UpdateMatchStateRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer) => UpdateMatchStateRequest.decode(value),
+    requestSerialize: (value: DeleteMatchRequest) => Buffer.from(DeleteMatchRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => DeleteMatchRequest.decode(value),
     responseSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
     responseDeserialize: (value: Buffer) => Empty.decode(value),
   },
@@ -408,7 +396,7 @@ export const BackendService = {
 
 export interface BackendServer extends UntypedServiceImplementation {
   createMatch: handleUnaryCall<CreateMatchRequest, CreateMatchResponse>;
-  updateMatchState: handleUnaryCall<UpdateMatchStateRequest, Empty>;
+  deleteMatch: handleUnaryCall<DeleteMatchRequest, Empty>;
 }
 
 export interface BackendClient extends Client {
@@ -427,17 +415,17 @@ export interface BackendClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: CreateMatchResponse) => void,
   ): ClientUnaryCall;
-  updateMatchState(
-    request: UpdateMatchStateRequest,
+  deleteMatch(
+    request: DeleteMatchRequest,
     callback: (error: ServiceError | null, response: Empty) => void,
   ): ClientUnaryCall;
-  updateMatchState(
-    request: UpdateMatchStateRequest,
+  deleteMatch(
+    request: DeleteMatchRequest,
     metadata: Metadata,
     callback: (error: ServiceError | null, response: Empty) => void,
   ): ClientUnaryCall;
-  updateMatchState(
-    request: UpdateMatchStateRequest,
+  deleteMatch(
+    request: DeleteMatchRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: Empty) => void,

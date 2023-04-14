@@ -116,6 +116,7 @@ func makeMatches(p *ompb.MatchProfile, poolTickets map[string][]*ompb.Ticket) ([
 			MatchId:       fmt.Sprintf("profile-%v-%s", p.GetName(), xid.New().String()),
 			MatchProfile:  p.GetName(),
 			MatchFunction: "basic-matchfunction",
+			Tickets:       matchTickets,
 			Extensions: map[string]*anypb.Any{
 				"game_config":   gameCfgAny,
 				"match_details": matchDetailsAny,

@@ -75,6 +75,7 @@ export interface QueueFinished {
 }
 
 export interface MatchFound {
+  matchId: string;
   connection: string;
 }
 
@@ -341,13 +342,16 @@ export const QueueFinished = {
 };
 
 function createBaseMatchFound(): MatchFound {
-  return { connection: "" };
+  return { matchId: "", connection: "" };
 }
 
 export const MatchFound = {
   encode(message: MatchFound, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.matchId !== "") {
+      writer.uint32(10).string(message.matchId);
+    }
     if (message.connection !== "") {
-      writer.uint32(10).string(message.connection);
+      writer.uint32(18).string(message.connection);
     }
     return writer;
   },
@@ -360,6 +364,9 @@ export const MatchFound = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          message.matchId = reader.string();
+          break;
+        case 2:
           message.connection = reader.string();
           break;
         default:
@@ -371,11 +378,15 @@ export const MatchFound = {
   },
 
   fromJSON(object: any): MatchFound {
-    return { connection: isSet(object.connection) ? String(object.connection) : "" };
+    return {
+      matchId: isSet(object.matchId) ? String(object.matchId) : "",
+      connection: isSet(object.connection) ? String(object.connection) : "",
+    };
   },
 
   toJSON(message: MatchFound): unknown {
     const obj: any = {};
+    message.matchId !== undefined && (obj.matchId = message.matchId);
     message.connection !== undefined && (obj.connection = message.connection);
     return obj;
   },
@@ -386,6 +397,7 @@ export const MatchFound = {
 
   fromPartial<I extends Exact<DeepPartial<MatchFound>, I>>(object: I): MatchFound {
     const message = createBaseMatchFound();
+    message.matchId = object.matchId ?? "";
     message.connection = object.connection ?? "";
     return message;
   },

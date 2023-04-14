@@ -108,7 +108,8 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 		return &pb.StatusResponse{
 			Status: pb.Status_STATUS_PLAYING,
 			Match: &pb.MatchFound{
-				Connection: match.MatchId,
+				MatchId:    match.MatchId,
+				Connection: match.Connection,
 			},
 		}, nil
 	}
@@ -129,6 +130,19 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 
 			// TODO: handle err instead of propagating
 			return nil, err
+		}
+
+		// if ticket has been assigned, untrack it and assume player is idle
+		// OpenMatch should have expired the ticket by this time
+		if ticket.GetAssignment().GetConnection() != "" {
+			go func() {
+				// TODO: handle error
+				_ = s.store.UntrackTicket(context.Background(), []string{player.PlayerId})
+			}()
+
+			return &pb.StatusResponse{
+				Status: pb.Status_STATUS_IDLE,
+			}, nil
 		}
 
 		details := &ipb.TicketInternal{}
