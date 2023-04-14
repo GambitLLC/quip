@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {useDisplay, useTheme} from "vuetify";
+import QuipLandingHero from "~/components/QuipLandingHero.vue";
 const {mobile} = useDisplay()
 const {colors} = useTheme().current.value
 </script>
@@ -10,12 +11,9 @@ const {colors} = useTheme().current.value
   >
     <Topbar />
     <div
-      class="pt-10 px-md-8 h-10"
-      :class="{
-        'px-lg-16': !mobile,
-        'px-6': mobile
-      }"
+      class="pt-10 safeArea"
     >
+      <QuipLandingHero/>
       <div class="cards">
         <div class="d-flex w-100 h-100">
           <div class="leftCards mr-8">
@@ -90,6 +88,8 @@ const {colors} = useTheme().current.value
 </template>
 
 <style lang="scss">
+@import 'styles/mixins.scss';
+
 * {
   box-sizing: border-box;
 }
@@ -138,5 +138,27 @@ body {
   flex-direction: column;
 
   flex: 1 1 auto;
+}
+
+.safeArea {
+  @include sm-down {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+
+  @include md {
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+  }
+
+  @include lg {
+    padding-left: 64px !important;
+    padding-right: 64px !important;
+  }
+
+  @include xl {
+    padding-left: 150px !important;
+    padding-right: 150px !important;
+  }
 }
 </style>

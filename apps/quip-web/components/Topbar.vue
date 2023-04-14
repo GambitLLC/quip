@@ -15,14 +15,10 @@ const toggleMobileMenu = () => {
 const isScrolled = computed(() => {
   return y.value > 0 || window.scrollY > 0
 })
-
-onMounted(() => {
-  console.log(colors)
-})
 </script>
 
 <template>
-  <div class="topbarBase" :class="{'topbarBaseScrolled': isScrolled}">
+  <div class="topbarBase safeArea" :class="{'topbarBaseScrolled': isScrolled}">
     <div v-if="!mobile" class="topbar">
       <img draggable="false" class="logo unselectable" src="/logo.svg" alt="Quip Logo" />
       <div class="buttons">
@@ -69,9 +65,9 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-$transitionTime: 0.3s;
-
 @import 'styles/mixins.scss';
+
+$transitionTime: 0.3s;
 
 .topbarBase {
   padding: 24px 64px;
