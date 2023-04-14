@@ -10,12 +10,14 @@ const quipThemeLight: ThemeDefinition = {
     white: '#FFFFFF',
     black: '#000000',
     jetblack: '#14171F',
-    green: '#AAE9AB',
+    'green-dark': '#AAE9AB',
     'green-light': '#C7F4C2',
-    purple: '#C6C3FC',
+    'purple-dark': '#C6C3FC',
     'purple-light': '#ECEBFF',
-    blue: '#9BE9F2',
+    'blue-dark': '#9BE9F2',
     'blue-light': '#C2F1F4',
+    'border-grey': '#B8CEDD',
+    'grey-light': '#fefefe'
   }
 }
 
@@ -31,7 +33,7 @@ export default defineNuxtPlugin(nuxtApp => {
       }
     },
     display: {
-      mobileBreakpoint: 'sm',
+      mobileBreakpoint: 'md',
     }
   })
 

@@ -25,7 +25,7 @@ const computedWidth = computed(() => {
 </script>
 
 <template>
-  <button
+  <a
     v-ripple
     :style="{
       width: computedWidth
@@ -36,21 +36,20 @@ const computedWidth = computed(() => {
       <Icon class="icon mr-2" v-if="props.icon !== undefined" :icon="props.icon ?? ''"/>
       <slot />
     </div>
-  </button>
+  </a>
 </template>
 
 <style scoped>
-button {
+a {
   background: none;
   border: none;
   cursor: pointer;
   border-radius: 70px;
   padding: 12px 24px;
   height: 48px;
-  font-size: 18px;
 }
 
-button > div {
+a > div {
   display: flex;
   flex-direction: row;
   align-items: center;

@@ -1,2 +1,9 @@
 @use "utils";
 @use "typography";
+@use "mixins";
+@use "transitions";
+
+//extra resets
+a {
+  text-decoration: none;
+}
