@@ -4,29 +4,39 @@ option go_package="github.com/GambitLLC/quip/libs/pb";
 
 import "google/protobuf/timestamp.proto";
 
+message GameConfiguration {
+  string gamemode = 1;
+}
+
 // Indicates change in queue status.
 message QueueUpdate {
   // Identifies the entities whose queue has received an update.
   repeated string targets = 1;
 
   oneof update {
-    QueueStarted started = 2;
-    QueueStopped stopped = 3;
+    // Currently searching for a match.
+    QueueSearching started = 2;
+
+    // Stopped searching for a match or a match has completed.
+    QueueFinished finished = 3;
+
+    // Found a match.
     MatchFound found = 4;
   }
 }
 
-message QueueStarted {
+message QueueSearching {
   string gamemode = 1;
   google.protobuf.Timestamp start_time = 2;
 }
 
-message QueueStopped {
+message QueueFinished {
   optional string reason = 1;
 }
 
 message MatchFound {
-  string connection = 1;
+  string match_id = 1;
+  string connection = 2;
 }
 
 enum Status {

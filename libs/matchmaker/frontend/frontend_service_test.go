@@ -143,7 +143,9 @@ func TestStartQueueStatestore(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				req: &pb.StartQueueRequest{
-					Gamemode: "test",
+					Config: &pb.GameConfiguration{
+						Gamemode: "test",
+					},
 				},
 			},
 			check: func(t *testing.T, ctx context.Context, s statestore.Service) {
@@ -198,7 +200,9 @@ func TestStartQueueBehaviour(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				req: &pb.StartQueueRequest{
-					Gamemode: "test",
+					Config: &pb.GameConfiguration{
+						Gamemode: "test",
+					},
 				},
 			},
 			check: func(t *testing.T, err error) {
@@ -211,7 +215,9 @@ func TestStartQueueBehaviour(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				req: &pb.StartQueueRequest{
-					Gamemode: "invalid gamemode",
+					Config: &pb.GameConfiguration{
+						Gamemode: "invalid gamemode",
+					},
 				},
 			},
 			check: func(t *testing.T, err error) {
@@ -229,7 +235,9 @@ func TestStartQueueBehaviour(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				req: &pb.StartQueueRequest{
-					Gamemode: "test",
+					Config: &pb.GameConfiguration{
+						Gamemode: "test",
+					},
 				},
 			},
 			check: func(t *testing.T, err error) {
@@ -247,7 +255,9 @@ func TestStartQueueBehaviour(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				req: &pb.StartQueueRequest{
-					Gamemode: "test",
+					Config: &pb.GameConfiguration{
+						Gamemode: "test",
+					},
 				},
 			},
 			check: func(t *testing.T, err error) {
@@ -320,7 +330,9 @@ func TestQueueUpdate(t *testing.T) {
 			},
 			action: func(t *testing.T, ctx context.Context, s *Service) {
 				_, err := s.StartQueue(ctx, &pb.StartQueueRequest{
-					Gamemode: "test",
+					Config: &pb.GameConfiguration{
+						Gamemode: "test",
+					},
 				})
 				require.NoError(t, err, "StartQueue failed")
 			},
@@ -331,12 +343,14 @@ func TestQueueUpdate(t *testing.T) {
 			expected: func(qu *pb.QueueUpdate) bool {
 				return len(qu.Targets) == 1 &&
 					qu.Targets[0] == player &&
-					qu.GetStopped() != nil
+					qu.GetFinished() != nil
 			},
 			action: func(t *testing.T, ctx context.Context, s *Service) {
 				// Queue needs to be started before stop update will be sent
 				_, err := s.StartQueue(ctx, &pb.StartQueueRequest{
-					Gamemode: "test",
+					Config: &pb.GameConfiguration{
+						Gamemode: "test",
+					},
 				})
 				require.NoError(t, err, "StartQueue failed")
 

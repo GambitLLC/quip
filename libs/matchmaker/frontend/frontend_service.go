@@ -108,7 +108,8 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 		return &pb.StatusResponse{
 			Status: pb.Status_STATUS_PLAYING,
 			Match: &pb.MatchFound{
-				Connection: match.MatchId,
+				MatchId:    match.MatchId,
+				Connection: match.Connection,
 			},
 		}, nil
 	}
@@ -131,6 +132,19 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 			return nil, err
 		}
 
+		// if ticket has been assigned, untrack it and assume player is idle
+		// OpenMatch should have expired the ticket by this time
+		if ticket.GetAssignment().GetConnection() != "" {
+			go func() {
+				// TODO: handle error
+				_ = s.store.UntrackTicket(context.Background(), []string{player.PlayerId})
+			}()
+
+			return &pb.StatusResponse{
+				Status: pb.Status_STATUS_IDLE,
+			}, nil
+		}
+
 		details := &ipb.TicketInternal{}
 		err = ticket.Extensions["details"].UnmarshalTo(details)
 		if err != nil {
@@ -140,7 +154,7 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 
 		return &pb.StatusResponse{
 			Status: pb.Status_STATUS_SEARCHING,
-			Queue: &pb.QueueStarted{
+			Queue: &pb.QueueSearching{
 				Gamemode:  details.Gamemode,
 				StartTime: ticket.CreateTime,
 			},
@@ -160,13 +174,18 @@ func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*e
 	}
 	defer unlock()
 
-	game, err := s.gc.GameDetails(req.Gamemode)
+	gameCfg := req.GetConfig()
+	if gameCfg == nil {
+		return nil, status.Error(codes.InvalidArgument, ".Config is required")
+	}
+
+	game, err := s.gc.GameDetails(gameCfg.Gamemode)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	if game == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid gamemode '%s'", req.Gamemode)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid gamemode '%s'", gameCfg.Gamemode)
 	}
 
 	if player.MatchId != nil {
@@ -179,7 +198,7 @@ func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*e
 
 	ticket, err := s.omfc.CreateTicket(ctx, &ipb.TicketInternal{
 		PlayerId: player.PlayerId,
-		Gamemode: req.Gamemode,
+		Gamemode: gameCfg.Gamemode,
 	})
 	if err != nil {
 		return nil, err
@@ -194,8 +213,8 @@ func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*e
 	go s.publish(&pb.QueueUpdate{
 		Targets: players,
 		Update: &pb.QueueUpdate_Started{
-			Started: &pb.QueueStarted{
-				Gamemode:  req.Gamemode,
+			Started: &pb.QueueSearching{
+				Gamemode:  gameCfg.Gamemode,
 				StartTime: ticket.CreateTime,
 			},
 		},
@@ -241,8 +260,8 @@ func (s *Service) StopQueue(ctx context.Context, _ *emptypb.Empty) (*emptypb.Emp
 	reason := fmt.Sprintf("%s stopped matchmaking", player.PlayerId)
 	go s.publish(&pb.QueueUpdate{
 		Targets: players,
-		Update: &pb.QueueUpdate_Stopped{
-			Stopped: &pb.QueueStopped{
+		Update: &pb.QueueUpdate_Finished{
+			Finished: &pb.QueueFinished{
 				Reason: &reason,
 			},
 		},

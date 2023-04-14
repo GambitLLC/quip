@@ -2,6 +2,7 @@ syntax = "proto3";
 package quip;
 option go_package="github.com/GambitLLC/quip/libs/pb";
 
+import "quip-messages.proto";
 import "google/protobuf/empty.proto";
 
 enum MatchState {
@@ -11,12 +12,31 @@ enum MatchState {
   MATCH_STATE_FINISHED = 3;     // Match has completed.
 }
 
-message UpdateMatchRequest {
-	string id = 1;
+message MatchDetails {
+  message Team {
+    repeated string players = 1;
+  }
 
-	MatchState state = 2;
+  repeated Team teams = 2;
+}
+
+message CreateMatchRequest {
+  string match_id = 1;
+
+  GameConfiguration game_config = 2;
+  MatchDetails match_details = 3;
+}
+
+message CreateMatchResponse {
+  string connection = 1;
+}
+
+message DeleteMatchRequest {
+  string match_id = 1;
 }
 
 service Backend {
-	rpc UpdateMatch(UpdateMatchRequest) returns (google.protobuf.Empty);
+  rpc CreateMatch(CreateMatchRequest) returns (CreateMatchResponse);
+
+  rpc DeleteMatch(DeleteMatchRequest) returns (google.protobuf.Empty);
 }

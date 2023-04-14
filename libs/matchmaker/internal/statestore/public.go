@@ -37,7 +37,7 @@ type Service interface {
 
 	GetMatch(ctx context.Context, id string) (*ipb.MatchInternal, error)
 
-	UpdateMatchState(ctx context.Context, id string, state ipb.MatchInternal_State) error
+	DeleteMatch(ctx context.Context, id string) error
 }
 
 func New(cfg config.View) Service {

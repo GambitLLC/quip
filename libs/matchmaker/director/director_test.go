@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	agones "agones.dev/agones/pkg/allocation/go"
+	"github.com/pkg/errors"
 	"github.com/rs/xid"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
@@ -18,6 +18,8 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	statestoreTesting "github.com/GambitLLC/quip/libs/matchmaker/internal/statestore/testing"
+	"github.com/GambitLLC/quip/libs/matchmaker/matchfunction"
+	"github.com/GambitLLC/quip/libs/pb"
 )
 
 func TestMatchFound(t *testing.T) {
@@ -64,7 +66,7 @@ func newService(t *testing.T) *Service {
 	cfg.Set("broker.port", cfg.Get("matchmaker.redis.port"))
 
 	newOMBackend(t, cfg)
-	newAgones(t, cfg)
+	newBackend(t, cfg)
 
 	srv := New(cfg).(*Service)
 
@@ -131,12 +133,33 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 		}
 	}
 
+	gameCfg := &pb.GameConfiguration{
+		Gamemode: "test",
+	}
+	gameCfgAny, err := anypb.New(gameCfg)
+	if err != nil {
+		return errors.WithMessage(err, "failed to create anypb from game config")
+	}
+
+	matchDetails, err := matchfunction.CreateMatchDetails(tickets)
+	if err != nil {
+		return err
+	}
+	matchDetailsAny, err := anypb.New(matchDetails)
+	if err != nil {
+		return err
+	}
+
 	srv.Send(&ompb.FetchMatchesResponse{
 		Match: &ompb.Match{
 			MatchId:       xid.New().String(),
 			MatchProfile:  req.Profile.Name,
 			MatchFunction: "static match generator",
 			Tickets:       tickets,
+			Extensions: map[string]*anypb.Any{
+				"game_config":   gameCfgAny,
+				"match_details": matchDetailsAny,
+			},
 		},
 	})
 	return nil
@@ -146,18 +169,18 @@ func (s *stubOMBackendService) AssignTickets(context.Context, *ompb.AssignTicket
 	return &ompb.AssignTicketsResponse{}, nil
 }
 
-func newAgones(t *testing.T, cfg config.Mutable) {
+func newBackend(t *testing.T, cfg config.Mutable) {
 	ln, err := net.Listen("tcp", ":0")
 	require.NoError(t, err, "net.Listen failed")
 
 	_, port, err := net.SplitHostPort(ln.Addr().String())
 	require.NoError(t, err, "net.SplitHostPort failed")
 
-	cfg.Set("agones.hostname", "localhost")
-	cfg.Set("agones.port", port)
+	cfg.Set("matchmaker.backend.hostname", "localhost")
+	cfg.Set("matchmaker.backend.port", port)
 
 	s := grpc.NewServer()
-	agones.RegisterAllocationServiceServer(s, &stubAgonesService{})
+	pb.RegisterBackendServer(s, &stubBackendService{})
 
 	go func() {
 		err := s.Serve(ln)
@@ -167,13 +190,12 @@ func newAgones(t *testing.T, cfg config.Mutable) {
 	}()
 
 	t.Cleanup(s.Stop)
-
 }
 
-type stubAgonesService struct {
-	agones.UnimplementedAllocationServiceServer
+type stubBackendService struct {
+	pb.UnimplementedBackendServer
 }
 
-func (s *stubAgonesService) Allocate(context.Context, *agones.AllocationRequest) (*agones.AllocationResponse, error) {
-	return &agones.AllocationResponse{Address: "127.0.0.1", Ports: []*agones.AllocationResponse_GameServerStatusPort{{Port: 51383}}}, nil
+func (s *stubBackendService) CreateMatch(ctx context.Context, req *pb.CreateMatchRequest) (*pb.CreateMatchResponse, error) {
+	return &pb.CreateMatchResponse{Connection: "127.0.0.1:27394"}, nil
 }

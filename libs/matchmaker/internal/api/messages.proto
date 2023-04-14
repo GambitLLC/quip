@@ -34,12 +34,5 @@ message MatchInternal {
   string match_id = 1;
   string connection = 2;
 
-  enum State {
-    STATE_UNSPECIFIED = 0;
-    STATE_PENDING = 1;
-    STATE_PLAYING = 2;
-    STATE_FINISHED = 3;
-  }
-
-  State state = 3;
+  repeated string players = 3;
 }

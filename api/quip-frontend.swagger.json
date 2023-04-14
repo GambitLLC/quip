@@ -45,6 +45,14 @@
       },
       "additionalProperties": {}
     },
+    "quipGameConfiguration": {
+      "type": "object",
+      "properties": {
+        "gamemode": {
+          "type": "string"
+        }
+      }
+    },
     "quipMatchFound": {
       "type": "object",
       "properties": {
@@ -53,7 +61,7 @@
         }
       }
     },
-    "quipQueueStarted": {
+    "quipQueueSearching": {
       "type": "object",
       "properties": {
         "gamemode": {
@@ -82,7 +90,7 @@
           "$ref": "#/definitions/quipStatus"
         },
         "queue": {
-          "$ref": "#/definitions/quipQueueStarted",
+          "$ref": "#/definitions/quipQueueSearching",
           "description": "Details about current queue status."
         },
         "match": {
