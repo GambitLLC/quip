@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {useDisplay, useTheme} from "vuetify";
-import QuipLandingHero from "~/components/QuipLandingHero.vue";
 const {mobile} = useDisplay()
 const {colors} = useTheme().current.value
 </script>
@@ -11,9 +10,9 @@ const {colors} = useTheme().current.value
   >
     <Topbar />
     <div
-      class="pt-10 safeArea"
+      class="pt-4 safeArea"
     >
-      <QuipLandingHero/>
+      <LandingHero/>
       <div class="cards">
         <div class="d-flex w-100 h-100">
           <div class="leftCards mr-8">
@@ -23,7 +22,7 @@ const {colors} = useTheme().current.value
               text="Enjoy fun multiplayer physics-based games!"
               :circle="{
                 size: 573,
-                top: 29,
+                top: 10,
                 right: -9,
               }"
               title-margin="mb-6"
@@ -31,7 +30,7 @@ const {colors} = useTheme().current.value
               :img="{
                 src: '/ImageApp1.png',
                 alt: 'quip app image',
-                top: -35,
+                top: -50,
                 left: -23,
                 overflow: true,
               }"
@@ -120,7 +119,7 @@ body {
 }
 
 .cards {
-  height: 611px;
+  height: 570px;
   width: 100%;
 }
 
@@ -147,8 +146,8 @@ body {
   }
 
   @include md {
-    padding-left: 32px !important;
-    padding-right: 32px !important;
+    padding-left: 48px !important;
+    padding-right: 48px !important;
   }
 
   @include lg {

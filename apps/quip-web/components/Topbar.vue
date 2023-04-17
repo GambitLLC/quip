@@ -13,7 +13,7 @@ const toggleMobileMenu = () => {
 }
 
 const isScrolled = computed(() => {
-  return y.value > 0 || window.scrollY > 0
+  return y.value > 0
 })
 </script>
 
