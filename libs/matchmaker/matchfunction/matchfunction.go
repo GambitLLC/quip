@@ -2,10 +2,11 @@ package matchfunction
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/rs/xid"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -18,6 +19,10 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/pb"
 )
+
+var logger = zerolog.New(os.Stderr).With().
+	Str("component", "matchmaker.matchfunction").
+	Logger()
 
 type Service struct {
 	query *omQueryClient
@@ -39,7 +44,7 @@ func BindService(cfg config.View, b *appmain.GRPCBindings) error {
 }
 
 func (s *Service) Run(req *ompb.RunRequest, stream ompb.MatchFunction_RunServer) error {
-	log.Printf("Generating proposals for function %v", req.GetProfile().GetName())
+	logger.Debug().Str("profile", req.GetProfile().GetName()).Msg("Generating proposals")
 
 	client, err := s.query.GetClient()
 	if err != nil {
@@ -57,7 +62,7 @@ func (s *Service) Run(req *ompb.RunRequest, stream ompb.MatchFunction_RunServer)
 		return status.Errorf(codes.Internal, "make matches failed: %s", err.Error())
 	}
 
-	log.Printf("Streaming %v proposals to Open Match", len(proposals))
+	logger.Debug().Str("profile", req.GetProfile().GetName()).Msgf("Streaming %d proposals", len(proposals))
 	for _, proposal := range proposals {
 		if err := stream.Send(&ompb.RunResponse{Proposal: proposal}); err != nil {
 			return status.Errorf(codes.Unknown, "stream proposals to Open Match failed: %s", err)

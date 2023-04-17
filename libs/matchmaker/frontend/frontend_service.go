@@ -3,10 +3,11 @@ package frontend
 import (
 	"context"
 	"fmt"
-	"log"
+	"os"
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -19,6 +20,10 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	"github.com/GambitLLC/quip/libs/pb"
 )
+
+var logger = zerolog.New(os.Stderr).With().
+	Str("component", "matchmaker.frontend").
+	Logger()
 
 type Service struct {
 	store  statestore.Service
@@ -276,11 +281,6 @@ func (s *Service) StopQueue(ctx context.Context, _ *emptypb.Empty) (*emptypb.Emp
 }
 
 func (s *Service) publish(msg proto.Message) {
-	if s.broker == nil {
-		log.Print("publish failed: broker is nil")
-		return
-	}
-
 	var err error
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -295,6 +295,6 @@ func (s *Service) publish(msg proto.Message) {
 	}
 
 	if err != nil {
-		log.Printf("publish failed: %v", err)
+		logger.Error().Err(err).Msg("Publish failed")
 	}
 }

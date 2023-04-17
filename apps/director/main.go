@@ -6,5 +6,5 @@ import (
 )
 
 func main() {
-	appmain.RunDaemon(director.New)
+	appmain.RunDaemon("matchmaker.director", director.New)
 }

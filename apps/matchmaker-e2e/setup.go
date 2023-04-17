@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -65,7 +64,6 @@ func main() {
 	}
 
 	<-c
-	log.Print("e2e setup ended successfully")
 }
 
 func createGamesConfig() error {

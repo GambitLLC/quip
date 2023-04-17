@@ -2,10 +2,12 @@ package director
 
 import (
 	"context"
-	"log"
+	"os"
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/appmain"
@@ -14,8 +16,11 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	"github.com/GambitLLC/quip/libs/pb"
-	"github.com/pkg/errors"
 )
+
+var logger = zerolog.New(os.Stderr).With().
+	Str("component", "matchmaker.director").
+	Logger()
 
 type Service struct {
 	cfg       config.View
@@ -52,7 +57,7 @@ func (s *Service) Start(ctx context.Context) error {
 				return err
 			}
 
-			log.Printf("Fetching matches for %d profiles", len(profiles))
+			logger.Debug().Msgf("Fetching matches for %d profiles", len(profiles))
 
 			var wg sync.WaitGroup
 			for _, p := range profiles {
@@ -73,15 +78,15 @@ func (s *Service) Start(ctx context.Context) error {
 					})
 
 					if err != nil {
-						log.Printf("failed to fetch matches for profile %s: %s", profile.Name, err.Error())
+						logger.Error().Err(err).Str("profile", profile.Name).Msg("Failed to fetch matches")
 						return
 					}
 
-					log.Printf("Fetched %d matches for profile %s", len(matches), profile.Name)
+					logger.Debug().Msgf("Fetched %d matches for profile %s", len(matches), profile.Name)
 
 					for _, match := range matches {
 						if err := s.assignMatch(ctx, match); err != nil {
-							log.Printf("failed to assign match '%s': %s", match.MatchId, err)
+							logger.Error().Err(err).Str("match_id", match.MatchId).Msg("Failed to assign match")
 						}
 					}
 				}(&wg, p)
@@ -157,7 +162,7 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 
 	// TODO: repeat assignment on error or failures?
 	for _, failure := range res.Failures {
-		log.Printf("failed to assign ticket %s", failure.TicketId)
+		logger.Warn().Str("ticket_id", failure.TicketId).Msg("Failed to assign ticket")
 	}
 
 	return nil
