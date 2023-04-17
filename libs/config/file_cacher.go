@@ -41,7 +41,7 @@ func (c *FileCacher) Get() (interface{}, error) {
 
 		cfg.WatchConfig()
 		cfg.OnConfigChange(func(in fsnotify.Event) {
-			log.Printf("Config file %s changed, invalidating config.FileCache", c.filename)
+			log.Debug().Str("operation", in.Op.String()).Str("filename", in.Name).Msg("Cached config file changed")
 
 			c.m.Lock()
 			defer c.m.Unlock()

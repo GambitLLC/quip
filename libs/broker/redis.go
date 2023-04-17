@@ -3,15 +3,20 @@ package broker
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/pb"
 )
+
+var logger = zerolog.New(os.Stderr).With().
+	Str("component", "broker").
+	Logger()
 
 type redisBroker struct {
 	cfg         config.View
@@ -55,7 +60,7 @@ func (rb *redisBroker) ConsumeQueueUpdates(ctx context.Context) (<-chan *pb.Queu
 		for msg := range sub.Channel() {
 			update := &pb.QueueUpdate{}
 			if err := proto.Unmarshal([]byte(msg.Payload), update); err != nil {
-				log.Printf("unmarshal msg as QueueUpdate failed: %v", err)
+				logger.Error().Err(err).Msg("Unmarshal QueueUpdate failed")
 				continue
 			}
 
@@ -86,7 +91,7 @@ func (rb *redisBroker) ConsumeStatusUpdate(ctx context.Context) (<-chan *pb.Stat
 		for msg := range sub.Channel() {
 			update := &pb.StatusUpdate{}
 			if err := proto.Unmarshal([]byte(msg.Payload), update); err != nil {
-				log.Printf("unmarshal msg as StatusUpdate failed: %v", err)
+				logger.Error().Err(err).Msg("Unmarshal StatusUpdate failed")
 				continue
 			}
 

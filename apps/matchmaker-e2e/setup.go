@@ -12,7 +12,6 @@ import (
 
 	agones "agones.dev/agones/pkg/allocation/go"
 	"github.com/alicebob/miniredis/v2"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
@@ -65,7 +64,6 @@ func main() {
 	}
 
 	<-c
-	log.Print("e2e setup ended successfully")
 }
 
 func createGamesConfig() error {

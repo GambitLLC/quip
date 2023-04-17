@@ -5,9 +5,10 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/rpc"
-	"github.com/rs/zerolog/log"
 )
 
 // RunGRPCService runs the given GRPC service forever. For use in main functions.
@@ -17,12 +18,12 @@ func RunGRPCService(serviceName string, bind BindGRPC) {
 
 	cfg, err := config.Read()
 	if err != nil {
-		panic(err)
+		log.Panic().Str("component", serviceName).Err(err).Msg("Failed to read config")
 	}
 
 	s, err := newGRPCService(serviceName, cfg, bind)
 	if err != nil {
-		panic(err)
+		log.Panic().Str("component", serviceName).Err(err).Msg("Failed to create grpc service")
 	}
 
 	<-c
@@ -31,7 +32,7 @@ func RunGRPCService(serviceName string, bind BindGRPC) {
 		panic(err)
 	}
 
-	log.Printf("Service '%s' stopped successfully", serviceName)
+	log.Info().Str("component", serviceName).Msg("Service stopped")
 }
 
 type BindGRPC func(config.View, *GRPCBindings) error
