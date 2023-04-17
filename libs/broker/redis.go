@@ -3,10 +3,10 @@ package broker
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/GambitLLC/quip/libs/config"

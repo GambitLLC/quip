@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -13,6 +12,7 @@ import (
 
 	agones "agones.dev/agones/pkg/allocation/go"
 	"github.com/alicebob/miniredis/v2"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 

@@ -2,10 +2,11 @@ package director
 
 import (
 	"context"
-	"log"
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/appmain"
@@ -14,7 +15,6 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	"github.com/GambitLLC/quip/libs/pb"
-	"github.com/pkg/errors"
 )
 
 type Service struct {

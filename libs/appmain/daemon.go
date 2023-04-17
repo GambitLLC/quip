@@ -2,12 +2,12 @@ package appmain
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/GambitLLC/quip/libs/config"
+	"github.com/rs/zerolog/log"
 )
 
 type Daemon interface {

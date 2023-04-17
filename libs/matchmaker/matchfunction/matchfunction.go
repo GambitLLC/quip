@@ -2,10 +2,10 @@ package matchfunction
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/pkg/errors"
 	"github.com/rs/xid"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

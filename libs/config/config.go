@@ -2,11 +2,11 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 

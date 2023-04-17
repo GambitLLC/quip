@@ -2,11 +2,11 @@ package rpc
 
 import (
 	"fmt"
-	"log"
 	"net"
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 )
 

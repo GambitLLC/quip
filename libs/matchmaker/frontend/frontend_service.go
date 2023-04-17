@@ -3,10 +3,10 @@ package frontend
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"

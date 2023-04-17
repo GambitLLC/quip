@@ -4,7 +4,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"strings"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/fsnotify/fsnotify"
+	"github.com/rs/zerolog/log"
 )
 
 // list of keys which setup must have updated

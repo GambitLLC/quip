@@ -1,13 +1,13 @@
 package appmain
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/rpc"
+	"github.com/rs/zerolog/log"
 )
 
 // RunGRPCService runs the given GRPC service forever. For use in main functions.

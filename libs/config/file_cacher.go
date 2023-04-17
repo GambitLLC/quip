@@ -1,10 +1,10 @@
 package config
 
 import (
-	"log"
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
