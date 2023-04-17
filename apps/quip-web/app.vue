@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {useDisplay, useTheme} from "vuetify";
-const {mobile} = useDisplay()
+const {mdAndDown} = useDisplay()
 const {colors} = useTheme().current.value
 </script>
 
@@ -13,7 +13,7 @@ const {colors} = useTheme().current.value
       class="pt-4 safeArea"
     >
       <LandingHero/>
-      <div class="cards">
+      <div v-if="!mdAndDown" class="cards">
         <div class="d-flex w-100 h-100">
           <div class="leftCards mr-8">
             <LandingHeroCard
@@ -22,16 +22,16 @@ const {colors} = useTheme().current.value
               text="Enjoy fun multiplayer physics-based games!"
               :circle="{
                 size: 573,
-                top: 10,
-                right: -9,
+                top: '10px',
+                right: '-9px',
               }"
               title-margin="mb-6"
               :text-max-width="250"
               :img="{
                 src: '/ImageApp1.png',
                 alt: 'quip app image',
-                top: -50,
-                left: -23,
+                top: '-50px',
+                left: '-23px',
                 overflow: true,
               }"
               text-location="bottom"
@@ -45,16 +45,16 @@ const {colors} = useTheme().current.value
               text="Earn real rewards and money when you play!"
               :circle="{
                 size: 315,
-                bottom: -93,
-                right: -84,
+                bottom: '-93px',
+                right: '-84px',
               }"
               title-margin="mb-3"
               :text-max-width="171"
               :img="{
                 src: '/ImageApp2.png',
                 alt: 'quip app image',
-                top: 33,
-                left: 23,
+                top: '33px',
+                left: '23px',
                 overflow: false,
               }"
               text-location="top"
@@ -65,22 +65,93 @@ const {colors} = useTheme().current.value
               text="Compete against your friends or the world, you decide."
               :circle="{
                 size: 356,
-                right: -125,
-                bottom: -134,
+                right: '-125px',
+                bottom: '-134px',
               }"
               title-margin="mb-3"
               :text-max-width="150"
               :img="{
                 src: '/ImageApp2.png',
                 alt: 'quip app image',
-                top: 29,
-                left: 29,
+                top: '29px',
+                left: '29px',
                 overflow: false,
               }"
               text-location="top"
             />
           </div>
         </div>
+      </div>
+      <div class="h-100 w-100" v-else>
+        <LandingHeroCard
+          class="mb-4"
+          :style="{height: '498px !important'}"
+          color="green"
+          title="Play."
+          text="Enjoy fun multiplayer physics-based games!"
+          :circle="{
+            size: 256,
+            bottom: '43px',
+            left: 'calc(50% - 128px)',
+          }"
+          title-margin="mb-2"
+          :text-max-width="190"
+          :img="{
+            src: '/ImageApp1.png',
+            width: '252px',
+            bottom: '-17px',
+            left: 'calc(50% - 136px)',
+            alt: 'quip app image',
+            overflow: false,
+          }"
+          text-location="top"
+        />
+        <LandingHeroCard
+          class="mb-4"
+          :style="{height: '293px !important'}"
+          color="purple"
+          title="Earn."
+          text="Earn real rewards and money when you play!"
+          :circle="{
+            size: 256,
+            bottom: '-76px',
+            right: '-64px'
+          }"
+          title-margin="mb-2"
+          :text-max-width="190"
+          :img="{
+            src: '/ImageApp2.png',
+            width: '228px',
+            top: '15px',
+            left: '15px',
+            width: '228px',
+            alt: 'quip app image',
+            overflow: false,
+          }"
+          text-location="top"
+        />
+        <LandingHeroCard
+          :style="{height: '293px !important'}"
+          color="blue"
+          title="Compete."
+          text="Compete against your friends or the world, you decide."
+          :circle="{
+            size: 256,
+            bottom: '-76px',
+            right: '-64px'
+          }"
+          title-margin="mb-2"
+          :text-max-width="190"
+          :img="{
+            src: '/ImageApp2.png',
+            width: '228px',
+            top: '15px',
+            left: '15px',
+            alt: 'quip app image',
+            overflow: false,
+          }"
+          text-location="top"
+        />
       </div>
     </div>
   </div>

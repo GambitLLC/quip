@@ -55,7 +55,7 @@ const display = useDisplay();
 .hero-wrapper {
   display: flex;
   flex-direction: row;
-  margin-bottom: 40px;
+  margin-bottom: 64px;
   width: 100%;
 
   @include sm-down {
@@ -147,9 +147,9 @@ const display = useDisplay();
   rotate: 20deg;
 
   @include sm-down {
-    left: auto;
-    right: 16px;
-    top: 130px;
+    left: 220px;
+    top: -120px;
+    rotate: 0deg;
     width: 95.12px;
     height: 59.02px;
   }
