@@ -2,8 +2,9 @@ package backend
 
 import (
 	"context"
-	"log"
+	"os"
 
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -14,6 +15,10 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	"github.com/GambitLLC/quip/libs/pb"
 )
+
+var logger = zerolog.New(os.Stderr).With().
+	Str("component", "matchmaker.backend").
+	Logger()
 
 type Service struct {
 	store  statestore.Service
@@ -121,7 +126,7 @@ func (s *Service) DeleteMatch(ctx context.Context, req *pb.DeleteMatchRequest) (
 	if err != nil {
 		// DeleteMatch failing is not very important because match has been untracked
 		// Match will eventually expire in statestore
-		log.Printf("DeleteMatch failed: %s", err.Error())
+		logger.Warn().Err(err).Msg("Failed to delete match from statestore")
 	}
 
 	return &emptypb.Empty{}, nil

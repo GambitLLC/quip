@@ -2,10 +2,11 @@ package appmain
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/GambitLLC/quip/libs/config"
 )
@@ -15,28 +16,28 @@ type Daemon interface {
 }
 
 // RunDaemon runs the given service forever. For use in main functions.
-func RunDaemon(daemon func(config.View) Daemon) {
+func RunDaemon(daemonName string, daemon func(config.View) Daemon) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 
 	cfg, err := config.Read()
 	if err != nil {
-		panic(err)
+		log.Panic().Str("component", daemonName).Err(err).Msg("Failed to read config")
 	}
 
 	d := daemon(cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		log.Print("Running service")
+		log.Info().Str("component", daemonName).Msg("Running daemon")
 		err := d.Start(ctx)
 		if err != nil {
-			panic(err)
+			log.Panic().Str("component", daemonName).Err(err).Msg("Failed to start daemon")
 		}
 	}()
 
 	<-c
 	cancel()
 
-	log.Print("Daemon stopped successfully")
+	log.Info().Str("component", daemonName).Msg("Daemon stopped")
 }

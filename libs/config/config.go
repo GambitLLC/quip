@@ -2,11 +2,11 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -37,7 +37,7 @@ func Read() (*viper.Viper, error) {
 	cfg.WatchConfig()
 	cfg.OnConfigChange(func(event fsnotify.Event) {
 		// Log whenever configuration changes.
-		log.Printf("Server configuration changed, operation: %v, filename: %s", event.Op, event.Name)
+		log.Info().Str("operation", event.Op.String()).Str("filename", event.Name).Msg("Config changed")
 	})
 
 	return cfg, nil

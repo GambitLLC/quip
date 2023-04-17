@@ -2,17 +2,20 @@ package rpc
 
 import (
 	"fmt"
-	"log"
 	"net"
+	"os"
+
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
+	"google.golang.org/grpc"
 
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/pkg/errors"
-	"google.golang.org/grpc"
 )
 
 type GRPCHandler func(*grpc.Server)
 
 type ServerParams struct {
+	logger   zerolog.Logger
 	ln       net.Listener
 	handlers []GRPCHandler
 }
@@ -27,6 +30,9 @@ func NewServerParams(cfg config.View, serviceName string) (*ServerParams, error)
 
 	return &ServerParams{
 		ln: ln,
+		logger: zerolog.New(os.Stderr).With().
+			Str("component", serviceName).
+			Logger(),
 	}, nil
 }
 
@@ -46,10 +52,10 @@ func (s *Server) Start(p *ServerParams) error {
 	}
 
 	go func() {
-		log.Printf("Serving gRPC: %s", p.ln.Addr().String())
+		p.logger.Info().Msgf("Serving gRPC: %s", p.ln.Addr().String())
 		err := s.srv.Serve(p.ln)
 		if err != nil {
-			log.Printf("serve gRPC failed: %s", err.Error())
+			p.logger.Error().Err(err).Msg("Serve gRPC failed")
 		}
 	}()
 	return nil
