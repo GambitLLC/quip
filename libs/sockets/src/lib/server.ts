@@ -8,10 +8,10 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 
-import { FrontendClient } from '@quip/pb/quip-frontend';
+import { FrontendClient } from '@quip/pb/matchmaker/frontend';
 import { Empty } from '@quip/pb/google/protobuf/empty';
 import { ClientToServerEvents, ServerToClientEvents } from './events';
-import { QueueUpdate, StatusUpdate } from '@quip/pb/quip-messages';
+import { QueueUpdate, StatusUpdate } from '@quip/pb/matchmaker/messages';
 
 export type Server = SocketIoServer<ClientToServerEvents, ServerToClientEvents>;
 

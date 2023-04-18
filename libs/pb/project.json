@@ -3,10 +3,9 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/pb/src",
   "projectType": "library",
-  "implicitDependencies": ["api"],
   "targets": {
     "make": {
-      "command": "make api-protos"
+      "command": "make all-protos"
     }
   },
   "tags": []

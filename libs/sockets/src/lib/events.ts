@@ -1,5 +1,8 @@
-import { QueueUpdate, StatusUpdate } from '@quip/pb/quip-messages';
-import { StartQueueRequest, StatusResponse } from '@quip/pb/quip-frontend';
+import { QueueUpdate, StatusUpdate } from '@quip/pb/matchmaker/messages';
+import {
+  StartQueueRequest,
+  StatusResponse,
+} from '@quip/pb/matchmaker/frontend';
 import { ServiceError } from '@grpc/grpc-js';
 
 export interface ServerToClientEvents {

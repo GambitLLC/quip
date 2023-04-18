@@ -12,10 +12,10 @@ import {
   UntypedServiceImplementation,
 } from "@grpc/grpc-js";
 import _m0 from "protobufjs/minimal";
-import { Empty } from "./google/protobuf/empty";
-import { GameConfiguration } from "./quip-messages";
+import { Empty } from "../google/protobuf/empty";
+import { GameConfiguration } from "./messages";
 
-export const protobufPackage = "quip";
+export const protobufPackage = "quip.matchmaker";
 
 export enum MatchState {
   UNSPECIFIED = 0,
@@ -375,7 +375,7 @@ export const DeleteMatchRequest = {
 export type BackendService = typeof BackendService;
 export const BackendService = {
   createMatch: {
-    path: "/quip.Backend/CreateMatch",
+    path: "/quip.matchmaker.Backend/CreateMatch",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: CreateMatchRequest) => Buffer.from(CreateMatchRequest.encode(value).finish()),
@@ -384,7 +384,7 @@ export const BackendService = {
     responseDeserialize: (value: Buffer) => CreateMatchResponse.decode(value),
   },
   deleteMatch: {
-    path: "/quip.Backend/DeleteMatch",
+    path: "/quip.matchmaker.Backend/DeleteMatch",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: DeleteMatchRequest) => Buffer.from(DeleteMatchRequest.encode(value).finish()),
@@ -432,7 +432,7 @@ export interface BackendClient extends Client {
   ): ClientUnaryCall;
 }
 
-export const BackendClient = makeGenericClientConstructor(BackendService, "quip.Backend") as unknown as {
+export const BackendClient = makeGenericClientConstructor(BackendService, "quip.matchmaker.Backend") as unknown as {
   new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): BackendClient;
   service: typeof BackendService;
 };

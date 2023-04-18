@@ -18,7 +18,7 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
-	"github.com/GambitLLC/quip/libs/pb"
+	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
 var logger = zerolog.New(os.Stderr).With().

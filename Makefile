@@ -34,16 +34,16 @@ endif
 
 PROTOC_INCLUDES := api/third-party
 
-PROTO_NAMES = quip-frontend quip-backend quip-messages
-TYPESCRIPT_API_PROTOS = $(foreach proto,$(PROTO_NAMES), libs/pb/$(proto).ts)
-GOLANG_API_PROTOS = $(foreach proto,$(PROTO_NAMES), libs/pb/$(proto).pb.go)
-API_PROTOS = $(GOLANG_API_PROTOS) $(TYPESCRIPT_API_PROTOS)
-
-SWAGGER_JSON_DOCS = api/quip-frontend.swagger.json
-
 MATCHMAKER_INTERNAL_PROTOS = libs/matchmaker/internal/ipb/messages.pb.go
 
-ALL_PROTOS = $(API_PROTOS) $(MATCHMAKER_INTERNAL_PROTOS) $(SWAGGER_JSON_DOCS)
+MATCHMAKER_PROTO_NAMES = backend frontend messages
+MATCHMAKER_TYPESCRIPT_PROTOS = $(foreach proto,$(MATCHMAKER_PROTO_NAMES), libs/pb/matchmaker/$(proto).ts)
+MATCHMAKER_GOLANG_PROTOS = $(foreach proto,$(MATCHMAKER_PROTO_NAMES), libs/pb/matchmaker/$(proto).pb.go) $(MATCHMAKER_INTERNAL_PROTOS)
+MATCHMAKER_PROTOS = $(MATCHMAKER_TYPESCRIPT_PROTOS) $(MATCHMAKER_GOLANG_PROTOS)
+
+SWAGGER_JSON_DOCS = api/matchmaker/frontend.swagger.json api/matchmaker/backend.swagger.json
+
+ALL_PROTOS = $(MATCHMAKER_PROTOS) $(SWAGGER_JSON_DOCS)
 
 help:
 	@cat Makefile | grep ^\#\# | grep -v ^\#\#\# |cut -c 4-
@@ -146,35 +146,34 @@ test: install-npm
 
 ## # Build protobuf definitions
 ## all-protos
-## api-protos
-## matchmaker-internal-protos
+## matchmaker-protos
 ##
 ## # Build Swagger OpenAPI docs
 ## api-docs
 ##
 
-all-protos: $(ALL_PROTOS)
-api-protos: $(API_PROTOS)
+
 api-docs: $(SWAGGER_JSON_DOCS)
 
-matchmaker-internal-protos: $(MATCHMAKER_INTERNAL_PROTOS)
+matchmaker-protos: $(MATCHMAKER_PROTOS)
+all-protos: $(ALL_PROTOS)
 
 GO_PROTOC_DEPS := build/toolchain/bin/protoc$(EXE_EXTENSION)
 GO_PROTOC_DEPS += build/toolchain/bin/protoc-gen-go$(EXE_EXTENSION)
 GO_PROTOC_DEPS += build/toolchain/bin/protoc-gen-go-grpc$(EXE_EXTENSION)
 
-libs/pb/%.pb.go: api/%.proto api/third-party/ $(GO_PROTOC_DEPS)
-	mkdir -p $(REPOSITORY_ROOT)/libs/pb
-	$(PROTOC) $(*F).proto \
+libs/pb/matchmaker/%.pb.go: api/matchmaker/%.proto api/third-party/ $(GO_PROTOC_DEPS)
+	mkdir -p $(REPOSITORY_ROOT)/libs/pb/matchmaker
+	$(PROTOC) matchmaker/$(*F).proto \
 		-I $(REPOSITORY_ROOT)/api -I $(PROTOC_INCLUDES) \
-		--go_out=$(REPOSITORY_ROOT)/libs/pb \
-		--go_opt=module=$(GO_MODULE)/libs/pb \
-		--go-grpc_out=require_unimplemented_servers=false:$(REPOSITORY_ROOT)/libs/pb \
-		--go-grpc_opt=module=$(GO_MODULE)/libs/pb
+		--go_out=$(REPOSITORY_ROOT)/libs/pb/matchmaker \
+		--go_opt=module=$(GO_MODULE)/libs/pb/matchmaker \
+		--go-grpc_out=require_unimplemented_servers=false:$(REPOSITORY_ROOT)/libs/pb/matchmaker \
+		--go-grpc_opt=module=$(GO_MODULE)/libs/pb/matchmaker
 
 # Include proto structure for dependency chain to run properly.
-libs/pb/quip-frontend.pb.go: libs/pb/quip-messages.pb.go
-libs/pb/quip-backend.pb.go: libs/pb/quip-messages.pb.go
+libs/pb/matchmaker/quip-frontend.pb.go: libs/pb/matchmaker/quip-messages.pb.go
+libs/pb/matchmaker/quip-backend.pb.go: libs/pb/matchmaker/quip-messages.pb.go
 
 libs/matchmaker/internal/ipb/%.pb.go: libs/matchmaker/internal/api/%.proto $(GO_PROTOC_DEPS)
 	mkdir -p $(REPOSITORY_ROOT)/libs/matchmaker/internal/ipb
@@ -183,23 +182,23 @@ libs/matchmaker/internal/ipb/%.pb.go: libs/matchmaker/internal/api/%.proto $(GO_
 		--go_out=$(REPOSITORY_ROOT)/libs/matchmaker/internal/ipb \
 		--go_opt=module=$(GO_MODULE)/libs/matchmaker/internal/ipb
 
-libs/pb/%.ts: api/%.proto api/third-party/
-	mkdir -p $(REPOSITORY_ROOT)/libs/pb
-	$(PROTOC) $(*F).proto \
+libs/pb/matchmaker/%.ts: api/matchmaker/%.proto api/third-party/
+	mkdir -p $(REPOSITORY_ROOT)/libs/pb/matchmaker
+	$(PROTOC) matchmaker/$(*F).proto \
 		-I $(REPOSITORY_ROOT)/api -I $(PROTOC_INCLUDES) \
 		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
 		--ts_proto_out=$(REPOSITORY_ROOT)/libs/pb \
 		--ts_proto_opt=esModuleInterop=true \
 		--ts_proto_opt=outputServices=grpc-js \
 		--ts_proto_opt=removeEnumPrefix=true \
-		--ts_proto_opt=unrecognizedEnum=false 
+		--ts_proto_opt=unrecognizedEnum=false
 
 # Include proto structure for dependency chain to run properly.
-libs/pb/quip-frontend.ts: libs/pb/quip-messages.ts
-libs/pb/quip-backend.ts: libs/pb/quip-messages.ts
+libs/pb/matchmaker/quip-frontend.ts: libs/pb/matchmaker/quip-messages.ts
+libs/pb/matchmaker/quip-backend.ts: libs/pb/matchmaker/quip-messages.ts
 
-api/%.swagger.json: api/%.proto api/third-party/ build/toolchain/bin/protoc$(EXE_EXTENSION) build/toolchain/bin/protoc-gen-openapiv2$(EXE_EXTENSION)
-	$(PROTOC) $(*F).proto \
+api/matchmaker/%.swagger.json: api/matchmaker/%.proto api/third-party/ build/toolchain/bin/protoc$(EXE_EXTENSION) build/toolchain/bin/protoc-gen-openapiv2$(EXE_EXTENSION)
+	$(PROTOC) matchmaker/$(*F).proto \
 		-I $(REPOSITORY_ROOT)/api -I $(PROTOC_INCLUDES) \
 		--openapiv2_out=json_names_for_fields=false,logtostderr=true,allow_delete_body=true:$(REPOSITORY_ROOT)/api
 

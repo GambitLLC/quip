@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v3.21.12
-// source: quip-backend.proto
+// source: matchmaker/backend.proto
 
-package pb
+package matchmaker
 
 import (
 	context "context"
@@ -20,8 +20,8 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Backend_CreateMatch_FullMethodName = "/quip.Backend/CreateMatch"
-	Backend_DeleteMatch_FullMethodName = "/quip.Backend/DeleteMatch"
+	Backend_CreateMatch_FullMethodName = "/quip.matchmaker.Backend/CreateMatch"
+	Backend_DeleteMatch_FullMethodName = "/quip.matchmaker.Backend/DeleteMatch"
 )
 
 // BackendClient is the client API for Backend service.
@@ -128,7 +128,7 @@ func _Backend_DeleteMatch_Handler(srv interface{}, ctx context.Context, dec func
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Backend_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "quip.Backend",
+	ServiceName: "quip.matchmaker.Backend",
 	HandlerType: (*BackendServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -141,5 +141,5 @@ var Backend_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "quip-backend.proto",
+	Metadata: "matchmaker/backend.proto",
 }
