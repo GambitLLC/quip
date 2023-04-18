@@ -172,8 +172,8 @@ libs/pb/matchmaker/%.pb.go: api/matchmaker/%.proto api/third-party/ $(GO_PROTOC_
 		--go-grpc_opt=module=$(GO_MODULE)/libs/pb/matchmaker
 
 # Include proto structure for dependency chain to run properly.
-libs/pb/matchmaker/quip-frontend.pb.go: libs/pb/matchmaker/quip-messages.pb.go
-libs/pb/matchmaker/quip-backend.pb.go: libs/pb/matchmaker/quip-messages.pb.go
+libs/pb/matchmaker/frontend.pb.go: libs/pb/matchmaker/messages.pb.go
+libs/pb/matchmaker/backend.pb.go: libs/pb/matchmaker/messages.pb.go
 
 libs/matchmaker/internal/ipb/%.pb.go: libs/matchmaker/internal/api/%.proto $(GO_PROTOC_DEPS)
 	mkdir -p $(REPOSITORY_ROOT)/libs/matchmaker/internal/ipb
@@ -182,7 +182,9 @@ libs/matchmaker/internal/ipb/%.pb.go: libs/matchmaker/internal/api/%.proto $(GO_
 		--go_out=$(REPOSITORY_ROOT)/libs/matchmaker/internal/ipb \
 		--go_opt=module=$(GO_MODULE)/libs/matchmaker/internal/ipb
 
-libs/pb/matchmaker/%.ts: api/matchmaker/%.proto api/third-party/
+TS_PROTOC_DEPS := build/toolchain/bin/protoc$(EXE_EXTENSION) install-npm
+
+libs/pb/matchmaker/%.ts: api/matchmaker/%.proto api/third-party/ $(TS_PROTOC_DEPS)
 	mkdir -p $(REPOSITORY_ROOT)/libs/pb/matchmaker
 	$(PROTOC) matchmaker/$(*F).proto \
 		-I $(REPOSITORY_ROOT)/api -I $(PROTOC_INCLUDES) \
@@ -194,21 +196,25 @@ libs/pb/matchmaker/%.ts: api/matchmaker/%.proto api/third-party/
 		--ts_proto_opt=unrecognizedEnum=false
 
 # Include proto structure for dependency chain to run properly.
-libs/pb/matchmaker/quip-frontend.ts: libs/pb/matchmaker/quip-messages.ts
-libs/pb/matchmaker/quip-backend.ts: libs/pb/matchmaker/quip-messages.ts
+libs/pb/matchmaker/frontend.ts: libs/pb/matchmaker/messages.ts
+libs/pb/matchmaker/backend.ts: libs/pb/matchmaker/messages.ts
 
 api/matchmaker/%.swagger.json: api/matchmaker/%.proto api/third-party/ build/toolchain/bin/protoc$(EXE_EXTENSION) build/toolchain/bin/protoc-gen-openapiv2$(EXE_EXTENSION)
 	$(PROTOC) matchmaker/$(*F).proto \
 		-I $(REPOSITORY_ROOT)/api -I $(PROTOC_INCLUDES) \
 		--openapiv2_out=json_names_for_fields=false,logtostderr=true,allow_delete_body=true:$(REPOSITORY_ROOT)/api
 
-## ####################################
-## # Cleaning
-##
+clean-build:
+	rm -rf $(BUILD_DIR)/
 
-## # clean generated proto files
-## clean-protos
-##
+clean-third-party:
+	rm -rf $(REPOSITORY_ROOT)/api/third-party/
+
+PB_EXCLUDE_ITEMS = libs/pb/package.json libs/pb/project.json libs/pb/README.md libs/pb/tsconfig.json libs/pb/tsconfig.lib.json
+PB_ITEMS = $(filter-out $(PB_EXCLUDE_ITEMS), $(wildcard libs/pb/*))
 
 clean-protos:
-	-rm $(foreach proto,$(ALL_PROTOS), $(proto))
+	rm -rf $(foreach item,$(PB_ITEMS), $(REPOSITORY_ROOT)/$(item))
+
+.PHONY: clean
+clean: clean-build clean-third-party clean-protos
