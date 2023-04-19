@@ -7,3 +7,66 @@
 a {
   text-decoration: none;
 }
+
+//shared styles
+@import 'mixins.scss';
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background-color: v-bind('colors["background"]');
+}
+
+body {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background-color: v-bind('colors["background"]');
+}
+
+#__nuxt {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  background-color: v-bind('colors["background"]');
+}
+
+.innerArea {
+  max-width: 1920px;
+  margin: 0 auto;
+}
+
+.safeArea {
+  @include sm-down {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+
+  @include md {
+    padding-left: 48px !important;
+    padding-right: 48px !important;
+  }
+
+  @include lg {
+    padding-left: 64px !important;
+    padding-right: 64px !important;
+  }
+
+  @include xl {
+    padding-left: 150px !important;
+    padding-right: 150px !important;
+  }
+
+  @include xxl {
+    padding-left: 300px !important;
+    padding-right: 300px !important;
+  }
+}
