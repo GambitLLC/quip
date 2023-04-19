@@ -3,7 +3,7 @@ package broker
 import (
 	"context"
 
-	"github.com/GambitLLC/quip/libs/pb"
+	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
 const (

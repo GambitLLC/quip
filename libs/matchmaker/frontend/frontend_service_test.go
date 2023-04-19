@@ -20,7 +20,7 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	statestoreTesting "github.com/GambitLLC/quip/libs/matchmaker/internal/statestore/testing"
-	"github.com/GambitLLC/quip/libs/pb"
+	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/rs/xid"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"

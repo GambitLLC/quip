@@ -1,6 +1,6 @@
 syntax = "proto3";
-package quip;
-option go_package="github.com/GambitLLC/quip/libs/pb";
+package quip.matchmaker;
+option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
 
 import "google/protobuf/timestamp.proto";
 

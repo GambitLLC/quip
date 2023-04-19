@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v3.21.12
-// source: quip-frontend.proto
+// source: matchmaker/frontend.proto
 
-package pb
+package matchmaker
 
 import (
 	context "context"
@@ -20,9 +20,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Frontend_GetStatus_FullMethodName  = "/quip.Frontend/GetStatus"
-	Frontend_StartQueue_FullMethodName = "/quip.Frontend/StartQueue"
-	Frontend_StopQueue_FullMethodName  = "/quip.Frontend/StopQueue"
+	Frontend_GetStatus_FullMethodName  = "/quip.matchmaker.Frontend/GetStatus"
+	Frontend_StartQueue_FullMethodName = "/quip.matchmaker.Frontend/StartQueue"
+	Frontend_StopQueue_FullMethodName  = "/quip.matchmaker.Frontend/StopQueue"
 )
 
 // FrontendClient is the client API for Frontend service.
@@ -167,7 +167,7 @@ func _Frontend_StopQueue_Handler(srv interface{}, ctx context.Context, dec func(
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Frontend_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "quip.Frontend",
+	ServiceName: "quip.matchmaker.Frontend",
 	HandlerType: (*FrontendServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -184,5 +184,5 @@ var Frontend_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "quip-frontend.proto",
+	Metadata: "matchmaker/frontend.proto",
 }

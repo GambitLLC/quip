@@ -12,10 +12,10 @@ import {
   UntypedServiceImplementation,
 } from "@grpc/grpc-js";
 import _m0 from "protobufjs/minimal";
-import { Empty } from "./google/protobuf/empty";
-import { GameConfiguration, MatchFound, QueueSearching, Status, statusFromJSON, statusToJSON } from "./quip-messages";
+import { Empty } from "../google/protobuf/empty";
+import { GameConfiguration, MatchFound, QueueSearching, Status, statusFromJSON, statusToJSON } from "./messages";
 
-export const protobufPackage = "quip";
+export const protobufPackage = "quip.matchmaker";
 
 export interface StartQueueRequest {
   config: GameConfiguration | undefined;
@@ -164,7 +164,7 @@ export type FrontendService = typeof FrontendService;
 export const FrontendService = {
   /** GetStatus returns the current matchmaking status. */
   getStatus: {
-    path: "/quip.Frontend/GetStatus",
+    path: "/quip.matchmaker.Frontend/GetStatus",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
@@ -174,7 +174,7 @@ export const FrontendService = {
   },
   /** StartQueue starts searching for a match with the given parameters. */
   startQueue: {
-    path: "/quip.Frontend/StartQueue",
+    path: "/quip.matchmaker.Frontend/StartQueue",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: StartQueueRequest) => Buffer.from(StartQueueRequest.encode(value).finish()),
@@ -184,7 +184,7 @@ export const FrontendService = {
   },
   /** StopQueue stops searching for a match. Idempotent. */
   stopQueue: {
-    path: "/quip.Frontend/StopQueue",
+    path: "/quip.matchmaker.Frontend/StopQueue",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
@@ -248,7 +248,7 @@ export interface FrontendClient extends Client {
   ): ClientUnaryCall;
 }
 
-export const FrontendClient = makeGenericClientConstructor(FrontendService, "quip.Frontend") as unknown as {
+export const FrontendClient = makeGenericClientConstructor(FrontendService, "quip.matchmaker.Frontend") as unknown as {
   new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): FrontendClient;
   service: typeof FrontendService;
 };

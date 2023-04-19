@@ -5,7 +5,7 @@ import (
 
 	"github.com/GambitLLC/quip/libs/appmain"
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/pb"
+	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
 func BindService(cfg config.View, b *appmain.GRPCBindings) error {

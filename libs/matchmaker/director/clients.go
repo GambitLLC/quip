@@ -7,7 +7,7 @@ import (
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/pb"
+	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/GambitLLC/quip/libs/rpc"
 )
 

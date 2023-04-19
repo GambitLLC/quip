@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "quip-frontend.proto",
+    "title": "matchmaker/frontend.proto",
     "version": "version not set"
   },
   "tags": [
@@ -36,16 +36,7 @@
         }
       }
     },
-    "protobufAny": {
-      "type": "object",
-      "properties": {
-        "@type": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": {}
-    },
-    "quipGameConfiguration": {
+    "matchmakerGameConfiguration": {
       "type": "object",
       "properties": {
         "gamemode": {
@@ -53,15 +44,18 @@
         }
       }
     },
-    "quipMatchFound": {
+    "matchmakerMatchFound": {
       "type": "object",
       "properties": {
+        "match_id": {
+          "type": "string"
+        },
         "connection": {
           "type": "string"
         }
       }
     },
-    "quipQueueSearching": {
+    "matchmakerQueueSearching": {
       "type": "object",
       "properties": {
         "gamemode": {
@@ -73,7 +67,32 @@
         }
       }
     },
-    "quipStatus": {
+    "matchmakerStatusResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/quipmatchmakerStatus"
+        },
+        "queue": {
+          "$ref": "#/definitions/matchmakerQueueSearching",
+          "description": "Details about current queue status."
+        },
+        "match": {
+          "$ref": "#/definitions/matchmakerMatchFound",
+          "description": "Details about the match the user is currently playing in."
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "quipmatchmakerStatus": {
       "type": "string",
       "enum": [
         "STATUS_OFFLINE",
@@ -82,22 +101,6 @@
         "STATUS_PLAYING"
       ],
       "default": "STATUS_OFFLINE"
-    },
-    "quipStatusResponse": {
-      "type": "object",
-      "properties": {
-        "status": {
-          "$ref": "#/definitions/quipStatus"
-        },
-        "queue": {
-          "$ref": "#/definitions/quipQueueSearching",
-          "description": "Details about current queue status."
-        },
-        "match": {
-          "$ref": "#/definitions/quipMatchFound",
-          "description": "Details about the match the user is currently playing in."
-        }
-      }
     }
   }
 }

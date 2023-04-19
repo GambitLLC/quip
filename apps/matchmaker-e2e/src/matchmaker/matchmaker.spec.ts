@@ -2,9 +2,16 @@ import { Client } from '@quip/sockets';
 import config from 'config';
 import { newToken } from '../auth';
 import { randomBytes } from 'crypto';
-import { BackendClient, DeleteMatchRequest } from '@quip/pb/quip-backend';
-import { StartQueueRequest, StatusResponse } from '@quip/pb/quip-frontend';
-import { QueueUpdate, Status, StatusUpdate } from '@quip/pb/quip-messages';
+import { BackendClient, DeleteMatchRequest } from '@quip/pb/matchmaker/backend';
+import {
+  StartQueueRequest,
+  StatusResponse,
+} from '@quip/pb/matchmaker/frontend';
+import {
+  QueueUpdate,
+  Status,
+  StatusUpdate,
+} from '@quip/pb/matchmaker/messages';
 import * as grpc from '@grpc/grpc-js';
 
 const sockets: Map<string, Client> = new Map();

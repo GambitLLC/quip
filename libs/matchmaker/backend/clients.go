@@ -8,7 +8,7 @@ import (
 	agones "agones.dev/agones/pkg/allocation/go"
 
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/pb"
+	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/GambitLLC/quip/libs/rpc"
 )
 

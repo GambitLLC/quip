@@ -4,9 +4,6 @@
   "projectType": "library",
   "sourceRoot": "libs/matchmaker",
   "targets": {
-    "make": {
-      "command": "make matchmaker-internal-protos"
-    },
     "test": {
       "executor": "@nx-go/nx-go:test"
     },

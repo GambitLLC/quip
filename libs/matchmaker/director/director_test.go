@@ -19,7 +19,7 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	statestoreTesting "github.com/GambitLLC/quip/libs/matchmaker/internal/statestore/testing"
 	"github.com/GambitLLC/quip/libs/matchmaker/matchfunction"
-	"github.com/GambitLLC/quip/libs/pb"
+	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
 func TestMatchFound(t *testing.T) {

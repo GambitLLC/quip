@@ -14,7 +14,7 @@ import {
   FrontendService,
   FrontendServer,
   StatusResponse,
-} from '@quip/pb/quip-frontend';
+} from '@quip/pb/matchmaker/frontend';
 import { Empty } from '@quip/pb/google/protobuf/empty';
 import Server from './server';
 import Client from './client';
