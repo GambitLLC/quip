@@ -72,10 +72,10 @@ const isScrolled = computed(() => {
 $transitionTime: 0.3s;
 
 .topbarBase {
-  padding: 24px 64px;
+  padding: 18px 64px;
 
   @include md-down {
-    padding: 24px 32px;
+    padding: 18px 32px;
   }
 
   @include sm-down {
@@ -105,7 +105,7 @@ $transitionTime: 0.3s;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  height: 48px;
+  height: 40px;
 
   @include md-down {
     height: 40px;
@@ -117,7 +117,7 @@ $transitionTime: 0.3s;
 }
 
 .logo {
-  height: 100%;
+  height: 90%;
   transition: filter $transitionTime ease-in-out;
 }
 
@@ -130,8 +130,7 @@ a {
 
 h3 {
   font-weight: normal;
-  font-size: 18px;
-  line-height: 22px;
+  font-size: 16px;
 
   @include md-down {
     font-size: 16px;

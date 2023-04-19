@@ -30,7 +30,7 @@ const computedWidth = computed(() => {
     :style="{
       width: computedWidth
     }"
-    class="co-headline font-weight-bold"
+    class="co-headline font-weight-bold unselectable"
   >
     <div>
       <Icon class="icon mr-2" v-if="props.icon !== undefined" :icon="props.icon ?? ''"/>
@@ -46,7 +46,7 @@ a {
   cursor: pointer;
   border-radius: 70px;
   padding: 12px 24px;
-  height: 48px;
+  height: 42px;
 }
 
 a > div {

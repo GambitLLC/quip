@@ -41,6 +41,7 @@ const computedCircleStyle = computed(() => {
     bottom: props.circle.bottom,
   }
 })
+
 const computedImgStyle = computed(() => {
   return {
     width: props.img.width,
@@ -51,11 +52,9 @@ const computedImgStyle = computed(() => {
     bottom: props.img.bottom,
   }
 })
-const computedTextMaxWidth = computed(() => {
-  return props.textMaxWidth + 'px'
-})
-const isTiny = computed(() => (props.color === "purple" || props.color === "blue") && !mobile.value)
 
+const computedTextMaxWidth = computed(() => { return props.textMaxWidth + 'px' })
+const isTiny = computed(() => (props.color === "purple" || props.color === "blue") && !mobile.value)
 </script>
 
 <template>

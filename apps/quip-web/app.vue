@@ -185,17 +185,41 @@ onMounted(() => {
             text-location="top"
           />
         </div>
-        <div class="w-100">
+        <div class="w-100 marginTopGameCards">
           <GameCard
             color="purple"
+            layout="right"
+            title="Quip: Race"
+            text="Enjoy fun physics-based games from your favorite creators."
+            :bullets="[
+              'Lorem Ipsum Dolor Met',
+              'Lorem Ipsum Dolor Met',
+              'Lorem Ipsum Dolor Met',
+            ]"
           >
           </GameCard>
           <GameCard
             color="green"
+            layout="left"
+            title="Quip: Shoot"
+            text="Enjoy fun physics-based games from your favorite creators."
+            :bullets="[
+              'Lorem Ipsum Dolor Met',
+              'Lorem Ipsum Dolor Met',
+              'Lorem Ipsum Dolor Met',
+            ]"
           >
           </GameCard>
           <GameCard
             color="blue"
+            layout="right"
+            title="Quip: Think"
+            text="Enjoy fun physics-based games from your favorite creators."
+            :bullets="[
+              'Lorem Ipsum Dolor Met',
+              'Lorem Ipsum Dolor Met',
+              'Lorem Ipsum Dolor Met',
+            ]"
           >
           </GameCard>
         </div>
@@ -290,5 +314,9 @@ body {
     padding-left: 300px !important;
     padding-right: 300px !important;
   }
+}
+
+.marginTopGameCards {
+  margin-top: 72px;
 }
 </style>
