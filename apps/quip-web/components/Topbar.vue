@@ -19,46 +19,48 @@ const isScrolled = computed(() => {
 
 <template>
   <div class="topbarBase safeArea" :class="{'topbarBaseScrolled': isScrolled}">
-    <div v-if="!mobile" class="topbar">
-      <img draggable="false" class="logo unselectable" src="/logo.svg" alt="Quip Logo" />
-      <div class="buttons">
-        <a class="hover-underline-animation">
-          <h3>
-            Home
-          </h3>
-        </a>
-        <a class="hover-underline-animation">
-          <h3>
-            About
-          </h3>
-        </a>
-        <a class="hover-underline-animation">
-          <h3>
-            Games
-          </h3>
-        </a>
-        <a class="mr-3 hover-underline-animation">
-          <h3>
-            FAQ
-          </h3>
-        </a>
-        <QuipButton href="https://www.apple.com/app-store/" target="_blank" icon="material-symbols:download-rounded" class="bg-primary mr-3">
-          <h3 class="font-weight-bold">
-            Download App
-          </h3>
-        </QuipButton>
-        <QuipButton :width="130" class="login text-jetblack">
-          <h3 class="font-weight-bold">
-            Login
-          </h3>
-        </QuipButton>
+    <div class="innerArea">
+      <div v-if="!mobile" class="topbar">
+        <img draggable="false" class="logo unselectable" src="/logo.svg" alt="Quip Logo" />
+        <div class="buttons">
+          <a class="hover-underline-animation">
+            <h3>
+              Home
+            </h3>
+          </a>
+          <a class="hover-underline-animation">
+            <h3>
+              About
+            </h3>
+          </a>
+          <a class="hover-underline-animation">
+            <h3>
+              Games
+            </h3>
+          </a>
+          <a class="mr-3 hover-underline-animation">
+            <h3>
+              FAQ
+            </h3>
+          </a>
+          <QuipButton href="https://www.apple.com/app-store/" target="_blank" icon="material-symbols:download-rounded" class="bg-primary mr-3">
+            <h3 class="font-weight-bold">
+              Download App
+            </h3>
+          </QuipButton>
+          <QuipButton :width="130" class="login text-jetblack">
+            <h3 class="font-weight-bold">
+              Login
+            </h3>
+          </QuipButton>
+        </div>
       </div>
-    </div>
-    <div v-else class="topbar">
-      <img draggable="false" class="logo unselectable" src="/mobileLogo.svg" alt="Quip Logo" />
-      <div class="buttons">
-        <IconButton href="https://www.apple.com/app-store/" target="_blank" icon="ic:outline-file-download" class="bg-primary mr-2" />
-        <IconButton @click="toggleMobileMenu" :icon="isOpen? 'material-symbols:close-rounded' : 'material-symbols:menu'" class="login text-jetblack"/>
+      <div v-else class="topbar">
+        <img draggable="false" class="logo unselectable" src="/mobileLogo.svg" alt="Quip Logo" />
+        <div class="buttons">
+          <IconButton href="https://www.apple.com/app-store/" target="_blank" icon="ic:outline-file-download" class="bg-primary mr-2" />
+          <IconButton @click="toggleMobileMenu" :icon="isOpen? 'material-symbols:close-rounded' : 'material-symbols:menu'" class="login text-jetblack"/>
+        </div>
       </div>
     </div>
   </div>
@@ -86,6 +88,11 @@ $transitionTime: 0.3s;
   background: v-bind('colors.background');
   transition: background $transitionTime ease-in-out, border-bottom-color $transitionTime ease-in-out;
   border-bottom: solid 1px transparent;
+
+  @include sm-down {
+    background: v-bind('colors["grey-light"]');
+    transition: border-bottom-color $transitionTime ease-in-out;
+  }
 }
 
 .topbarBaseScrolled {

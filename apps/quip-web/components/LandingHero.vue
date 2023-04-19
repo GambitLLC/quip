@@ -109,9 +109,14 @@ const display = useDisplay();
 
 .hero-title {
   font-weight: 700;
-  font-size: 60px;
-  line-height: 70px;
   letter-spacing: 0.02em;
+  font-size: 80px;
+  line-height: 100px;
+
+  @include lg-down {
+    font-size: 60px;
+    line-height: 70px;
+  }
 
   @include md-down {
     font-size: 50px;

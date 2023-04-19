@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {useDisplay, useTheme} from "vuetify";
 
-const {mdAndDown} = useDisplay()
+const {mobile} = useDisplay()
 const props = defineProps<{
   title: string,
   text: string,
@@ -54,7 +54,7 @@ const computedImgStyle = computed(() => {
 const computedTextMaxWidth = computed(() => {
   return props.textMaxWidth + 'px'
 })
-const isTiny = computed(() => (props.color === "purple" || props.color === "blue") && !mdAndDown.value)
+const isTiny = computed(() => (props.color === "purple" || props.color === "blue") && !mobile.value)
 
 </script>
 
@@ -98,6 +98,11 @@ h3 {
   line-height: 56px;
   font-size: 48px;
   font-weight: bold;
+
+  @include lg-down {
+    font-size: 28px;
+    line-height: 30px;
+  }
 
   @include sm-down {
     font-size: 32px;

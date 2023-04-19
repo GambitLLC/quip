@@ -11,6 +11,9 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
+      meta: [
+        { name: 'theme-color', content: 'black-translucent'}
+      ],
       title: 'quip.gg',
       link: [
         //Preconnect to Google Fonts
