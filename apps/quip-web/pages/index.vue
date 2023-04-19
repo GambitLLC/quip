@@ -196,6 +196,7 @@ onMounted(() => {
               'Lorem Ipsum Dolor Met',
               'Lorem Ipsum Dolor Met',
             ]"
+            img="/game/gameCardImg1.png"
           >
           </GameCard>
           <GameCard
@@ -208,6 +209,7 @@ onMounted(() => {
               'Lorem Ipsum Dolor Met',
               'Lorem Ipsum Dolor Met',
             ]"
+            img="/game/gameCardImg2.png"
           >
           </GameCard>
           <GameCard
@@ -220,6 +222,8 @@ onMounted(() => {
               'Lorem Ipsum Dolor Met',
               'Lorem Ipsum Dolor Met',
             ]"
+            :coming-soon="true"
+            img="/game/gameCardImg3.png"
           >
           </GameCard>
         </div>
