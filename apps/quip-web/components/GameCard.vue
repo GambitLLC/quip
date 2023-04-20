@@ -43,13 +43,7 @@ watch(height, calcCardRot)
 
 <template>
   <QuipCard :class="computedColor" class="gameCard mb-8 overflow-hidden">
-    <div
-      :class="{
-        'flex-row': props.layout === 'right',
-        'flex-row-reverse': props.layout === 'left',
-      }"
-      class="d-flex w-100 h-100 position-relative"
-    >
+    <div class="d-flex w-100 h-100 position-relative">
       <div v-if="comingSoon" class="comingSoon position-absolute h-100 w-100 rounded-corners overflow-hidden">
         <div class="w-100 h-100 rotate d-flex align-center justify-center">
           <div class="banner elevation-24 d-flex align-center justify-center ml-16" :class="computedColor">
@@ -64,21 +58,28 @@ watch(height, calcCardRot)
           </div>
         </div>
       </div>
-      <div class="d-flex w-100 h-100 align-center pa-16" :class="{'blur': comingSoon}">
-        <div class="w-100 h-100 d-flex align-center justify-center">
+      <div
+        :class="{
+          'flex-row': props.layout === 'right',
+          'flex-row-reverse': props.layout === 'left',
+          'blur': comingSoon,
+        }"
+        class="d-flex w-100 h-100 align-center pa-xl-16 pa-lg-16 pa-sm-8 pa-8 mobileContent"
+      >
+        <div class="w-100 h-100 d-flex justify-center align-start align-md-center align-lg-center align-xl-center">
           <div class="circle position-relative" :class="computedColorAccent">
             <img :src="img" alt="quip game image" class="position-absolute gameImg"/>
           </div>
         </div>
         <div class="w-100">
-          <h1 class="text-jetblack-light mb-6">
+          <h1 class="text-jetblack-light mb-2 mb-md-6 mb-lg-6 mb-xl-6">
             {{ title }}
           </h1>
           <p>
             {{ text }}
           </p>
-          <div class="mt-10">
-            <div v-for="(bullet, i) in bullets" :key="i" class="d-flex align-center mb-8">
+          <div class="mt-4 mt-md-10 mt-lg-10 mt-xl-10">
+            <div v-for="(bullet, i) in bullets" :key="i" class="d-flex align-center mb-md-8 mb-lg-8 mb-xl-8 mb-3">
               <div class="bullet" :class="computedBulletColor">
                 <div class="bulletCircle" :class="computedBulletColorAccent"/>
               </div>
@@ -87,7 +88,7 @@ watch(height, calcCardRot)
               </div>
             </div>
           </div>
-          <div class="learnMore">
+          <div class="learnMore mt-2 mt-md-0 mt-lg-0 mt-xl-0">
             <QuipButton :width="176" class="learnMoreBtn text-jetblack">
               <h3>Learn More</h3>
             </QuipButton>
@@ -99,13 +100,35 @@ watch(height, calcCardRot)
 </template>
 
 <style scoped lang="scss">
+@import "styles/mixins.scss";
+
 .gameCard {
-  height: calc(100vh - 160px);
+  height: 740px;
+
+  @include sm-down {
+    height: 772px !important;
+  }
+}
+
+.mobileContent {
+  @include sm-down {
+    flex-direction: column !important;
+  }
 }
 
 h1 {
   font-size: 80px;
   line-height: 80px;
+
+  @include md-down {
+    font-size: 48px;
+    line-height: 48px;
+  }
+
+  @include sm-down {
+    font-size: 32px;
+    line-height: 100%;
+  }
 }
 
 p {
@@ -113,6 +136,16 @@ p {
   font-weight: 300;
   font-size: 24px;
   line-height: 30px;
+
+  @include md-down {
+    font-size: 20px;
+    line-height: 22px;
+  }
+
+  @include sm-down {
+    font-size: 18px;
+    line-height: 22px;
+  }
 }
 
 .learnMore {
@@ -132,18 +165,34 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @include md-down {
+    border-radius: 12px;
+    width: 36px;
+    height: 36px;
+  }
 }
 
 .bulletCircle {
   width: 32px;
   height: 32px;
   border-radius: 50%;
+
+  @include md-down {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 .bulletText {
   font-weight: 400;
   font-size: 18px;
   line-height: 20px;
+
+  @include sm-down {
+    font-size: 18px;
+    line-height: 110%;
+  }
 }
 
 .comingSoon {
@@ -204,11 +253,33 @@ p {
   width: 480px;
   height: 480px;
   border-radius: 50%;
+
+  @include md-down {
+    width: 320px;
+    height: 320px;
+  }
+
+  @include sm-down {
+    width: 270px;
+    height: 270px;
+  }
 }
 
 .gameImg {
-  top: calc(50% - 260px);
-  left: calc(50% - 290px);
-  height: 620px;
+  top: calc(50% - 270px);
+  left: calc(50% - 320px);
+  height: 640px;
+
+  @include md-down {
+    height: 480px;
+    top: calc(50% - 200px);
+    left: calc(50% - 240px);
+  }
+
+  @include sm-down {
+    height: 390px;
+    top: calc(50% - 150px);
+    left: calc(50% - 195px);
+  }
 }
 </style>

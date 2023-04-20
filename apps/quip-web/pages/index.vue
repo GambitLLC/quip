@@ -8,7 +8,7 @@ const computedDesktopCircles = computed(() => [
   {
     //circle 1
     circle: {
-      size: md.value ? 400 : 573,
+      size: md.value ? 360 : 573,
       top: md.value ? 'calc(50% - 200px)' : '10px',
       right: '-9px',
     },
@@ -16,9 +16,9 @@ const computedDesktopCircles = computed(() => [
     img: {
       src: '/ImageApp1.png',
       alt: 'quip app image',
-      top: '-50px',
-      left: '-30px',
-      height: md.value ? '500px' : undefined,
+      top: md.value ? '-30px' : '-70px',
+      left: md.value ? '-40px' : '-80px',
+      height: md.value ? '420px' : undefined,
       overflow: !md.value,
     }
   },
@@ -131,9 +131,9 @@ onMounted(() => {
             :text-max-width="190"
             :img="{
               src: '/ImageApp1.png',
-              width: '252px',
-              bottom: '-17px',
-              left: 'calc(50% - 136px)',
+              width: '320px',
+              bottom: '-35px',
+              left: 'calc(50% - 175px)',
               alt: 'quip app image',
               overflow: false,
             }"
@@ -210,6 +210,7 @@ onMounted(() => {
               'Lorem Ipsum Dolor Met',
             ]"
             img="/game/gameCardImg2.png"
+            :coming-soon="true"
           >
           </GameCard>
           <GameCard
