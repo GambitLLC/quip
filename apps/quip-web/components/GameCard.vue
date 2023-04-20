@@ -46,7 +46,7 @@ watch(height, calcCardRot)
     <div class="d-flex w-100 h-100 position-relative">
       <div v-if="comingSoon" class="comingSoon position-absolute h-100 w-100 rounded-corners overflow-hidden">
         <div class="w-100 h-100 rotate d-flex align-center justify-center">
-          <div class="banner elevation-24 d-flex align-center justify-center ml-16" :class="computedColor">
+          <div class="banner elevation-24 d-flex align-center justify-center ml-16 unselectable" :class="computedColor">
             <div v-for="i in range(7)">
               <h1 class="text-jetblack-light mr-6 d-inline outlineText" v-if="i % 2 === 1">
                 Coming Soon
@@ -64,22 +64,22 @@ watch(height, calcCardRot)
           'flex-row-reverse': props.layout === 'left',
           'blur': comingSoon,
         }"
-        class="d-flex w-100 h-100 align-center pa-xl-16 pa-lg-16 pa-sm-8 pa-8 mobileContent"
+        class="d-flex w-100 h-100 align-center pa-xxl-16 pa-xl-16 pa-lg-16 pa-sm-8 pa-8 mobileContent"
       >
-        <div class="w-100 h-100 d-flex justify-center align-start align-md-center align-lg-center align-xl-center">
+        <div class="w-100 h-100 d-flex justify-center align-start align-md-center align-lg-center align-xl-center align-xxl-center">
           <div class="circle position-relative" :class="computedColorAccent">
             <img :src="img" alt="quip game image" class="position-absolute gameImg"/>
           </div>
         </div>
         <div class="w-100">
-          <h1 class="text-jetblack-light mb-2 mb-md-6 mb-lg-6 mb-xl-6">
+          <h1 class="text-jetblack-light mb-2 mb-md-6 mb-lg-6 mb-xl-6 mb-xxl-6">
             {{ title }}
           </h1>
           <p>
             {{ text }}
           </p>
-          <div class="mt-4 mt-md-10 mt-lg-10 mt-xl-10">
-            <div v-for="(bullet, i) in bullets" :key="i" class="d-flex align-center mb-md-8 mb-lg-8 mb-xl-8 mb-3">
+          <div class="mt-4 mt-md-10 mt-lg-10 mt-xl-10 mt-xxl-10">
+            <div v-for="(bullet, i) in bullets" :key="i" class="d-flex align-center mb-md-8 mb-lg-8 mb-xl-8 mb-xxl-8 mb-3">
               <div class="bullet" :class="computedBulletColor">
                 <div class="bulletCircle" :class="computedBulletColorAccent"/>
               </div>
@@ -88,7 +88,7 @@ watch(height, calcCardRot)
               </div>
             </div>
           </div>
-          <div class="learnMore mt-2 mt-md-0 mt-lg-0 mt-xl-0">
+          <div class="learnMore mt-2 mt-md-0 mt-lg-0 mt-xl-0 mt-xxl-0">
             <QuipButton :width="176" class="learnMoreBtn text-jetblack">
               <h3>Learn More</h3>
             </QuipButton>
@@ -106,7 +106,7 @@ watch(height, calcCardRot)
   height: 740px;
 
   @include sm-down {
-    height: 772px !important;
+    height: 620px !important;
   }
 }
 
@@ -205,6 +205,10 @@ p {
   font-weight: 700;
   font-size: 48px;
   line-height: 100%;
+
+  @include sm-down {
+    font-size: 32px;
+  }
 }
 
 .outlineText {
@@ -216,6 +220,10 @@ p {
     -1px 1px 0 #000,
     1px 1px 0 #000;
   color: v-bind('computedColorOutline') !important;
+
+  @include sm-down {
+    font-size: 32px;
+  }
 }
 
 /* Real outline for modern browsers */
@@ -260,8 +268,8 @@ p {
   }
 
   @include sm-down {
-    width: 270px;
-    height: 270px;
+    width: 180px;
+    height: 180px;
   }
 }
 
@@ -277,9 +285,9 @@ p {
   }
 
   @include sm-down {
-    height: 390px;
-    top: calc(50% - 150px);
-    left: calc(50% - 195px);
+    height: 280px;
+    top: calc(50% - 110px);
+    left: calc(50% - 140px);
   }
 }
 </style>

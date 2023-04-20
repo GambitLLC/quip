@@ -65,7 +65,7 @@ onMounted(() => {
 
 <template>
   <div
-    class="bg-background bg w-100"
+    class="bg-background w-100"
   >
     <Topbar/>
     <div
@@ -230,16 +230,15 @@ onMounted(() => {
         </div>
       </div>
     </div>
+    <div class="faqMargin">
+      <FrequentlyAskedQuestions/>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .marginTopGameCards {
   margin-top: 72px;
-}
-
-.bg {
-  height: 10000px;
 }
 
 .cards {
@@ -261,5 +260,9 @@ onMounted(() => {
   flex-direction: column;
 
   flex: 1 1 auto;
+}
+
+.faqMargin {
+  margin-top: 70px;
 }
 </style>
