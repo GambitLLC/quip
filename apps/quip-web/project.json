@@ -4,6 +4,12 @@
   "projectType": "application",
   "sourceRoot": "apps/quip-web",
   "targets": {
+    "generate": {
+      "command": "nuxt generate",
+      "options": {
+        "cwd": "apps/quip-web"
+      }
+    },
     "build": {
       "command": "nuxt build",
       "options": {

@@ -27,7 +27,7 @@ jobs:
         id: build
         run: |
           npm install
-          npx nx build quip-web --prod
+          npx nx run quip-web:generate --prod
 
       # deploy the app to Azure Static Web Apps
       - name: Deploy
@@ -39,8 +39,8 @@ jobs:
           action: "upload"
           ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
           # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "/apps/quip-web/.output/public" # App source code path
-          api_location: "/apps/quip-web/.output/server" # Api source code path - optional
+          app_location: "apps/quip-web/.output/public" # App source code path
+          #api_location: "/apps/quip-web/.output/server" # Api source code path - optional
           output_location: "" # Built app content directory - optional
           skip_app_build: true
           ###### End of Repository/Build Configurations ######
