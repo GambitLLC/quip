@@ -2,6 +2,9 @@ name: Azure Static Web Apps CI/CD
 
 on:
   push:
+    paths:
+      - .github/workflows/azure-static-web-apps-green-smoke-05fb3b90f.yml
+      - apps/quip-web/**
     branches:
       - main
   pull_request:
