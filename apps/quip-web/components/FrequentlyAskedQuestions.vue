@@ -3,13 +3,11 @@ import {range} from "~/util/iteration";
 </script>
 
 <template>
-<div class="w-100 faq bg-jetblack px-8">
+<div class="w-100 faq bg-jetblack">
   <div class="faqTitle w-100 d-flex align-center justify-center">
-    <h1>
-      Frequently Asked Questions
-    </h1>
+    <FAQTitle/>
   </div>
-  <div class="faqArea">
+  <div class="faqArea px-8">
     <Collapsible :has-divider="false" class="mb-12" :open="true" v-for="i in range(5)">
       <template #header>
         <h1 class="text-white">

@@ -211,31 +211,6 @@ p {
   }
 }
 
-.outlineText {
-  font-weight: 700;
-  font-size: 48px;
-  text-shadow:
-    -1px -1px 0 #000,
-    1px -1px 0 #000,
-    -1px 1px 0 #000,
-    1px 1px 0 #000;
-  color: v-bind('computedColorOutline') !important;
-
-  @include sm-down {
-    font-size: 32px;
-  }
-}
-
-/* Real outline for modern browsers */
-@supports((text-stroke: 2px black) or (-webkit-text-stroke: 2px black)) {
-  .outlineText {
-    color: transparent;
-    -webkit-text-stroke: 2px black;
-    text-stroke: 2px black;
-    text-shadow: none;
-  }
-}
-
 .blur {
   filter: blur(16px);
 }
