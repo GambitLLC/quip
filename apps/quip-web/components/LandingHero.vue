@@ -26,7 +26,7 @@ const display = useDisplay();
       </div>
     </div>
     <div class="hero-second position-relative">
-      <img class="hero-swirl" src="/landinghero/Vector 32.png" alt="swirl">
+      <img class="hero-swirl" src="/landinghero/Vector-32.png" alt="swirl">
       <div class="pr-4">
         <img
           draggable="false"
