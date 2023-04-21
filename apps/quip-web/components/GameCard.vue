@@ -42,7 +42,7 @@ watch(height, calcCardRot)
 </script>
 
 <template>
-  <QuipCard :class="computedColor" class="gameCard mb-8 overflow-hidden">
+  <QuipCard :class="computedColor" class="gameCard mb-4 mb-md-8 mb-lg-8 mb-xl-8 mb-xxl-8 overflow-hidden">
     <div class="d-flex w-100 h-100 position-relative">
       <div v-if="comingSoon" class="comingSoon position-absolute h-100 w-100 rounded-corners overflow-hidden">
         <div class="w-100 h-100 rotate d-flex align-center justify-center">
