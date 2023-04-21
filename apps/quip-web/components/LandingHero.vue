@@ -180,9 +180,10 @@ const display = useDisplay();
 }
 
 .hero-avatar-icon {
-  width: 53px;
-  height: 53px;
+  width: 64px;
+  height: 64px;
   margin-right: -16px;
+  image-rendering: crisp-edges;
 }
 
 .hero-user-top {
