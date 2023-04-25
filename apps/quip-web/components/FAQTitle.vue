@@ -1,6 +1,9 @@
 <script setup lang="ts">
 
 import {range} from "~/util/iteration";
+import {useTheme} from "vuetify";
+
+const computedColorOutline = useTheme().current.value.colors["jetblack"]
 </script>
 
 <template>
@@ -27,7 +30,7 @@ import {range} from "~/util/iteration";
 </template>
 
 <style scoped lang="scss">
-@import "styles/mixins.scss";
+@import "@/styles/mixins.scss";
 
 .title {
   height: 189px;
@@ -110,6 +113,29 @@ h1 {
 
   @include sm-down {
     margin-left: 225px;
+  }
+}
+
+.outlineText {
+  text-shadow:
+    -1px -1px 0 #fff,
+    1px -1px 0 #fff,
+    -1px 1px 0 #fff,
+    1px 1px 0 #fff;
+  color: v-bind('computedColorOutline') !important;
+
+  @include sm-down {
+    font-size: 32px;
+  }
+}
+
+/* Real outline for modern browsers */
+@supports((text-stroke: 2px black) or (-webkit-text-stroke: 2px black)) {
+  .outlineText {
+    color: transparent;
+    -webkit-text-stroke: 1px #ffffff;
+    text-stroke: 1px #fffff;
+    text-shadow: none;
   }
 }
 </style>
