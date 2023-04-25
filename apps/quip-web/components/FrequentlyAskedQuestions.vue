@@ -3,7 +3,7 @@ import {range} from "~/util/iteration";
 </script>
 
 <template>
-<div class="w-100 faq bg-jetblack">
+<div id="faq" class="w-100 faq bg-jetblack">
   <div class="faqTitle w-100 d-flex align-center justify-center">
     <FAQTitle/>
   </div>
