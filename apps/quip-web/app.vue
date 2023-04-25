@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import {useTheme} from "vuetify";
+import {useDisplay, useTheme} from "vuetify";
 import {useWindowScroll} from "@vueuse/core";
 import {computed} from "vue";
 
+const {mobile} = useDisplay()
 const { x, y } = useWindowScroll()
 
 const faqBG = useTheme().current.value.colors["jetblack"]
@@ -13,6 +14,8 @@ let faqTop: number = 1000
 const doAnimate = ref(false)
 
 const computedBG = computed(() => {
+  if (mobile.value) return topBG
+
   if (y.value <= 0) {
     return nonBG
   } else if (y.value > 0 && y.value < faqTop) {
@@ -23,15 +26,28 @@ const computedBG = computed(() => {
 })
 
 watch(computedBG, (value, oldValue) => {
-    doAnimate.value = (value === nonBG && oldValue === topBG) || (value === topBG && oldValue === nonBG);
+  if (mobile.value) return
+  doAnimate.value = (value === nonBG && oldValue === topBG) || (value === topBG && oldValue === nonBG);
 
-    const r = document.querySelector(':root') as HTMLElement;
-    r.style.setProperty('--computedBG', value);
+  const r = document.querySelector(':root') as HTMLElement;
+  r.style.setProperty('--computedBG', value);
 })
 
 watch(doAnimate, (value) => {
+  if (mobile.value) {
+    document.body.classList.remove("doAnimate")
+    return
+  }
   if (value) document.body.classList.add("doAnimate")
   else document.body.classList.remove("doAnimate")
+})
+
+onMounted(() => {
+  if (mobile.value) {
+    document.body.classList.remove("doAnimate")
+    const r = document.querySelector(':root') as HTMLElement;
+    r.style.setProperty('--computedBG', topBG);
+  }
 })
 </script>
 
