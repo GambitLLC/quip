@@ -5,20 +5,33 @@ import {computed} from "vue";
 
 const { x, y } = useWindowScroll()
 
-const bottomBG = useTheme().current.value.colors["jetblack"]
-const topBG = useTheme().current.value.colors["background"]
-let faqTop = 500
+const faqBG = useTheme().current.value.colors["jetblack"]
+const topBG = useTheme().current.value.colors["white"]
+const nonBG = useTheme().current.value.colors["background"]
 
-const computedBG = computed(() => y.value > faqTop ? bottomBG : topBG)
+let faqTop: number = 1000
+const doAnimate = ref(false)
 
-onMounted(() => {
-  const faq = document.getElementById('faq')
-  faqTop = faq?.getBoundingClientRect().y ?? 500
+const computedBG = computed(() => {
+  if (y.value <= 0) {
+    return nonBG
+  } else if (y.value > 0 && y.value < faqTop) {
+    return topBG
+  } else {
+    return faqBG
+  }
 })
 
-watch(computedBG, (value) => {
+watch(computedBG, (value, oldValue) => {
+    doAnimate.value = (value === nonBG && oldValue === topBG) || (value === topBG && oldValue === nonBG);
+
     const r = document.querySelector(':root') as HTMLElement;
     r.style.setProperty('--computedBG', value);
+})
+
+watch(doAnimate, (value) => {
+  if (value) document.body.classList.add("doAnimate")
+  else document.body.classList.remove("doAnimate")
 })
 </script>
 
@@ -32,6 +45,10 @@ watch(computedBG, (value) => {
 }
 
 body {
-  background: var(--computedBG)
+  background: var(--computedBG);
+}
+
+.doAnimate {
+  transition: background ease-in-out 0.3s;
 }
 </style>

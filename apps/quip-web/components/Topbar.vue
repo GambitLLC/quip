@@ -67,7 +67,7 @@ const isScrolled = computed(() => {
 </template>
 
 <style scoped lang="scss">
-@import 'styles/mixins.scss';
+@import '@/styles/mixins.scss';
 
 $transitionTime: 0.3s;
 
