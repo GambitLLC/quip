@@ -237,8 +237,14 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@import "styles/mixins.scss";
+
 .marginTopGameCards {
   margin-top: 72px;
+
+  @include sm-down {
+    margin-top: 16px;
+  }
 }
 
 .cards {
@@ -264,5 +270,9 @@ onMounted(() => {
 
 .faqMargin {
   margin-top: 70px;
+
+  @include sm-down {
+    margin-top: 56px;
+  }
 }
 </style>

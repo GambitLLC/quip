@@ -26,7 +26,7 @@ const display = useDisplay();
       </div>
     </div>
     <div class="hero-second position-relative">
-      <img class="hero-swirl" src="/landinghero/Vector-32.png" alt="swirl">
+      <img class="hero-swirl" src="/landinghero/Vector-32.svg" alt="swirl">
       <div class="pr-4">
         <img
           draggable="false"
@@ -180,9 +180,10 @@ const display = useDisplay();
 }
 
 .hero-avatar-icon {
-  width: 53px;
-  height: 53px;
+  width: 64px;
+  height: 64px;
   margin-right: -16px;
+  image-rendering: crisp-edges;
 }
 
 .hero-user-top {

@@ -5,7 +5,7 @@ const currentYear = new Date().getFullYear()
 <template>
   <div class="footerPadding w-100">
     <div class="footer w-100 d-flex flex-column align-center justify-end">
-      <img class="mb-6" src="/logofooter.png" alt="footer-logo">
+      <img class="mb-6 footerLogo" src="/logoFooter.svg" alt="footer-logo">
       <p>All Rights Reserved Quip {{currentYear}}</p>
     </div>
   </div>
@@ -24,6 +24,10 @@ const currentYear = new Date().getFullYear()
 
 .footer {
   height: 145px;
+}
+
+.footerLogo {
+  height: 44px;
 }
 
 p {

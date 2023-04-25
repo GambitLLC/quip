@@ -42,7 +42,7 @@ watch(height, calcCardRot)
 </script>
 
 <template>
-  <QuipCard :class="computedColor" class="gameCard mb-8 overflow-hidden">
+  <QuipCard :class="computedColor" class="gameCard mb-4 mb-md-8 mb-lg-8 mb-xl-8 mb-xxl-8 overflow-hidden">
     <div class="d-flex w-100 h-100 position-relative">
       <div v-if="comingSoon" class="comingSoon position-absolute h-100 w-100 rounded-corners overflow-hidden">
         <div class="w-100 h-100 rotate d-flex align-center justify-center">
@@ -211,31 +211,6 @@ p {
   }
 }
 
-.outlineText {
-  font-weight: 700;
-  font-size: 48px;
-  text-shadow:
-    -1px -1px 0 #000,
-    1px -1px 0 #000,
-    -1px 1px 0 #000,
-    1px 1px 0 #000;
-  color: v-bind('computedColorOutline') !important;
-
-  @include sm-down {
-    font-size: 32px;
-  }
-}
-
-/* Real outline for modern browsers */
-@supports((text-stroke: 2px black) or (-webkit-text-stroke: 2px black)) {
-  .outlineText {
-    color: transparent;
-    -webkit-text-stroke: 2px black;
-    text-stroke: 2px black;
-    text-shadow: none;
-  }
-}
-
 .blur {
   filter: blur(16px);
 }
@@ -288,6 +263,31 @@ p {
     height: 280px;
     top: calc(50% - 110px);
     left: calc(50% - 140px);
+  }
+}
+
+.outlineText {
+  font-weight: 700;
+  font-size: 48px;
+  text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;
+  color: v-bind('computedColorOutline') !important;
+
+  @include sm-down {
+    font-size: 32px;
+  }
+}
+
+/* Real outline for modern browsers */
+@supports((text-stroke: 2px black) or (-webkit-text-stroke: 2px black)) {
+  .outlineText {
+    color: transparent;
+    -webkit-text-stroke: 2px black;
+    text-stroke: 2px black;
+    text-shadow: none;
   }
 }
 </style>
