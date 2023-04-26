@@ -1,20 +1,18 @@
 <script setup lang="ts">
 import {useDisplay, useTheme} from "vuetify";
-import {useWindowScroll} from "@vueuse/core";
+import QuipButton from "~/components/util/QuipButton.vue"
+import IconButton from "~/components/util/IconButton.vue"
+import {useScroll} from "~/util/scroll";
 
 const {mobile} = useDisplay()
 const {colors} = useTheme().current.value
 
 const isOpen = ref(false)
-const { x, y } = useWindowScroll()
+const { isScrolled } = useScroll()
 
 const toggleMobileMenu = () => {
   isOpen.value = !isOpen.value
 }
-
-const isScrolled = computed(() => {
-  return y.value > 0
-})
 </script>
 
 <template>
@@ -106,19 +104,10 @@ $transitionTime: 0.3s;
   justify-content: space-between;
   align-items: center;
   height: 40px;
-
-  @include md-down {
-    height: 40px;
-  }
-
-  @include sm-down {
-    height: 40px;
-  }
 }
 
 .logo {
   height: 90%;
-  transition: filter $transitionTime ease-in-out;
 }
 
 a {

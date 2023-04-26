@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import {range} from "~/util/iteration";
+import Collapsible from "~/components/util/Collapsible.vue";
+import FAQTitle from "~/components/landing/FAQTitle.vue";
+import QuipFooter from "~/components/landing/QuipFooter.vue";
 </script>
 
 <template>

@@ -2,6 +2,7 @@
 import {useWindowSize} from "@vueuse/core";
 import {range} from "~/util/iteration";
 import {useTheme} from "vuetify";
+import QuipButton from "~/components/util/QuipButton.vue"
 
 const props = defineProps<{
   color: "green" | "purple" | "blue",

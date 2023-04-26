@@ -2,6 +2,9 @@
 import {useDisplay, useTheme} from "vuetify";
 import {useWindowScroll} from "@vueuse/core";
 import {computed} from "vue";
+import {useRoute} from "#app";
+
+const route = useRoute()
 
 const {mobile} = useDisplay()
 const { x, y } = useWindowScroll()
@@ -13,7 +16,10 @@ const nonBG = useTheme().current.value.colors["background"]
 let faqTop: number = 1000
 const doAnimate = ref(false)
 
+const isLandingPage = computed(() => route.name === 'index')
+
 const computedBG = computed(() => {
+  if (!isLandingPage.value) return nonBG
   if (mobile.value) return topBG
 
   if (y.value <= 0) {
@@ -26,6 +32,13 @@ const computedBG = computed(() => {
 })
 
 watch(computedBG, (value, oldValue) => {
+  if (!isLandingPage.value) {
+    doAnimate.value = false
+    const r = document.querySelector(':root') as HTMLElement;
+    r.style.setProperty('--computedBG', value);
+    return;
+  }
+
   if (mobile.value) return
   doAnimate.value = (value === nonBG && oldValue === topBG) || (value === topBG && oldValue === nonBG);
 
@@ -34,7 +47,7 @@ watch(computedBG, (value, oldValue) => {
 })
 
 watch(doAnimate, (value) => {
-  if (mobile.value) {
+  if (mobile.value || !isLandingPage) {
     document.body.classList.remove("doAnimate")
     return
   }
@@ -43,10 +56,17 @@ watch(doAnimate, (value) => {
 })
 
 onMounted(() => {
-  if (mobile.value) {
+  if (!isLandingPage.value) {
     document.body.classList.remove("doAnimate")
     const r = document.querySelector(':root') as HTMLElement;
-    r.style.setProperty('--computedBG', topBG);
+    r.style.setProperty('--computedBG', computedBG.value );
+    return
+  }
+
+  if (mobile.value || !isLandingPage) {
+    document.body.classList.remove("doAnimate")
+    const r = document.querySelector(':root') as HTMLElement;
+    r.style.setProperty('--computedBG', topBG );
   }
 })
 </script>
