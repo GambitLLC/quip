@@ -237,7 +237,7 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-@import "styles/mixins.scss";
+@import "@/styles/mixins.scss";
 
 .marginTopGameCards {
   margin-top: 72px;

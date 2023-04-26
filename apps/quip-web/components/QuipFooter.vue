@@ -12,7 +12,7 @@ const currentYear = new Date().getFullYear()
 </template>
 
 <style scoped lang="scss">
-@import "styles/mixins.scss";
+@import "@/styles/mixins.scss";
 
 .footerPadding {
   padding-bottom: 80px;

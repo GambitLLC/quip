@@ -26,7 +26,7 @@ const computedSize = computed(() => {
 </template>
 
 <style scoped lang="scss">
-@import 'styles/mixins.scss';
+@import '@/styles/mixins.scss';
 
 a {
   display: flex;

@@ -61,7 +61,7 @@ watch(() => props.open, (newValue) => {
 </template>
 
 <style scoped lang="scss">
-@import "styles/mixins.scss";
+@import "@/styles/mixins.scss";
 
 .header {
   cursor: pointer;
