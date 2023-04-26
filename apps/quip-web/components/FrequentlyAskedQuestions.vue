@@ -27,7 +27,7 @@ import {range} from "~/util/iteration";
 </template>
 
 <style scoped lang="scss">
-@import "styles/mixins.scss";
+@import "@/styles/mixins.scss";
 
 .faq {
   padding-top: 162px;

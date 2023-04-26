@@ -81,7 +81,7 @@ const isTiny = computed(() => (props.color === "purple" || props.color === "blue
 </template>
 
 <style scoped lang="scss">
-@import "styles/mixins.scss";
+@import "@/styles/mixins.scss";
 
 .innerContent {
   z-index: 10;

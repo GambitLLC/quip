@@ -100,7 +100,7 @@ watch(height, calcCardRot)
 </template>
 
 <style scoped lang="scss">
-@import "styles/mixins.scss";
+@import "@/styles/mixins.scss";
 
 .gameCard {
   height: 740px;
