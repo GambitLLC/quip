@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import {useDisplay, useTheme} from "vuetify";
 
+import QuipCard from "~/components/util/QuipCard.vue"
+
 const {mobile} = useDisplay()
 const props = defineProps<{
   title: string,

@@ -100,7 +100,7 @@ h1 {
   }
 
   @include sm-down {
-    margin-left: 178px;
+    margin-left: 158px;
   }
 }
 
@@ -112,7 +112,7 @@ h1 {
   }
 
   @include sm-down {
-    margin-left: 225px;
+    margin-left: 210px;
   }
 }
 
