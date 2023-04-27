@@ -73,27 +73,29 @@ watch(height, calcCardRot)
             <img :src="img" alt="quip game image" class="position-absolute gameImg"/>
           </div>
         </div>
-        <div class="w-100">
-          <h1 class="text-jetblack-light mb-2 mb-md-6 mb-lg-6 mb-xl-6 mb-xxl-6">
-            {{ title }}
-          </h1>
-          <p>
-            {{ text }}
-          </p>
-          <div class="mt-4 mt-md-10 mt-lg-10 mt-xl-10 mt-xxl-10">
-            <div v-for="(bullet, i) in bullets" :key="i" class="d-flex align-center mb-md-8 mb-lg-8 mb-xl-8 mb-xxl-8 mb-3">
-              <div class="bullet" :class="computedBulletColor">
-                <div class="bulletCircle" :class="computedBulletColorAccent"/>
-              </div>
-              <div class="bulletText co-headline text-jetblack-light ml-6">
-                {{ bullet }}
+        <div class="w-100 d-flex flex-column justify-center align-center">
+          <div>
+            <h1 class="text-jetblack-light mb-2 mb-md-6 mb-lg-6 mb-xl-6 mb-xxl-6">
+              {{ title }}
+            </h1>
+            <p>
+              {{ text }}
+            </p>
+            <div class="mt-4 mt-md-10 mt-lg-10 mt-xl-10 mt-xxl-10">
+              <div v-for="(bullet, i) in bullets" :key="i" class="d-flex align-center mb-md-8 mb-lg-8 mb-xl-8 mb-xxl-8 mb-3">
+                <div class="bullet" :class="computedBulletColor">
+                  <div class="bulletCircle" :class="computedBulletColorAccent"/>
+                </div>
+                <div class="bulletText co-headline text-jetblack-light ml-6">
+                  {{ bullet }}
+                </div>
               </div>
             </div>
-          </div>
-          <div class="learnMore mt-2 mt-md-0 mt-lg-0 mt-xl-0 mt-xxl-0">
-            <QuipButton :width="176" class="learnMoreBtn text-jetblack">
-              <h3>Learn More</h3>
-            </QuipButton>
+            <div class="learnMore mt-2 mt-md-0 mt-lg-0 mt-xl-0 mt-xxl-0">
+              <QuipButton :width="176" class="learnMoreBtn text-jetblack">
+                <h3>Learn More</h3>
+              </QuipButton>
+            </div>
           </div>
         </div>
       </div>
