@@ -10,6 +10,30 @@ function useScroll() {
   return { x, y, isScrolled }
 }
 
+function scrollIntoViewWithOffset(element?: HTMLElement | null, offset?: number) {
+  if (!element) return
+  if (offset === undefined) offset = 0
+
+  const top = element.getBoundingClientRect().top + window.scrollY
+
+  window.scrollTo({
+    top: top - offset,
+    behavior: "smooth",
+  })
+}
+
+function onScroll(callback: (event: Event) => void) {
+  onMounted(() => {
+    window.addEventListener("scroll", callback)
+  })
+
+  onUnmounted(() => {
+    window.removeEventListener("scroll", callback)
+  })
+}
+
 export {
-  useScroll
+  useScroll,
+  scrollIntoViewWithOffset,
+  onScroll,
 }

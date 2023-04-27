@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import {useDisplay, useTheme} from "vuetify";
+import {Tab} from "~/util/types";
+
 import LandingTopbar from "~/components/landing/LandingTopbar.vue";
 import LandingHero from "~/components/landing/LandingHero.vue";
 import LandingHeroCard from "~/components/landing/LandingHeroCard.vue"
 import GameCard from "~/components/landing/GameCard.vue"
 import FrequentlyAskedQuestions from "~/components/landing/FrequentlyAskedQuestions.vue";
+import {scrollIntoViewWithOffset} from "~/util/scroll";
 
 const {mobile, md, lgAndDown} = useDisplay()
 const {colors} = useTheme().current.value
@@ -63,22 +66,68 @@ const computedDesktopCircles = computed(() => [
   }
 ])
 
-onMounted(() => {
-  console.log(useDisplay())
-})
+const homeRef = ref<HTMLElement | null>(null)
+const aboutRef = ref<HTMLElement | null>(null)
+const gamesRef = ref<HTMLElement | null>(null)
+const faqRef = ref<HTMLElement | null>(null)
+
+function scrollToTab(tab: Tab) {
+  if (!mobile.value) {
+    switch (tab) {
+      case 'home':
+        scrollIntoViewWithOffset(homeRef.value, 100)
+        break
+      case 'about':
+        scrollIntoViewWithOffset(aboutRef.value, 140)
+        break
+      case 'games':
+        scrollIntoViewWithOffset(gamesRef.value, 95)
+        break
+      case 'faq':
+        scrollIntoViewWithOffset(faqRef.value, -30)
+        break
+    }
+  } else {
+    switch (tab) {
+      case 'home':
+        scrollIntoViewWithOffset(homeRef.value, 100)
+        break
+      case 'about':
+        scrollIntoViewWithOffset(aboutRef.value, 95)
+        break
+      case 'games':
+        scrollIntoViewWithOffset(gamesRef.value, 90)
+        break
+      case 'faq':
+        scrollIntoViewWithOffset(faqRef.value, 77)
+        break
+    }
+  }
+}
+
+const tabSections = computed(() => [
+  ['home', homeRef.value],
+  ['about', aboutRef.value],
+  ['games', gamesRef.value],
+  ['faq', faqRef.value],
+])
 </script>
 
 <template>
   <div
     class="bg-background w-100"
   >
-    <LandingTopbar/>
+    <ClientOnly>
+      <LandingTopbar :tab-sections="tabSections" @tab="scrollToTab"/>
+    </ClientOnly>
     <div
       class="pt-4 safeArea"
     >
       <div class="w-100 h-100 innerArea">
-        <LandingHero/>
-        <div v-if="!mobile" class="cards">
+        <div ref="homeRef">
+          <LandingHero/>
+        </div>
+        <div ref="aboutRef" v-if="!mobile" class="cards">
           <div class="d-flex w-100 h-100">
             <div class="leftCards" :class="{
             'mr-16': !lgAndDown,
@@ -120,7 +169,7 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div class="w-100" v-else>
+        <div ref="aboutRef" class="w-100" v-else>
           <LandingHeroCard
             class="mb-4"
             :style="{height: '498px !important'}"
@@ -190,7 +239,7 @@ onMounted(() => {
             text-location="top"
           />
         </div>
-        <div class="w-100 marginTopGameCards">
+        <div ref="gamesRef" class="w-100 marginTopGameCards">
           <GameCard
             color="purple"
             layout="right"
@@ -235,7 +284,7 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <div class="faqMargin">
+    <div ref="faqRef" class="faqMargin">
       <FrequentlyAskedQuestions/>
     </div>
   </div>

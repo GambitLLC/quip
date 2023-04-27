@@ -1,9 +1,31 @@
+$transitionTime: 0.3s;
+
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.200s ease-in-out;
+  transition: opacity $transitionTime ease-in-out;
 }
 
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.fade-slide {
+  &-enter-active {
+    transition: opacity $transitionTime linear, transform $transitionTime ease-in-out;
+    transition-delay: calc( 0.1s * var(--i) );
+  }
+
+  &-leave-active {
+    transition: opacity $transitionTime linear, transform $transitionTime ease-in-out;
+    transition-delay: calc( 0.05s * (var(--total) - var(--i)) );
+  }
+
+  &-enter-from,
+  &-leave-to {
+    opacity: 0;
+  }
+
+  &-enter-from { transform: translateX(-1em); }
+  &-leave-to { transform: translateX(1em); }
 }
