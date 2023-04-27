@@ -74,7 +74,7 @@ watch(height, calcCardRot)
           </div>
         </div>
         <div class="w-100 d-flex flex-column justify-center align-center">
-          <div class="">
+          <div>
             <h1 class="text-jetblack-light mb-2 mb-md-6 mb-lg-6 mb-xl-6 mb-xxl-6">
               {{ title }}
             </h1>
