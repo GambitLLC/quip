@@ -3,6 +3,8 @@ import {Icon} from '@iconify/vue';
 import {range} from "~/util/iteration";
 import {useDisplay} from "vuetify";
 
+import QuipButton from "~/components/util/QuipButton.vue"
+
 const display = useDisplay();
 </script>
 
