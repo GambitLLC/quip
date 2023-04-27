@@ -1,0 +1,9 @@
+{
+  "name": "graph",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "make": {
+      "command": "make graph/generated.go"
+    }
+  }
+}

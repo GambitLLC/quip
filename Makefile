@@ -141,6 +141,15 @@ test: install-npm
 	npx nx run-many --targets=test,e2e --all
 
 ## ####################################
+## # GraphQL
+##
+
+## graph/generated.go
+
+graph/generated.go: graph/schema.graphqls
+	$(GO) run github.com/99designs/gqlgen generate .
+
+## ####################################
 ## # Protobuf
 ##
 

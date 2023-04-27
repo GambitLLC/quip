@@ -1,0 +1,112 @@
+scalar Time
+
+type User {
+  id: ID!
+  status: Status!
+  friends: [User!]
+  matchHistory: [Match!]
+}
+
+enum StatusState {
+  OFFLINE
+
+  "Online on mobile application"
+  IDLE
+
+  "Searching for a match"
+  SEARCHING
+
+  "Creating a custom duel"
+  CREATING
+
+  "Currently in a match"
+  PLAYING
+}
+
+union StatusDetails = Queue | Duel | Match
+
+type Status {
+  state: StatusState!
+
+  details: StatusDetails
+}
+
+"""
+Represents a custom match in the process of being created.
+"""
+type Duel {
+  id: ID!
+  gamemode: String!
+  players: [User!]!
+
+  # TODO: additional details like bet amount
+}
+
+type Queue {
+  gamemode: String!
+  players: [User!]!
+  startTime: Time!
+
+  # TODO: additional details like bet amount
+}
+
+type Match {
+  id: ID!
+  gamemode: String!
+
+  connection: String
+
+  teams: [[User!]!]!
+
+  state: MatchState!
+  results: MatchResults
+}
+
+enum MatchState {
+  PENDING
+  IN_PROGRESS
+  FINISHED
+  FAILED
+}
+
+"""
+TODO: determine schema for match results
+type MatchResults {
+  placements: [MatchPlacement!]
+}
+
+type MatchPlacement {
+  players: [User!]
+  place: Int!
+  earnings?
+}
+"""
+type MatchResults {
+  winner: String
+}
+
+type Query {
+  "Get the currently authenticated User"
+  player: User!
+
+  "Query for a specific user"
+  user(id: ID!): User!
+
+  match(id: ID!): Match!
+}
+
+type Mutation {
+  addFriend(userId: ID!): User
+  removeFriend(userId: ID!): User
+
+  createDuel(gamemode: String!): Duel!
+  inviteToDuel(userId: ID!): Duel!
+
+  "Starts the duel the user has created"
+  startDuel: Match!
+}
+
+type Subscription {
+  "Status of the currently authenticated User"
+  status: Status!
+}
