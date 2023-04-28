@@ -5,6 +5,8 @@
   "scripts": {},
   "private": true,
   "dependencies": {
+    "@dicebear/core": "^6.0.3",
+    "@dicebear/personas": "^6.0.3",
     "@grpc/grpc-js": "^1.8.12",
     "@socket.io/redis-adapter": "^8.1.0",
     "@vueuse/components": "^10.1.0",
