@@ -61,3 +61,13 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
+  User:
+    fields:
+      matchHistory:
+        resolver: true
+      friends:
+        resolver: true
+  Match:
+    fields:
+      results:
+        resolver: true

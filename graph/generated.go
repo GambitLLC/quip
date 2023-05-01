@@ -39,9 +39,11 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Match() MatchResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Subscription() SubscriptionResolver
+	User() UserResolver
 }
 
 type DirectiveRoot struct {
@@ -49,9 +51,10 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Duel struct {
-		Gamemode func(childComplexity int) int
-		ID       func(childComplexity int) int
-		Players  func(childComplexity int) int
+		Gamemode    func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Invitations func(childComplexity int) int
+		Players     func(childComplexity int) int
 	}
 
 	Match struct {
@@ -104,9 +107,14 @@ type ComplexityRoot struct {
 	}
 }
 
+type MatchResolver interface {
+	Teams(ctx context.Context, obj *model.Match) ([][]*model.User, error)
+
+	Results(ctx context.Context, obj *model.Match) (*model.MatchResults, error)
+}
 type MutationResolver interface {
-	AddFriend(ctx context.Context, userID string) (*model.User, error)
-	RemoveFriend(ctx context.Context, userID string) (*model.User, error)
+	AddFriend(ctx context.Context, userID string) (*bool, error)
+	RemoveFriend(ctx context.Context, userID string) (*bool, error)
 	CreateDuel(ctx context.Context, gamemode string) (*model.Duel, error)
 	InviteToDuel(ctx context.Context, userID string) (*model.Duel, error)
 	StartDuel(ctx context.Context) (*model.Match, error)
@@ -118,6 +126,10 @@ type QueryResolver interface {
 }
 type SubscriptionResolver interface {
 	Status(ctx context.Context) (<-chan *model.Status, error)
+}
+type UserResolver interface {
+	Friends(ctx context.Context, obj *model.User) ([]*model.User, error)
+	MatchHistory(ctx context.Context, obj *model.User) ([]*model.Match, error)
 }
 
 type executableSchema struct {
@@ -148,6 +160,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Duel.ID(childComplexity), true
+
+	case "Duel.invitations":
+		if e.complexity.Duel.Invitations == nil {
+			break
+		}
+
+		return e.complexity.Duel.Invitations(childComplexity), true
 
 	case "Duel.players":
 		if e.complexity.Duel.Players == nil {
@@ -716,17 +735,65 @@ func (ec *executionContext) _Duel_players(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Duel_players(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Duel",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "status":
+				return ec.fieldContext_User_status(ctx, field)
+			case "friends":
+				return ec.fieldContext_User_friends(ctx, field)
+			case "matchHistory":
+				return ec.fieldContext_User_matchHistory(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Duel_invitations(ctx context.Context, field graphql.CollectedField, obj *model.Duel) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Duel_invitations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Invitations, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Duel_invitations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Duel",
 		Field:      field,
@@ -892,7 +959,7 @@ func (ec *executionContext) _Match_teams(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Teams, nil
+		return ec.resolvers.Match().Teams(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -913,8 +980,8 @@ func (ec *executionContext) fieldContext_Match_teams(ctx context.Context, field 
 	fc = &graphql.FieldContext{
 		Object:     "Match",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -990,7 +1057,7 @@ func (ec *executionContext) _Match_results(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Results, nil
+		return ec.resolvers.Match().Results(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1008,8 +1075,8 @@ func (ec *executionContext) fieldContext_Match_results(ctx context.Context, fiel
 	fc = &graphql.FieldContext{
 		Object:     "Match",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "winner":
@@ -1085,9 +1152,9 @@ func (ec *executionContext) _Mutation_addFriend(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*bool)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addFriend(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1097,17 +1164,7 @@ func (ec *executionContext) fieldContext_Mutation_addFriend(ctx context.Context,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "status":
-				return ec.fieldContext_User_status(ctx, field)
-			case "friends":
-				return ec.fieldContext_User_friends(ctx, field)
-			case "matchHistory":
-				return ec.fieldContext_User_matchHistory(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	defer func() {
@@ -1147,9 +1204,9 @@ func (ec *executionContext) _Mutation_removeFriend(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*bool)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_removeFriend(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1159,17 +1216,7 @@ func (ec *executionContext) fieldContext_Mutation_removeFriend(ctx context.Conte
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "status":
-				return ec.fieldContext_User_status(ctx, field)
-			case "friends":
-				return ec.fieldContext_User_friends(ctx, field)
-			case "matchHistory":
-				return ec.fieldContext_User_matchHistory(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	defer func() {
@@ -1231,6 +1278,8 @@ func (ec *executionContext) fieldContext_Mutation_createDuel(ctx context.Context
 				return ec.fieldContext_Duel_gamemode(ctx, field)
 			case "players":
 				return ec.fieldContext_Duel_players(ctx, field)
+			case "invitations":
+				return ec.fieldContext_Duel_invitations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Duel", field.Name)
 		},
@@ -1294,6 +1343,8 @@ func (ec *executionContext) fieldContext_Mutation_inviteToDuel(ctx context.Conte
 				return ec.fieldContext_Duel_gamemode(ctx, field)
 			case "players":
 				return ec.fieldContext_Duel_players(ctx, field)
+			case "invitations":
+				return ec.fieldContext_Duel_invitations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Duel", field.Name)
 		},
@@ -1445,14 +1496,11 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1510,14 +1558,11 @@ func (ec *executionContext) _Query_match(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Match)
 	fc.Result = res
-	return ec.marshalNMatch2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐMatch(ctx, field.Selections, res)
+	return ec.marshalOMatch2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐMatch(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_match(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2086,7 +2131,7 @@ func (ec *executionContext) _User_friends(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Friends, nil
+		return ec.resolvers.User().Friends(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2104,8 +2149,8 @@ func (ec *executionContext) fieldContext_User_friends(ctx context.Context, field
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -2137,7 +2182,7 @@ func (ec *executionContext) _User_matchHistory(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.MatchHistory, nil
+		return ec.resolvers.User().MatchHistory(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2155,8 +2200,8 @@ func (ec *executionContext) fieldContext_User_matchHistory(ctx context.Context, 
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -4017,9 +4062,10 @@ func (ec *executionContext) _Duel(ctx context.Context, sel ast.SelectionSet, obj
 
 			out.Values[i] = ec._Duel_players(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+		case "invitations":
+
+			out.Values[i] = ec._Duel_invitations(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4046,37 +4092,63 @@ func (ec *executionContext) _Match(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Match_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "gamemode":
 
 			out.Values[i] = ec._Match_gamemode(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "connection":
 
 			out.Values[i] = ec._Match_connection(ctx, field, obj)
 
 		case "teams":
+			field := field
 
-			out.Values[i] = ec._Match_teams(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Match_teams(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "state":
 
 			out.Values[i] = ec._Match_state(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "results":
+			field := field
 
-			out.Values[i] = ec._Match_results(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Match_results(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4234,9 +4306,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_user(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			}
 
@@ -4257,9 +4326,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_match(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			}
 
@@ -4402,23 +4468,49 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._User_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
 
 			out.Values[i] = ec._User_status(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "friends":
+			field := field
 
-			out.Values[i] = ec._User_friends(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_friends(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "matchHistory":
+			field := field
 
-			out.Values[i] = ec._User_matchHistory(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_matchHistory(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5296,6 +5388,13 @@ func (ec *executionContext) marshalOMatch2ᚕᚖgithubᚗcomᚋGambitLLCᚋquip�
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalOMatch2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐMatch(ctx context.Context, sel ast.SelectionSet, v *model.Match) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Match(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOMatchResults2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐMatchResults(ctx context.Context, sel ast.SelectionSet, v *model.MatchResults) graphql.Marshaler {

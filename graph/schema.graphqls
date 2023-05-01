@@ -37,7 +37,8 @@ Represents a custom match in the process of being created.
 type Duel {
   id: ID!
   gamemode: String!
-  players: [User!]!
+  players: [User!]
+  invitations: [User!]
 
   # TODO: additional details like bet amount
 }
@@ -90,19 +91,26 @@ type Query {
   player: User!
 
   "Query for a specific user"
-  user(id: ID!): User!
+  user(id: ID!): User
 
-  match(id: ID!): Match!
+  "Query specific matches"
+  match(id: ID!): Match
 }
 
 type Mutation {
-  addFriend(userId: ID!): User
-  removeFriend(userId: ID!): User
+  "Send a friend request to the specified user"
+  addFriend(userId: ID!): Boolean
 
+  "Remove specified user as a friend"
+  removeFriend(userId: ID!): Boolean
+
+  "Creates a duel with the given options"
   createDuel(gamemode: String!): Duel!
+
+  "Invite specified user to duel the current player is part of"
   inviteToDuel(userId: ID!): Duel!
 
-  "Starts the duel the user has created"
+  "Starts the duel the current user is part of"
   startDuel: Match!
 }
 

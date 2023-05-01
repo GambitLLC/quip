@@ -15,9 +15,10 @@ type StatusDetails interface {
 
 // Represents a custom match in the process of being created.
 type Duel struct {
-	ID       string  `json:"id"`
-	Gamemode string  `json:"gamemode"`
-	Players  []*User `json:"players"`
+	ID          string  `json:"id"`
+	Gamemode    string  `json:"gamemode"`
+	Players     []*User `json:"players,omitempty"`
+	Invitations []*User `json:"invitations,omitempty"`
 }
 
 func (Duel) IsStatusDetails() {}

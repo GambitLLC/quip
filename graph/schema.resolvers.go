@@ -11,13 +11,23 @@ import (
 	"github.com/GambitLLC/quip/graph/model"
 )
 
+// Teams is the resolver for the teams field.
+func (r *matchResolver) Teams(ctx context.Context, obj *model.Match) ([][]*model.User, error) {
+	panic(fmt.Errorf("not implemented: Teams - teams"))
+}
+
+// Results is the resolver for the results field.
+func (r *matchResolver) Results(ctx context.Context, obj *model.Match) (*model.MatchResults, error) {
+	panic(fmt.Errorf("not implemented: Results - results"))
+}
+
 // AddFriend is the resolver for the addFriend field.
-func (r *mutationResolver) AddFriend(ctx context.Context, userID string) (*model.User, error) {
+func (r *mutationResolver) AddFriend(ctx context.Context, userID string) (*bool, error) {
 	panic(fmt.Errorf("not implemented: AddFriend - addFriend"))
 }
 
 // RemoveFriend is the resolver for the removeFriend field.
-func (r *mutationResolver) RemoveFriend(ctx context.Context, userID string) (*model.User, error) {
+func (r *mutationResolver) RemoveFriend(ctx context.Context, userID string) (*bool, error) {
 	panic(fmt.Errorf("not implemented: RemoveFriend - removeFriend"))
 }
 
@@ -56,6 +66,19 @@ func (r *subscriptionResolver) Status(ctx context.Context) (<-chan *model.Status
 	panic(fmt.Errorf("not implemented: Status - status"))
 }
 
+// Friends is the resolver for the friends field.
+func (r *userResolver) Friends(ctx context.Context, obj *model.User) ([]*model.User, error) {
+	panic(fmt.Errorf("not implemented: Friends - friends"))
+}
+
+// MatchHistory is the resolver for the matchHistory field.
+func (r *userResolver) MatchHistory(ctx context.Context, obj *model.User) ([]*model.Match, error) {
+	panic(fmt.Errorf("not implemented: MatchHistory - matchHistory"))
+}
+
+// Match returns MatchResolver implementation.
+func (r *Resolver) Match() MatchResolver { return &matchResolver{r} }
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
@@ -65,6 +88,11 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 // Subscription returns SubscriptionResolver implementation.
 func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
 
+// User returns UserResolver implementation.
+func (r *Resolver) User() UserResolver { return &userResolver{r} }
+
+type matchResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
+type userResolver struct{ *Resolver }
