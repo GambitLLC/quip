@@ -13,69 +13,76 @@ const props = defineProps<{
 }>()
 
 const computedSize = computed(() => `${props.size}px`)
-const computedAccessory = computed(() => `/playful_avatars/accessories/${props.accessory}.svg`)
-const computedEye = computed(() => `/playful_avatars/eyes/${props.eye}.svg`)
-const computedFace = computed(() => `/playful_avatars/face/${props.face}.svg`)
-const computedHair = computed(() => `/playful_avatars/hair/${props.hair}.svg`)
-const computedMouth = computed(() => `/playful_avatars/mouth/${props.mouth}.svg`)
-const computedOutfit = computed(() => `/playful_avatars/outfit/${props.outfit}.svg`)
+
+const AccessoryComponent = defineAsyncComponent(() => import(`./playful_avatars/accessories/${props.accessory}.vue`))
+const EyeComponent = defineAsyncComponent(() => import(`./playful_avatars/eyes/${props.eye}.vue`))
+const FaceComponent = defineAsyncComponent(() => import(`./playful_avatars/face/${props.face}.vue`))
+const HairComponent = defineAsyncComponent(() => import(`./playful_avatars/hair/${props.hair}.vue`))
+const MouthComponent = defineAsyncComponent(() => import(`./playful_avatars/mouth/${props.mouth}.vue`))
+const OutfitComponent = defineAsyncComponent(() => import(`./playful_avatars/outfit/${props.outfit}.vue`))
 </script>
 
 <template>
-  <div :class="color" class="position-relative rounded-circle d-flex align-center justify-center overflow-hidden" :style="{width: computedSize, height: computedSize}">
-    <img v-if="props.accessory !== undefined" class="accessory" :src="computedAccessory" alt="accessory">
-    <img  class="eye" :src="computedEye" alt="eye">
-    <img class="face" :src="computedFace" alt="face">
-    <img v-if="props.hair !== undefined" class="hair" :src="computedHair" alt="hair">
-    <img class="mouth" :src="computedMouth" alt="mouth">
-    <img class="outfit" :src="computedOutfit" alt="outfit">
+  <div :class="color" class="position-relative rounded-circle overflow-hidden" :style="{width: computedSize, height: computedSize}">
+    <AccessoryComponent class="avatarComponent accessory"/>
+    <EyeComponent class="avatarComponent eye"/>
+    <FaceComponent class="avatarComponent face"/>
+    <HairComponent class="avatarComponent hair"/>
+    <MouthComponent class="avatarComponent mouth"/>
+    <OutfitComponent class="avatarComponent outfit"/>
   </div>
 </template>
 
 <style scoped lang="scss">
-img {
+.avatarComponent {
   position: absolute;
 }
 
 .accessory {
-  position: absolute;
-  z-index: 3;
-  //top: 50px;
-  top: 16.949%;
-  //left: 72px;
-  left: 24.407%;
+  width: 606.67px;
+  left: 29.8%;
+  right: 23.53%;
+  top: 47.3%;
+  bottom: 23.37%;
 }
 
 .eye {
-  position: absolute;
-  z-index: 2;
-  //top: 120px;
-  top: 40.678%;
-  //left: 145px;
-  left: 49.153%;
+  width: 338px;
+  left: 47.8%;
+  right: 26.2%;
+  top: 36.3%;
+  bottom: 49.37%;
 }
 
 .face {
-  position: relative;
-  top: 13.559%;
-  left: -3.4%;
+  width: 797.33px;
+  left: 16.8%;
+  right: 21.87%;
+  top: 19.47%;
+  bottom: -0.47%;
 }
 
 .hair {
-  position: absolute;
-  margin-top: -5px;
+  width: 1083.33px;
+  left: 8.22%;
+  right: 8.45%;
+  top: 19.99%;
+  bottom: 20.01%;
 }
 
 .mouth {
-  position: absolute;
-  bottom: 30.508%;
-  left: 52.542%;
+  width: 130px;
+  left: 52.89%;
+  right: 37.11%;
+  top: 57.29%;
+  bottom: 37.38%;
 }
 
 .outfit {
-  position: absolute;
-  z-index: 1;
-  top: 190px;
-  left: 8px;
+  width: 1256.67px;
+  left: 4.47%;
+  right: -1.13%;
+  top: 62.97%;
+  bottom: -26.3%;
 }
 </style>
