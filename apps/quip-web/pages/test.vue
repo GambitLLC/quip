@@ -5,30 +5,30 @@ import {accessories, eyes, faces, hairs, mouths, outfits} from "~/components/uti
 
 <template>
   <div class="pa-16">
-    <div class="d-flex">
-      <div>
-        <h1 class="py-8">
+    <div class="d-flex flex-row justify-space-between flex-wrap">
+      <div class="w-100 d-flex flex-column align-center">
+        <h1 class="py-16">
           Jon
         </h1>
-        <Avatar eye="Normal" face="Light" mouth="Open_Tooth" outfit="03" size="500" hair="07" color="bg-green-light"/>
+        <Avatar eye="Normal" face="Light" mouth="Open_Tooth" outfit="03" :size="200" hair="07" color="bg-green-light"/>
       </div>
-      <div>
-        <h1 class="py-8">
+      <div class="w-100 d-flex flex-column align-center">
+        <h1 class="py-16">
           Alex
         </h1>
-        <Avatar accessory="Rounded_Glasses" eye="Normal" face="Fair" mouth="Eat" outfit="20" size="500" hair="03" color="bg-green-light"/>
+        <Avatar accessory="Rounded_Glasses" eye="Normal" face="Fair" mouth="Eat" outfit="20" :size="200" hair="03" color="bg-green-light"/>
       </div>
-      <div>
-        <h1 class="py-8">
+      <div class="w-100 d-flex flex-column align-center">
+        <h1 class="py-16">
           Randolph
         </h1>
-        <Avatar accessory="Earphone" eye="Cynic" face="Light" mouth="Hate" outfit="06" size="500" hair="16" color="bg-green-light"/>
+        <Avatar accessory="Earphone" eye="Cynic" face="Light" mouth="Hate" outfit="06" :size="200" hair="16" color="bg-green-light"/>
       </div>
-      <div>
-        <h1 class="py-8">
+      <div class="w-100 d-flex flex-column align-center">
+        <h1 class="py-16">
           Ben
         </h1>
-        <Avatar eye="Thin" face="Light" mouth="Open_Mouth" outfit="01" size="500" hair="08" color="bg-green-light"/>
+        <Avatar eye="Thin" face="Light" mouth="Open_Mouth" outfit="01" :size="200" hair="08" color="bg-green-light"/>
       </div>
     </div>
   </div>
