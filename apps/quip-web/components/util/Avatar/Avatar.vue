@@ -66,6 +66,7 @@ const OutfitComponent = computed(() => {
 
 .avatarBase {
   transition: background-color 0.3s ease-in-out;
+  transform: translateZ(0);
 }
 
 .avatarComponent {

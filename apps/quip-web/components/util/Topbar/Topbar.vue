@@ -8,7 +8,7 @@ import {useTopbar} from "~/store/TopbarStore";
 
 const {mobile} = useDisplay()
 const route = useRoute()
-const isLanding = computed(() => route.name === "index")
+const isLanding = computed(() => route.name === "index" || route.name === "test")
 
 const topbar = useTopbar()
 const homeRef = computed(() => topbar.homeRef)

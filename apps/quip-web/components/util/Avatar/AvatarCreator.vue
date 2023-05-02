@@ -83,7 +83,7 @@ const computedColor = computed(() => `bg-${color.value}-dark`)
       <div>
         <SliderSelector class="pb-2" @left="picker.accessoryIndex--" @right="picker.accessoryIndex++">
           <h3>
-            {{accessory}}
+            {{accessory.split('_').join(" ")}}
           </h3>
         </SliderSelector>
       </div>
