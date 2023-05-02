@@ -8,6 +8,7 @@
     "@dicebear/core": "^6.0.3",
     "@dicebear/personas": "^6.0.3",
     "@grpc/grpc-js": "^1.8.12",
+    "@pinia/nuxt": "^0.4.9",
     "@socket.io/redis-adapter": "^8.1.0",
     "@vueuse/components": "^10.1.0",
     "@vueuse/core": "^10.0.2",
@@ -21,7 +22,6 @@
     "socket.io": "^4.6.1",
     "socket.io-client": "^4.6.1",
     "tslib": "^2.3.0",
-    "vue": "^3.2.47",
     "vuetify": "^3.1.14"
   },
   "devDependencies": {
@@ -54,5 +54,8 @@
     "ts-node": "10.9.1",
     "ts-proto": "^1.140.0",
     "typescript": "~4.9.5"
+  },
+  "overrides": {
+    "vue": "latest"
   }
 }

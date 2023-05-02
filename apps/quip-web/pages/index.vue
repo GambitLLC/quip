@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import {useDisplay, useTheme} from "vuetify";
-import {Tab} from "~/util/types";
 
 import LandingTopbar from "~/components/landing/LandingTopbar.vue";
 import LandingHero from "~/components/landing/LandingHero.vue";
 import LandingHeroCard from "~/components/landing/LandingHeroCard.vue"
 import GameCard from "~/components/landing/GameCard.vue"
 import FrequentlyAskedQuestions from "~/components/landing/FrequentlyAskedQuestions.vue";
-import {scrollIntoViewWithOffset} from "~/util/scroll";
+import {useTopbar} from "~/store/TopbarStore";
 
 const {mobile, md, lgAndDown} = useDisplay()
 const {colors} = useTheme().current.value
@@ -71,55 +70,18 @@ const aboutRef = ref<HTMLElement | null>(null)
 const gamesRef = ref<HTMLElement | null>(null)
 const faqRef = ref<HTMLElement | null>(null)
 
-function scrollToTab(tab: Tab) {
-  if (!mobile.value) {
-    switch (tab) {
-      case 'home':
-        scrollIntoViewWithOffset(homeRef.value, 100)
-        break
-      case 'about':
-        scrollIntoViewWithOffset(aboutRef.value, 140)
-        break
-      case 'games':
-        scrollIntoViewWithOffset(gamesRef.value, 95)
-        break
-      case 'faq':
-        scrollIntoViewWithOffset(faqRef.value, -30)
-        break
-    }
-  } else {
-    switch (tab) {
-      case 'home':
-        scrollIntoViewWithOffset(homeRef.value, 100)
-        break
-      case 'about':
-        scrollIntoViewWithOffset(aboutRef.value, 95)
-        break
-      case 'games':
-        scrollIntoViewWithOffset(gamesRef.value, 90)
-        break
-      case 'faq':
-        scrollIntoViewWithOffset(faqRef.value, 77)
-        break
-    }
-  }
-}
+const topbar = useTopbar()
 
-const tabSections = computed(() => [
-  ['home', homeRef.value],
-  ['about', aboutRef.value],
-  ['games', gamesRef.value],
-  ['faq', faqRef.value],
-])
+watch(homeRef,  (value) => { topbar.homeRef  = value })
+watch(aboutRef, (value) => { topbar.aboutRef = value })
+watch(gamesRef, (value) => { topbar.gamesRef = value })
+watch(faqRef,   (value) => { topbar.faqRef   = value })
 </script>
 
 <template>
   <div
     class="bg-background w-100"
   >
-    <ClientOnly>
-      <LandingTopbar :tab-sections="tabSections" @tab="scrollToTab"/>
-    </ClientOnly>
     <div
       class="pt-4 safeArea"
     >

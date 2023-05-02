@@ -2,7 +2,7 @@
 import Avatar from "~/components/util/Avatar/Avatar.vue";
 import {Accessory, Eye, Face, Mouth, Hair, Outfit, accessories, eyes, faces, mouths, hairs, outfits} from "~/components/util/Avatar/types";
 import SliderSelector from "~/components/util/Avatar/SliderSelector.vue";
-import {capitalize} from "../../../util/text";
+import {capitalize} from "~/util/text";
 
 const colors = ["green", "purple", "blue"] as const
 type Color = typeof colors[number]

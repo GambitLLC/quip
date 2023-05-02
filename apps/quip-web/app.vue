@@ -3,6 +3,7 @@ import {useDisplay, useTheme} from "vuetify";
 import {useWindowScroll} from "@vueuse/core";
 import {computed} from "vue";
 import {useRoute} from "#app";
+import Topbar from "~/components/util/Topbar/Topbar.vue";
 
 const route = useRoute()
 
@@ -72,7 +73,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <router-view/>
+  <div class="w-100">
+    <Topbar/>
+    <router-view/>
+  </div>
 </template>
 
 <style>
