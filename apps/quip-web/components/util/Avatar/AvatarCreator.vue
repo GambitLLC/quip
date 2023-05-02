@@ -1,14 +1,26 @@
 <script setup lang="ts">
 import Avatar from "~/components/util/Avatar/Avatar.vue";
 import SliderSelector from "~/components/util/Avatar/SliderSelector.vue";
-import {Accessory, Eye, Face, Mouth, Hair, Outfit, accessories, eyes, faces, mouths, hairs, outfits} from "~/components/util/Avatar/types";
+import {
+  Accessory,
+  Eye,
+  Face,
+  Mouth,
+  Hair,
+  Outfit,
+  Color,
+  accessories,
+  eyes,
+  faces,
+  mouths,
+  hairs,
+  outfits,
+  colors
+} from "~/components/util/Avatar/types";
 import {capitalize} from "~/util/text";
 import {useDisplay} from "vuetify";
 
 const { mobile } = useDisplay()
-
-const colors = ["green", "purple", "blue"] as const
-type Color = typeof colors[number]
 
 const picker = reactive({
   eyeIndex: 3,
@@ -31,11 +43,10 @@ const outfit = computed<Outfit>(() => outfits[circ(picker.outfitIndex, outfits.l
 const accessory = computed<Accessory>(() => accessories[circ(picker.accessoryIndex, accessories.length)])
 const hair = computed<Hair>(() => hairs[circ(picker.hairIndex, hairs.length)])
 const color = computed<Color>(() => colors[circ(picker.colorIndex, colors.length)])
-const computedColor = computed(() => `bg-${color.value}-dark`)
 </script>
 
 <template>
-  <div class="mt-10 bg-white rounded-corners creator unselectable" :class="{'pa-4': mobile, 'pa-6': !mobile}">
+  <div class="bg-white rounded-corners creator unselectable" :class="{'pa-4': mobile, 'pa-6': !mobile}">
     <Avatar
       class="flex-shrink-0"
       :size="mobile ? 180 : 250"
@@ -45,7 +56,7 @@ const computedColor = computed(() => `bg-${color.value}-dark`)
       :outfit="outfit"
       :accessory="accessory"
       :hair="hair"
-      :color="computedColor"
+      :color="color"
     />
     <div class="mt-4 w-100 h-100 d-flex flex-column align-center">
       <div>

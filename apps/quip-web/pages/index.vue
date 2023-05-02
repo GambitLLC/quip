@@ -7,6 +7,7 @@ import LandingHeroCard from "~/components/landing/LandingHeroCard.vue"
 import GameCard from "~/components/landing/GameCard.vue"
 import FrequentlyAskedQuestions from "~/components/landing/FrequentlyAskedQuestions.vue";
 import {useTopbar} from "~/store/TopbarStore";
+import Topbar from "~/components/util/Topbar/Topbar.vue";
 
 const {mobile, md, lgAndDown} = useDisplay()
 const {colors} = useTheme().current.value
@@ -82,6 +83,9 @@ watch(faqRef,   (value) => { topbar.faqRef   = value })
   <div
     class="bg-background w-100"
   >
+    <ClientOnly>
+      <Topbar/>
+    </ClientOnly>
     <div
       class="pt-4 safeArea"
     >

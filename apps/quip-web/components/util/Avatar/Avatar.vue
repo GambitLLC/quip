@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {Accessory, Eye, Face, Hair, Mouth, Outfit} from "~/components/util/Avatar/types";
+import {Accessory, Eye, Face, Hair, Mouth, Outfit, Color} from "~/components/util/Avatar/types";
 
 const props = defineProps<{
   size: number,
-  color: string,
+  color: Color,
   accessory?: Accessory
   eye: Eye,
   face: Face,
@@ -32,12 +32,14 @@ const OutfitComponent = computed(() => {
   return defineAsyncComponent(() => import(`./playful_avatars/outfit/${outfit}.vue`))
 })
 
+const computedColor = computed(() => `bg-${props.color}-dark`)
+
 const computedSize = computed(() => props.size)
 const computedScale = computed(() => props.size / 295)
 </script>
 
 <template>
-  <div :class="color" class="position-relative rounded-circle overflow-hidden d-flex align-center justify-center avatarBase" :style="{width: `${computedSize}px`, height: `${computedSize}px`}">
+  <div :class="computedColor" class="position-relative rounded-circle overflow-hidden d-flex align-center justify-center avatarBase" :style="{width: `${computedSize}px`, height: `${computedSize}px`}">
     <transition name="fade">
       <AccessoryComponent :class="`accessory-${accessory}`" class="avatarComponent accessory"/>
     </transition>

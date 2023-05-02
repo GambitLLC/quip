@@ -73,10 +73,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="w-100">
-    <Topbar/>
-    <router-view/>
-  </div>
+  <router-view/>
 </template>
 
 <style>
