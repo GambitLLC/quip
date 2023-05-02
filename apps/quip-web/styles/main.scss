@@ -3,6 +3,10 @@
 @use "mixins";
 @use "transitions";
 
+* {
+  touch-action: manipulation;
+}
+
 //extra resets
 a {
   text-decoration: none;

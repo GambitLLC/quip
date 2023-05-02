@@ -15,7 +15,8 @@ export default defineNuxtConfig({
   app: {
     head: {
       meta: [
-        { name: 'theme-color', content: 'black-translucent'}
+        { name: 'theme-color', content: 'black-translucent'},
+        // { name: 'viewport', content: 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' },
       ],
       title: 'quip.gg',
       link: [

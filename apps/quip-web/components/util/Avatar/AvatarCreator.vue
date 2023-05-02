@@ -3,6 +3,9 @@ import Avatar from "~/components/util/Avatar/Avatar.vue";
 import SliderSelector from "~/components/util/Avatar/SliderSelector.vue";
 import {Accessory, Eye, Face, Mouth, Hair, Outfit, accessories, eyes, faces, mouths, hairs, outfits} from "~/components/util/Avatar/types";
 import {capitalize} from "~/util/text";
+import {useDisplay} from "vuetify";
+
+const { mobile } = useDisplay()
 
 const colors = ["green", "purple", "blue"] as const
 type Color = typeof colors[number]
@@ -32,10 +35,10 @@ const computedColor = computed(() => `bg-${color.value}-dark`)
 </script>
 
 <template>
-  <div class="bg-white rounded-corners creator pa-6 unselectable">
+  <div class="mt-10 bg-white rounded-corners creator unselectable" :class="{'pa-4': mobile, 'pa-6': !mobile}">
     <Avatar
       class="flex-shrink-0"
-      :size="250"
+      :size="mobile ? 180 : 250"
       :eye="eye"
       :face="face"
       :mouth="mouth"
@@ -99,15 +102,24 @@ const computedColor = computed(() => `bg-${color.value}-dark`)
 </template>
 
 <style scoped lang="scss">
+@import "styles/mixins.scss";
 .creator {
   width: 400px;
 
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  @include sm-down {
+    width: 300px;
+  }
 }
 
 h3 {
   text-align: center;
+
+  @include sm-down {
+    font-size: 16px;
+  }
 }
 </style>

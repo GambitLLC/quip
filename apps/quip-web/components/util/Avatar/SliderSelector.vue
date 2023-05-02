@@ -12,21 +12,27 @@ function right() { emit('right') }
 
 <template>
   <div class="d-flex align-center slider">
-    <div class="sliderIcon" @click="left">
+    <a v-ripple class="sliderIcon rounded-circle" @click="left">
       <Icon icon="material-symbols:chevron-left-rounded" />
-    </div>
+    </a>
     <div class="flex-grow-1">
       <slot/>
     </div>
-    <div class="sliderIcon" @click="right">
+    <a v-ripple class="sliderIcon rounded-circle pl-1" @click="right">
       <Icon icon="material-symbols:chevron-right-rounded" />
-    </div>
+    </a>
   </div>
 </template>
 
 <style scoped lang="scss">
+@import "styles/mixins.scss";
+
 .slider {
   width: 280px;
+
+  @include sm-down {
+    width: 220px;
+  }
 }
 
 .sliderIcon {
