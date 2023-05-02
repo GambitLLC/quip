@@ -15,29 +15,57 @@ const props = defineProps<{
 const computedSize = computed(() => props.size)
 const computedScale = computed(() => props.size / 295)
 
-const AccessoryComponent = (props.accessory) ? defineAsyncComponent(() => import(`./playful_avatars/accessories/${props.accessory}.vue`)) : null
-const HairComponent = (props.hair) ? defineAsyncComponent(() => import(`./playful_avatars/hair/${props.hair}.vue`)) : null
+const AccessoryComponent = computed(() => (props.accessory) ? defineAsyncComponent(() => import(`./playful_avatars/accessories/${props.accessory}.vue`)) : null)
+const HairComponent = computed(() => (props.hair) ? defineAsyncComponent(() => import(`./playful_avatars/hair/${props.hair}.vue`)) : null)
 
-const EyeComponent = defineAsyncComponent(() => import(`./playful_avatars/eyes/${props.eye}.vue`))
-const FaceComponent = defineAsyncComponent(() => import(`./playful_avatars/face/${props.face}.vue`))
-const MouthComponent = defineAsyncComponent(() => import(`./playful_avatars/mouth/${props.mouth}.vue`))
-const OutfitComponent = defineAsyncComponent(() => import(`./playful_avatars/outfit/${props.outfit}.vue`))
+const EyeComponent = computed(() => {
+  const eye = props.eye
+  return defineAsyncComponent(() => import(`./playful_avatars/eyes/${eye}.vue`))
+})
+const FaceComponent = computed(() => {
+  const face = props.face
+  return defineAsyncComponent(() => import(`./playful_avatars/face/${face}.vue`))
+})
+const MouthComponent = computed(() => {
+  const mouth = props.mouth
+  return defineAsyncComponent(() => import(`./playful_avatars/mouth/${mouth}.vue`))
+})
+const OutfitComponent = computed(() => {
+  const outfit = props.outfit
+  return defineAsyncComponent(() => import(`./playful_avatars/outfit/${outfit}.vue`))
+})
 </script>
 
 <template>
-  <div :class="color" class="position-relative rounded-circle overflow-hidden d-flex align-center justify-center" :style="{width: `${computedSize}px`, height: `${computedSize}px`}">
-    <AccessoryComponent :class="`accessory-${accessory}`" class="avatarComponent accessory"/>
-    <EyeComponent class="avatarComponent eye"/>
-    <FaceComponent class="avatarComponent face"/>
-    <HairComponent :class="`hair-${hair}`" class="avatarComponent hair"/>
-    <MouthComponent class="avatarComponent mouth"/>
-    <OutfitComponent :class="`outfit-${outfit}`" class="avatarComponent outfit"/>
+  <div :class="color" class="position-relative rounded-circle overflow-hidden d-flex align-center justify-center avatarBase" :style="{width: `${computedSize}px`, height: `${computedSize}px`}">
+    <transition name="fade">
+      <AccessoryComponent :class="`accessory-${accessory}`" class="avatarComponent accessory"/>
+    </transition>
+    <transition name="fade">
+      <EyeComponent class="avatarComponent eye"/>
+    </transition>
+    <transition name="fade" mode="in-out">
+      <FaceComponent class="avatarComponent face"/>
+    </transition>
+    <transition name="fade">
+      <HairComponent :class="`hair-${hair}`" class="avatarComponent hair"/>
+    </transition>
+    <transition name="fade">
+      <MouthComponent class="avatarComponent mouth"/>
+    </transition>
+    <transition name="fade">
+      <OutfitComponent :class="`outfit-${outfit}`" class="avatarComponent outfit"/>
+    </transition>
   </div>
 </template>
 
 <style scoped lang="scss">
 @function scaleP($px_value) {
   @return calc(#{$px_value} / v-bind(computedSize) * v-bind(computedScale) * 100%);
+}
+
+.avatarBase {
+  transition: background-color 0.3s ease-in-out;
 }
 
 .avatarComponent {
