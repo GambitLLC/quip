@@ -28,7 +28,7 @@ const outfit = computed<Outfit>(() => outfits[circ(picker.outfitIndex, outfits.l
 const accessory = computed<Accessory>(() => accessories[circ(picker.accessoryIndex, accessories.length)])
 const hair = computed<Hair>(() => hairs[circ(picker.hairIndex, hairs.length)])
 const color = computed<Color>(() => colors[circ(picker.colorIndex, colors.length)])
-const computedColor = computed(() => `bg-${color.value}-light`)
+const computedColor = computed(() => `bg-${color.value}-dark`)
 </script>
 
 <template>
