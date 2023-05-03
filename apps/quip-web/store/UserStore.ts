@@ -5,6 +5,7 @@ interface User {
   name: string,
   email: string,
   avatar: Avatar,
+  btcAddress: string,
 }
 
 interface UserStore {
@@ -27,7 +28,8 @@ const useUser = defineStore('user', {
           outfit: "01",
           accessory: "Earphone",
           color: "green",
-        }
+        },
+        btcAddress: '3H7mh...FqEfW',
       }
     }
   },
