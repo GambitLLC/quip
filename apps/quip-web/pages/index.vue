@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {useDisplay, useTheme} from "vuetify";
 
-import LandingTopbar from "~/components/landing/LandingTopbar.vue";
 import LandingHero from "~/components/landing/LandingHero.vue";
 import LandingHeroCard from "~/components/landing/LandingHeroCard.vue"
 import GameCard from "~/components/landing/GameCard.vue"
