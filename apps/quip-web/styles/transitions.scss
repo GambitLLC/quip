@@ -29,3 +29,12 @@ $transitionTime: 0.3s;
   &-enter-from { transform: translateX(-1em); }
   &-leave-to { transform: translateX(1em); }
 }
+
+.fade-slide-up-enter-active, .fade-slide-up-leave-active {
+  transition: opacity $transitionTime ease-in-out, transform $transitionTime ease-in-out;
+}
+
+.fade-slide-up-enter-from, .fade-slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(1em);
+}

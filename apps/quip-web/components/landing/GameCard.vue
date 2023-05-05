@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {useWindowSize} from "@vueuse/core";
-import {range} from "~/util/iteration";
+import {range} from "~/utils/iteration";
 import {useTheme} from "vuetify";
 import QuipButton from "~/components/util/QuipButton.vue"
 import QuipCard from "~/components/util/QuipCard.vue";

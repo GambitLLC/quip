@@ -17,7 +17,7 @@ import {
   outfits,
   colors
 } from "~/components/util/Avatar/types";
-import {capitalize} from "~/util/text";
+import {capitalize} from "~/utils/text";
 import {useDisplay} from "vuetify";
 
 const { mobile } = useDisplay()
@@ -46,10 +46,10 @@ const color = computed<Color>(() => colors[circ(picker.colorIndex, colors.length
 </script>
 
 <template>
-  <div class="bg-white rounded-corners creator unselectable" :class="{'pa-4': mobile, 'pa-6': !mobile}">
+  <div class="bg-white rounded-corners creator unselectable">
     <Avatar
       class="flex-shrink-0"
-      :size="mobile ? 180 : 250"
+      :size="180"
       :eye="eye"
       :face="face"
       :mouth="mouth"
@@ -60,49 +60,49 @@ const color = computed<Color>(() => colors[circ(picker.colorIndex, colors.length
     />
     <div class="mt-4 w-100 h-100 d-flex flex-column align-center">
       <div>
-        <SliderSelector class="pb-2" @left="picker.faceIndex--" @right="picker.faceIndex++">
+        <SliderSelector class="pb-1" @left="picker.faceIndex--" @right="picker.faceIndex++">
           <h3>
             {{face}} Face
           </h3>
         </SliderSelector>
       </div>
       <div>
-        <SliderSelector class="pb-2" @left="picker.hairIndex--" @right="picker.hairIndex++">
+        <SliderSelector class="pb-1" @left="picker.hairIndex--" @right="picker.hairIndex++">
           <h3>
             Hair {{hair}}
           </h3>
         </SliderSelector>
       </div>
       <div>
-        <SliderSelector class="pb-2" @left="picker.eyeIndex--" @right="picker.eyeIndex++">
+        <SliderSelector class="pb-1" @left="picker.eyeIndex--" @right="picker.eyeIndex++">
           <h3>
             {{eye}} Eyes
           </h3>
         </SliderSelector>
       </div>
       <div>
-        <SliderSelector class="pb-2" @left="picker.mouthIndex--" @right="picker.mouthIndex++">
+        <SliderSelector class="pb-1" @left="picker.mouthIndex--" @right="picker.mouthIndex++">
           <h3>
             {{mouth.split('_').join(" ")}}
           </h3>
         </SliderSelector>
       </div>
       <div>
-        <SliderSelector class="pb-2" @left="picker.outfitIndex--" @right="picker.outfitIndex++">
+        <SliderSelector class="pb-1" @left="picker.outfitIndex--" @right="picker.outfitIndex++">
           <h3>
             Outfit {{outfit}}
           </h3>
         </SliderSelector>
       </div>
       <div>
-        <SliderSelector class="pb-2" @left="picker.accessoryIndex--" @right="picker.accessoryIndex++">
+        <SliderSelector class="pb-1" @left="picker.accessoryIndex--" @right="picker.accessoryIndex++">
           <h3>
             {{accessory.split('_').join(" ")}}
           </h3>
         </SliderSelector>
       </div>
       <div>
-        <SliderSelector class="pb-2" @left="picker.colorIndex--" @right="picker.colorIndex++">
+        <SliderSelector class="pb-1" @left="picker.colorIndex--" @right="picker.colorIndex++">
           <h3>
             {{capitalize(color)}}
           </h3>
@@ -115,22 +115,15 @@ const color = computed<Color>(() => colors[circ(picker.colorIndex, colors.length
 <style scoped lang="scss">
 @import "styles/mixins.scss";
 .creator {
-  width: 400px;
+  width: 300px;
 
   display: flex;
   flex-direction: column;
   align-items: center;
-
-  @include sm-down {
-    width: 300px;
-  }
 }
 
 h3 {
   text-align: center;
-
-  @include sm-down {
-    font-size: 16px;
-  }
+  font-size: 15px;
 }
 </style>

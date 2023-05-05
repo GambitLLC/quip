@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {Icon} from '@iconify/vue';
-import {range} from "~/util/iteration";
+import {range} from "~/utils/iteration";
 import {useDisplay} from "vuetify";
 
 import QuipButton from "~/components/util/QuipButton.vue"

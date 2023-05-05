@@ -2,9 +2,9 @@
 import {useDisplay, useTheme} from "vuetify";
 import QuipButton from "~/components/util/QuipButton.vue"
 import IconButton from "~/components/util/IconButton.vue"
-import {onScroll, useScroll} from "~/util/scroll";
-import { Tab } from "~/util/types";
-import { capitalize } from "~/util/text";
+import {onScroll, useScroll} from "~/utils/scroll";
+import { Tab } from "~/utils/types";
+import { capitalize } from "~/utils/text";
 import { vOnClickOutside } from '@vueuse/components'
 
 const props = defineProps<{

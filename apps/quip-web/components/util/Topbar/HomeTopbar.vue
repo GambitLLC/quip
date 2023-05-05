@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import QuipButton from "~/components/util/QuipButton.vue"
 
-import {useScroll} from "~/util/scroll";
+import {useScroll} from "~/utils/scroll";
 import {useTheme} from "vuetify";
 
 const { isScrolled } = useScroll()

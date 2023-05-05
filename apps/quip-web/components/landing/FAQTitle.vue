@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {range} from "~/util/iteration";
+import {range} from "~/utils/iteration";
 import {useTheme} from "vuetify";
 
 const computedColorOutline = useTheme().current.value.colors["jetblack"]

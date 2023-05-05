@@ -6,9 +6,11 @@ import QuipButton from "~/components/util/QuipButton.vue";
 import Tabs from "~/components/util/Tabs.vue";
 import {useTheme} from "vuetify";
 import GeneralTab from "~/components/profile/GeneralTab.vue";
+import {useModal} from "~/store/ModalStore";
 
 const colors = useTheme().current.value.colors
 const user = useUser().user
+const modal = useModal()
 </script>
 
 <template>
@@ -30,7 +32,7 @@ const user = useUser().user
           <h3>{{user.email}}</h3>
         </div>
         <div class="flex-grow-1"/>
-        <QuipButton class="editBtn text-jetblack" :width="262">
+        <QuipButton @click="modal.open('AvatarCreator')" class="editBtn text-jetblack" :width="262">
           Edit Profile Picture
         </QuipButton>
       </div>

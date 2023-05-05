@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import HomeTopbar from "~/components/util/Topbar/HomeTopbar.vue";
 import LandingTopbar from "~/components/util/Topbar/LandingTopbar.vue";
-import {Tab} from "~/util/types";
-import {scrollIntoViewWithOffset} from "~/util/scroll";
+import {Tab} from "~/utils/types";
+import {scrollIntoViewWithOffset} from "~/utils/scroll";
 import {useDisplay} from "vuetify";
 import {useTopbar} from "~/store/TopbarStore";
 

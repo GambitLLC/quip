@@ -73,6 +73,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <ModalView/>
   <router-view/>
 </template>
 
