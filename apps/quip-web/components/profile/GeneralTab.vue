@@ -19,21 +19,21 @@ const user = useUser().user
       <v-divider class="text-border-grey divider"/>
       <div class="cardRow px-8">
         <h3 class="subtext">Display Name</h3>
-        <h3>
+        <h3 class="info">
           {{user?.name}}
         </h3>
       </div>
       <v-divider class="text-border-grey divider"/>
       <div class="cardRow px-8">
         <h3 class="subtext">Email Address</h3>
-        <h3>
+        <h3 class="info">
           {{user?.email}}
         </h3>
       </div>
       <v-divider class="text-border-grey divider"/>
       <div class="cardRow px-8">
         <h3 class="subtext">Bitcoin Address</h3>
-        <h3>
+        <h3 class="info">
           {{user?.btcAddress}}
         </h3>
       </div>
@@ -62,33 +62,7 @@ const user = useUser().user
 </template>
 
 <style scoped lang="scss">
-.contentCard {
-  border-radius: 24px !important;
-  margin-top: 117px;
-}
-
-.cardHeader {
-  height: 78px;
-}
-
-.cardRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 69px;
-}
-
-.divider {
-  opacity: 1 !important;
-}
-
-.subtext {
-  opacity: 0.4;
-  font-style: normal;
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 20px;
-}
+@import "styles.scss";
 
 .subtextClose {
   opacity: 0.4;
@@ -96,14 +70,6 @@ const user = useUser().user
   font-weight: 400;
   font-size: 12px;
   line-height: 15px;
-}
-
-h3 {
-  font-style: normal;
-  font-weight: 400;
-  font-size: 18px;
-  line-height: 22px;
-  color: v-bind("colors.jetblack");
 }
 
 .closeBorder {

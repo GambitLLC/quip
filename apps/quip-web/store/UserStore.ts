@@ -1,16 +1,30 @@
 import {defineStore} from "pinia";
 import {Avatar} from "~/components/util/Avatar/types";
 
+interface PersonalInfo {
+  legalName: string,
+  dob: Date,
+  address: string,
+}
+
 interface User {
   name: string,
   email: string,
   avatar: Avatar,
   btcAddress: string,
+  personalInfo: PersonalInfo,
 }
 
 interface UserStore {
   signedIn: boolean,
   user: User | null,
+}
+
+function getLang() {
+  console.log(navigator)
+  if (navigator.languages !== undefined)
+    return navigator.languages[0];
+  return navigator.language;
 }
 
 const useUser = defineStore('user', {
@@ -30,7 +44,12 @@ const useUser = defineStore('user', {
           color: "green",
         },
         btcAddress: '3H7mh...FqEfW',
-      }
+        personalInfo: {
+          legalName: 'Benjamin Kosten',
+          dob: new Date('1995-01-01'),
+          address: '123 Fake Street, Fake City, Fake Country',
+        },
+      },
     }
   },
   actions: {
@@ -47,5 +66,6 @@ const useUser = defineStore('user', {
 
 export {
   User,
-  useUser
+  useUser,
+  getLang
 }

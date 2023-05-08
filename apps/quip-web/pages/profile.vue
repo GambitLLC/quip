@@ -7,6 +7,18 @@ import Tabs from "~/components/util/Tabs.vue";
 import {useTheme} from "vuetify";
 import GeneralTab from "~/components/profile/GeneralTab.vue";
 import {useModal} from "~/store/ModalStore";
+import Match from "~/components/util/Match.vue";
+import PersonalTab from "~/components/profile/PersonalTab.vue";
+import PreferencesTab from "~/components/profile/PreferencesTab.vue";
+import ReferFriendTab from "~/components/profile/ReferFriendTab.vue";
+
+const currentTab = ref<ProfileTab>('General Info')
+const profileTabs = ['General Info', 'Personal Info', 'Preferences', 'Refer a Friend'] as const
+type ProfileTab = typeof profileTabs[number]
+
+function switchTab(tab: ProfileTab) {
+  currentTab.value = tab
+}
 
 const colors = useTheme().current.value.colors
 const user = useUser().user
@@ -36,11 +48,16 @@ const modal = useModal()
           Edit Profile Picture
         </QuipButton>
       </div>
-      <Tabs class="mt-10 unselectable" :tabs="['General Info', 'Personal Info', 'Preferences', 'Refer a Friend']" :active-tab="0"/>
+      <Tabs class="mt-10 unselectable" :tabs="profileTabs" @tab="switchTab" :active-tab="0"/>
       <div class="dividerHolder">
         <v-divider class="text-border-grey divider fullDivider"/>
       </div>
-      <GeneralTab/>
+        <transition name="fade-slide" mode="out-in">
+          <GeneralTab v-if="currentTab === profileTabs[0]"/>
+          <PersonalTab v-else-if="currentTab === profileTabs[1]"/>
+          <PreferencesTab v-else-if="currentTab === profileTabs[2]"/>
+          <ReferFriendTab v-else-if="currentTab === profileTabs[3]"/>
+        </transition>
     </div>
   </View>
 </template>

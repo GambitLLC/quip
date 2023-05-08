@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Match from "~/components/util/Match.vue";
+import QuipInput from "~/components/util/QuipInput.vue";
 const a = ref(0)
 </script>
 
@@ -9,6 +10,7 @@ const a = ref(0)
     <div @click="a = (a + 1) % 3">
       Click me! {{a}}
     </div>
+    <QuipInput/>
     <Match :match="a">
       <div :case="0">
         Case 0

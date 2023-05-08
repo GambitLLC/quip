@@ -22,7 +22,7 @@
     "socket.io": "^4.6.1",
     "socket.io-client": "^4.6.1",
     "tslib": "^2.3.0",
-    "vuetify": "^3.1.14"
+    "vuetify": "^3.2.2"
   },
   "devDependencies": {
     "@iconify/vue": "^4.1.1",

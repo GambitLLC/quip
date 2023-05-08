@@ -1,0 +1,48 @@
+.contentCard {
+  border-radius: 24px !important;
+  margin-top: 40px;
+}
+
+.roundedCardSmall {
+  border-radius: 24px !important;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  height: 78px;
+}
+
+.cardRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 69px;
+}
+
+.divider {
+  opacity: 1 !important;
+}
+
+h3 {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 22px;
+  color: v-bind("colors.jetblack");
+}
+
+.info {
+  font-style: normal;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 21px;
+}
+
+.subtext {
+  opacity: 0.4;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20px;
+}

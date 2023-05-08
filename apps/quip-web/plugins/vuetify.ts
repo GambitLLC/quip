@@ -24,6 +24,7 @@ const quipThemeLight: ThemeDefinition = {
     'blue-bullet': '#9BE9F2',
     'blue-bullet-accent': '#F1FAB8',
     'border-grey': '#B8CEDD',
+    'secondary-grey': '#98A7B1',
     'grey-light': '#fefefe',
     'grey-dark': '#6C6D71',
     'gold': '#FFBB55',
