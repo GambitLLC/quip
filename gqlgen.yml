@@ -63,6 +63,8 @@ models:
       - github.com/99designs/gqlgen/graphql.Int32
   User:
     fields:
+      status:
+        resolver: true
       matchHistory:
         resolver: true
       friends:

@@ -108,8 +108,6 @@ type ComplexityRoot struct {
 }
 
 type MatchResolver interface {
-	Teams(ctx context.Context, obj *model.Match) ([][]*model.User, error)
-
 	Results(ctx context.Context, obj *model.Match) (*model.MatchResults, error)
 }
 type MutationResolver interface {
@@ -128,6 +126,7 @@ type SubscriptionResolver interface {
 	Status(ctx context.Context) (<-chan *model.Status, error)
 }
 type UserResolver interface {
+	Status(ctx context.Context, obj *model.User) (*model.Status, error)
 	Friends(ctx context.Context, obj *model.User) ([]*model.User, error)
 	MatchHistory(ctx context.Context, obj *model.User) ([]*model.Match, error)
 }
@@ -959,7 +958,7 @@ func (ec *executionContext) _Match_teams(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Match().Teams(rctx, obj)
+		return obj.Teams, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -980,8 +979,8 @@ func (ec *executionContext) fieldContext_Match_teams(ctx context.Context, field 
 	fc = &graphql.FieldContext{
 		Object:     "Match",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -2081,7 +2080,7 @@ func (ec *executionContext) _User_status(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return ec.resolvers.User().Status(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2102,8 +2101,8 @@ func (ec *executionContext) fieldContext_User_status(ctx context.Context, field 
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "state":
@@ -4106,25 +4105,12 @@ func (ec *executionContext) _Match(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Match_connection(ctx, field, obj)
 
 		case "teams":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Match_teams(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Match_teams(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "state":
 
 			out.Values[i] = ec._Match_state(ctx, field, obj)
@@ -4471,12 +4457,25 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
+			field := field
 
-			out.Values[i] = ec._User_status(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_status(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "friends":
 			field := field
 
