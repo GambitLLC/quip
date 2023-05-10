@@ -1,7 +1,7 @@
 import {defineStore} from "pinia";
 import {Ref, ref} from "vue";
 
-const modals = ["AvatarCreator", "CloseAccount"] as const
+const modals = ["AvatarCreator", "CloseAccount", "Login"] as const
 type Modal = typeof modals[number]
 
 interface ModalStore {

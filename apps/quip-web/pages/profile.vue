@@ -26,40 +26,38 @@ const modal = useModal()
 </script>
 
 <template>
-  <View v-if="user">
-    <div class="w-100 profileArea mx-auto mt-8">
-      <div class="d-flex align-center">
-        <Avatar
-          :size="72"
-          :eye="user.avatar.eye"
-          :face="user.avatar.face"
-          :mouth="user.avatar.mouth"
-          :outfit="user.avatar.outfit"
-          :color="user.avatar.color"
-          :hair="user.avatar.hair"
-          :accessory="user.avatar.accessory"
-        />
-        <div class="d-flex flex-column justify-center ml-6">
-          <h3>{{user.name}}</h3>
-          <h3>{{user.email}}</h3>
-        </div>
-        <div class="flex-grow-1"/>
-        <QuipButton @click="modal.open('AvatarCreator')" class="editBtn text-jetblack" :width="262">
-          Edit Profile Picture
-        </QuipButton>
+  <div v-if="user" class="w-100 profileArea mx-auto mt-8">
+    <div class="d-flex align-center">
+      <Avatar
+        :size="72"
+        :eye="user.avatar.eye"
+        :face="user.avatar.face"
+        :mouth="user.avatar.mouth"
+        :outfit="user.avatar.outfit"
+        :color="user.avatar.color"
+        :hair="user.avatar.hair"
+        :accessory="user.avatar.accessory"
+      />
+      <div class="d-flex flex-column justify-center ml-6">
+        <h3>{{user.name}}</h3>
+        <h3>{{user.email}}</h3>
       </div>
-      <Tabs class="mt-10 unselectable" :tabs="profileTabs" @tab="switchTab" :active-tab="0"/>
-      <div class="dividerHolder">
-        <v-divider class="text-border-grey divider fullDivider"/>
-      </div>
-        <transition name="fade-slide" mode="out-in">
-          <GeneralTab v-if="currentTab === profileTabs[0]"/>
-          <PersonalTab v-else-if="currentTab === profileTabs[1]"/>
-          <PreferencesTab v-else-if="currentTab === profileTabs[2]"/>
-          <ReferFriendTab v-else-if="currentTab === profileTabs[3]"/>
-        </transition>
+      <div class="flex-grow-1"/>
+      <QuipButton @click="modal.open('AvatarCreator')" class="editBtn text-jetblack" :width="262">
+        Edit Profile Picture
+      </QuipButton>
     </div>
-  </View>
+    <Tabs class="mt-10 unselectable" :tabs="profileTabs" @tab="switchTab" :active-tab="0"/>
+    <div class="dividerHolder">
+      <v-divider class="text-border-grey divider fullDivider"/>
+    </div>
+    <transition name="fade-slide" mode="out-in">
+      <GeneralTab v-if="currentTab === profileTabs[0]"/>
+      <PersonalTab v-else-if="currentTab === profileTabs[1]"/>
+      <PreferencesTab v-else-if="currentTab === profileTabs[2]"/>
+      <ReferFriendTab v-else-if="currentTab === profileTabs[3]"/>
+    </transition>
+  </div>
 </template>
 
 <style scoped lang="scss">

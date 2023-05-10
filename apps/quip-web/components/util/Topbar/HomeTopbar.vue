@@ -1,38 +1,62 @@
 <script setup lang="ts">
-import QuipButton from "~/components/util/QuipButton.vue"
-
 import {useScroll} from "~/utils/scroll";
 import {useTheme} from "vuetify";
+import Avatar from "~/components/util/Avatar/Avatar.vue";
+import {useUser} from "~/store/UserStore";
 
 const { isScrolled } = useScroll()
 const {colors} = useTheme().current.value
+
+const router = useRouter()
+const user = useUser().user
+
+const computedRoute = computed(() => router.currentRoute.value.name)
 </script>
 
 <template>
   <div class="topbarBase safeArea" :class="{'topbarBaseScrolled': isScrolled}">
     <div class="topbar">
-      <img @click="$router.push('/')" draggable="false" class="logo unselectable" src="/logo.svg" alt="Quip Logo" />
+      <NuxtLink to="/" class="logo">
+        <img draggable="false" class="logo unselectable" src="/logo.svg" alt="Quip Logo" />
+      </NuxtLink>
       <div class="buttons">
-        <a class="hover-underline-animation">
-          <h3>
+        <NuxtLink to="/home" class="hover-underline-animation text-jetblack">
+          <h3 :class="{'text-primary': computedRoute === 'home'}">
             Home
           </h3>
-        </a>
-        <a class="hover-underline-animation">
-          <h3>
+        </NuxtLink>
+        <NuxtLink to="/deposit" class="hover-underline-animation text-jetblack">
+          <h3 :class="{'text-primary': computedRoute === 'deposit'}">
             Deposit
           </h3>
-        </a>
-        <a class="hover-underline-animation">
-          <h3>
+        </NuxtLink>
+        <NuxtLink to="/withdraw" class="hover-underline-animation text-jetblack">
+          <h3 :class="{'text-primary': computedRoute === 'withdraw'}">
             Withdraw
           </h3>
-        </a>
-        <a class="hover-underline-animation">
-          <h3>
+        </NuxtLink>
+        <NuxtLink to="/profile" class="hover-underline-animation text-jetblack">
+          <h3 :class="{'text-primary': computedRoute === 'profile'}">
             Profile
           </h3>
-        </a>
+        </NuxtLink>
+        <div class="ml-6 d-flex align-center" v-if="user">
+          <Avatar
+            :size="44"
+            :eye="user.avatar.eye"
+            :face="user.avatar.face"
+            :mouth="user.avatar.mouth"
+            :outfit="user.avatar.outfit"
+            :color="user.avatar.color"
+            :hair="user.avatar.hair"
+            :accessory="user.avatar.accessory"
+          />
+          <div class="ml-3">
+            <h3 class="username">
+              {{ user.name }}
+            </h3>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -81,10 +105,13 @@ $transitionTime: 0.3s;
 }
 
 .logo {
-  height: 90%;
+  height: 36px;
+  padding: 0;
 }
 
 a {
+  text-decoration: none;
+  color: inherit;
   background: none;
   border: none;
   cursor: pointer;
@@ -92,6 +119,8 @@ a {
 }
 
 h3 {
+  transition: color $transitionTime ease-in-out;
+
   font-weight: normal;
   font-size: 16px;
 
@@ -105,5 +134,12 @@ h3 {
   display: flex;
   flex-direction: row;
   align-items: center;
+}
+
+.username {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 22px;
 }
 </style>

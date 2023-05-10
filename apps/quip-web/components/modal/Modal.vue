@@ -35,10 +35,11 @@ $headerSize: 28px;
 
 .modal {
   border-radius: 24px;
-  border: 2px solid v-bind(grey);
+  //border: 2px solid v-bind(grey);
   min-width: 300px;
   min-height: 400px;
   pointer-events: all;
+  box-shadow: 0 12px 56px rgba(119,118,122,.15);
 }
 
 .modalHeader {

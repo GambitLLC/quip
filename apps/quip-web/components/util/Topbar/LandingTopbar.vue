@@ -6,11 +6,13 @@ import {onScroll, useScroll} from "~/utils/scroll";
 import { Tab } from "~/utils/types";
 import { capitalize } from "~/utils/text";
 import { vOnClickOutside } from '@vueuse/components'
+import {useModal} from "~/store/ModalStore";
 
 const props = defineProps<{
   tabSections: [Tab, HTMLElement | null][]
 }>()
 
+const modal = useModal()
 const {mobile} = useDisplay()
 const {colors} = useTheme().current.value
 
@@ -88,7 +90,7 @@ function goHome() {
                 Download App
               </h3>
             </QuipButton>
-            <QuipButton :width="130" class="login text-jetblack">
+            <QuipButton @click="modal.open('Login')" :width="130" class="login text-jetblack">
               <h3 class="font-weight-bold">
                 Login
               </h3>
