@@ -6,6 +6,7 @@ tmp
 /out-tsc
 build
 .output
+*.test
 
 # dependencies
 node_modules
