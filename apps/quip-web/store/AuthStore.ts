@@ -12,7 +12,7 @@ interface AuthStore {
 const useAuth = defineStore('auth', {
   state: (): AuthStore => {
     return {
-      magic: new Magic('pk_live_8618D6B0D8F04F08', {
+      magic: new Magic('pk_live_79385C11B09DBB96', {
         extensions: [
           new SolanaExtension({
             rpcUrl: RPC_URL,
