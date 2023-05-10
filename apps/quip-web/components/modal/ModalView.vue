@@ -2,7 +2,7 @@
 import {useModal} from "~/store/ModalStore";
 import AvatarCreatorModal from "~/components/modal/AvatarCreatorModal.vue";
 import CloseAccountModal from "~/components/modal/CloseAccountModal.vue";
-import Match from "~/components/util/Match.vue";
+import LoginModal from "~/components/modal/LoginModal.vue";
 
 const modal = useModal()
 </script>
@@ -11,7 +11,8 @@ const modal = useModal()
   <div class="w-100 h-100 position-fixed modalView" :class="{'open': modal.modal !== null}">
     <div class="safeArea d-flex align-center justify-center w-100 h-100">
       <transition name="fade-slide-up">
-        <AvatarCreatorModal v-if="modal.modal === 'AvatarCreator'" title="Avatar Creator" />
+        <LoginModal v-if="modal.modal === 'Login'" title="Login"/>
+        <AvatarCreatorModal v-else-if="modal.modal === 'AvatarCreator'" title="Avatar Creator" />
         <CloseAccountModal v-else-if="modal.modal === 'CloseAccount'" title="Close Account" />
       </transition>
     </div>
@@ -25,7 +26,9 @@ const modal = useModal()
   pointer-events: none;
   z-index: 1000;
   opacity: 0;
-  background: linear-gradient(180deg, rgba(240, 249, 255, 0.8) 0%, rgba(255, 255, 255, .9) 134.69%);
+  //background: linear-gradient(180deg, rgba(240, 249, 255, 0.8) 0%, rgba(255, 255, 255, .9) 134.69%);
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(6px);
 }
 
 .open {
