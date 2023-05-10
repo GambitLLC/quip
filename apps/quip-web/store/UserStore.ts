@@ -43,11 +43,11 @@ const useUser = defineStore('user', {
           accessory: "Earphone",
           color: "green",
         },
-        btcAddress: '3H7mh...FqEfW',
+        btcAddress: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
         personalInfo: {
           legalName: 'Benjamin Kosten',
           dob: new Date('1995-01-01'),
-          address: '123 Fake Street, Fake City, Fake Country',
+          address: '61 Olive Place, Forest Hills, NY',
         },
       },
     }

@@ -2,15 +2,9 @@
 import QuipCard from "~/components/util/QuipCard.vue";
 import {getLang} from "~/store/UserStore";
 
-const computedTimezone = computed(() => {
-  return new Date().toString().split(" ")[5]
-})
-
+const computedTimezone = computed(() => { return new Date().toString().split(" ").slice(5).join(" ") })
 const getCurrencySymbol = (locale: string, currency: string) => (0).toLocaleString(locale, { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\d/g, '').trim()
-
-const computedLocalCurrency = computed(() => {
-  return `USD (${getCurrencySymbol(getLang(), "USD")})`
-})
+const computedLocalCurrency = computed(() => { return `USD (${getCurrencySymbol(getLang(), "USD")})` })
 </script>
 
 <template>

@@ -3,9 +3,45 @@ import QuipButton from "~/components/util/QuipButton.vue";
 import QuipCard from "~/components/util/QuipCard.vue";
 import {useTheme} from "vuetify";
 import {useUser} from "~/store/UserStore";
+import {Icon} from "@iconify/vue";
+import {useElementSize, watchOnce} from "@vueuse/core";
+import VisibilityIcon from "~/components/profile/VisibilityIcon.vue";
 
 const colors = useTheme().current.value.colors
 const user = useUser().user
+
+const showEmail = ref(false)
+const emailRef = ref<HTMLElement | null>(null)
+const {width, height} = useElementSize(emailRef)
+
+const computedEmail = computed(() => {
+  const showAmt = 1
+  if (showEmail.value) {
+    return user?.email ? user.email : "No Email"
+  } else {
+    if (user?.email) {
+      const split = user.email.split("@")
+      return split[0].slice(0,showAmt) + "*".repeat(split[0].length-showAmt) + "@" + split[1]
+    } else {
+      return "No Email"
+    }
+  }
+})
+
+const computedEmailWidth = ref("auto")
+
+
+const computedBTCAddress = computed(
+  () => user?.btcAddress?
+    `${user.btcAddress.slice(0, 5)}...${user.btcAddress.slice(user.btcAddress.length-5, user.btcAddress.length)}`
+    : "No Address"
+)
+
+watchOnce(width, (value) => {
+  if (value) {
+    computedEmailWidth.value = value + "px"
+  }
+})
 </script>
 
 <template>
@@ -26,15 +62,18 @@ const user = useUser().user
       <v-divider class="text-border-grey divider"/>
       <div class="cardRow px-8">
         <h3 class="subtext">Email Address</h3>
-        <h3 class="info">
-          {{user?.email}}
-        </h3>
+        <div class="d-flex align-center">
+          <VisibilityIcon v-model="showEmail"/>
+          <h3 ref="emailRef" class="info email">
+            {{computedEmail}}
+          </h3>
+        </div>
       </div>
       <v-divider class="text-border-grey divider"/>
       <div class="cardRow px-8">
         <h3 class="subtext">Bitcoin Address</h3>
         <h3 class="info">
-          {{user?.btcAddress}}
+          {{computedBTCAddress}}
         </h3>
       </div>
     </QuipCard>
@@ -74,5 +113,9 @@ const user = useUser().user
 
 .closeBorder {
   border: solid 2px v-bind("colors.jetblack");
+}
+
+.email {
+  width: v-bind("computedEmailWidth");
 }
 </style>
