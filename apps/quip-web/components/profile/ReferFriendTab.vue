@@ -58,7 +58,7 @@ const computedHeight = computed(() => `${height.value - 16 - 20 - 25}px`)
         </div>
       </div>
     </QuipCard>
-    <div class="d-flex mt-4">
+    <div class="d-flex mt-4 mb-10">
       <div class="mr-4 flex-shrink-0">
         <QuipCard has-border class="bg-white roundedCardSmall px-8 py-6 d-flex flex-column align-center mb-4">
           <Icon icon="ic:twotone-people-alt" class="text-primary referralIcon"/>

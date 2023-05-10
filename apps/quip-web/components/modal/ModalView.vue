@@ -20,14 +20,17 @@ const modal = useModal()
 
 <style scoped lang="scss">
 .modalView {
-  transition: background-color 0.3s ease-in-out;
+  transition: opacity 0.3s ease-in-out;
+  background: rgba(0, 0, 0, 0);
   pointer-events: none;
   z-index: 1000;
+  opacity: 0;
+  background: linear-gradient(180deg, rgba(240, 249, 255, 0.8) 0%, rgba(255, 255, 255, .9) 134.69%);
 }
 
 .open {
   //dim background
-  background-color: rgba(0, 0, 0, 0.7);
   pointer-events: all;
+  opacity: 1;
 }
 </style>
