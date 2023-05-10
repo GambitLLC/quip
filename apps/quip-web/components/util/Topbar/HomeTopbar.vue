@@ -11,7 +11,7 @@ const {colors} = useTheme().current.value
 <template>
   <div class="topbarBase safeArea" :class="{'topbarBaseScrolled': isScrolled}">
     <div class="topbar">
-      <img draggable="false" class="logo unselectable" src="/logo.svg" alt="Quip Logo" />
+      <img @click="$router.push('/')" draggable="false" class="logo unselectable" src="/logo.svg" alt="Quip Logo" />
       <div class="buttons">
         <a class="hover-underline-animation">
           <h3>

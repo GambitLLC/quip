@@ -14,7 +14,7 @@ const display = useDisplay();
       <h1 class="hero-title text-jetblack">Skill Matters.</h1>
       <p class="hero-description text-jetblack">Crypto e-sports. Real money gaming. Competitive Experience.</p>
       <div class="hero-components">
-        <QuipButton :width="211" icon="material-symbols:download-rounded" class="bg-primary hero-dl-button">
+        <QuipButton href="https://www.apple.com/app-store/" target="_blank" :width="211" icon="material-symbols:download-rounded" class="bg-primary hero-dl-button">
           Download App
         </QuipButton>
         <div>

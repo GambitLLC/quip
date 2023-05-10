@@ -65,6 +65,10 @@ const intersectedTab = computed(() => {
 
   return closest
 })
+
+function goHome() {
+  changeTab('home')
+}
 </script>
 
 <template>
@@ -72,7 +76,7 @@ const intersectedTab = computed(() => {
     <div v-on-click-outside="() => isOpen = false" class="topbarBase safeArea" :class="{'topbarBaseScrolled': isScrolled || isOpen}">
       <div class="innerArea">
         <div v-if="!mobile" class="topbar">
-          <img draggable="false" class="logo unselectable" src="/logo.svg" alt="Quip Logo" />
+          <img @click="goHome()" draggable="false" class="logo unselectable" src="/logo.svg" alt="Quip Logo" />
           <div class="buttons">
             <a class="hover-underline-animation" @click="changeTab(tab)" v-for="tab in tabs" :key="tab">
               <h3 class="unselectable" :class="{'text-primary': intersectedTab === tab}">
@@ -93,7 +97,7 @@ const intersectedTab = computed(() => {
         </div>
         <div v-else class="topbarMobile" :class="{'topbarMobileOpen': isOpen}">
           <div class="topbar w-100 mb-4">
-            <img draggable="false" class="logo unselectable" src="/mobileLogo.svg" alt="Quip Logo" />
+            <img @click="goHome()" draggable="false" class="logo unselectable" src="/mobileLogo.svg" alt="Quip Logo" />
             <div class="buttons">
               <IconButton href="https://www.apple.com/app-store/" target="_blank" icon="ic:outline-file-download" class="bg-primary mr-2" />
               <IconButton @click="toggleMobileMenu" :icon="isOpen? 'material-symbols:close-rounded' : 'material-symbols:menu'" class="login text-jetblack"/>
@@ -178,6 +182,7 @@ const intersectedTab = computed(() => {
 
 .logo {
   height: 90%;
+  cursor: pointer;
 }
 
 a {
