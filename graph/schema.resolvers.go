@@ -11,11 +11,6 @@ import (
 	"github.com/GambitLLC/quip/graph/model"
 )
 
-// Teams is the resolver for the teams field.
-func (r *matchResolver) Teams(ctx context.Context, obj *model.Match) ([][]*model.User, error) {
-	panic(fmt.Errorf("not implemented: Teams - teams"))
-}
-
 // Results is the resolver for the results field.
 func (r *matchResolver) Results(ctx context.Context, obj *model.Match) (*model.MatchResults, error) {
 	panic(fmt.Errorf("not implemented: Results - results"))
@@ -66,6 +61,11 @@ func (r *subscriptionResolver) Status(ctx context.Context) (<-chan *model.Status
 	panic(fmt.Errorf("not implemented: Status - status"))
 }
 
+// Status is the resolver for the status field.
+func (r *userResolver) Status(ctx context.Context, obj *model.User) (*model.Status, error) {
+	panic(fmt.Errorf("not implemented: Status - status"))
+}
+
 // Friends is the resolver for the friends field.
 func (r *userResolver) Friends(ctx context.Context, obj *model.User) ([]*model.User, error) {
 	panic(fmt.Errorf("not implemented: Friends - friends"))
@@ -96,3 +96,13 @@ type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *matchResolver) Teams(ctx context.Context, obj *model.Match) ([][]*model.User, error) {
+	panic(fmt.Errorf("not implemented: Teams - teams"))
+}
