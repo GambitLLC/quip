@@ -2,10 +2,9 @@
 import {useDisplay, useTheme} from "vuetify";
 import {useWindowScroll} from "@vueuse/core";
 import {computed} from "vue";
-import {useRoute} from "#app";
-import Topbar from "~/components/util/Topbar/Topbar.vue";
+import View from "~/components/util/View.vue";
 
-const route = useRoute()
+const router = useRouter()
 
 const {mobile} = useDisplay()
 const { x, y } = useWindowScroll()
@@ -17,7 +16,7 @@ const nonBG = useTheme().current.value.colors["background"]
 let faqTop: number = 1000
 const doAnimate = ref(false)
 
-const isLandingPage = computed(() => route.name === 'index')
+const isLandingPage = computed(() => router.currentRoute.value.name === 'index')
 
 const computedBG = computed(() => {
   if (!isLandingPage.value) return nonBG
@@ -74,7 +73,15 @@ onMounted(() => {
 
 <template>
   <ModalView/>
-  <router-view/>
+  <transition name="fade-slide" mode="out-in">
+    <View :key="isLandingPage">
+      <router-view v-slot="{ Component }">
+        <transition name="fade-slide" mode="out-in">
+          <component :is="Component"/>
+        </transition>
+      </router-view>
+    </View>
+  </transition>
 </template>
 
 <style>

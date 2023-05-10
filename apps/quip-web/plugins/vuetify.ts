@@ -29,6 +29,7 @@ const quipThemeLight: ThemeDefinition = {
     'grey-dark': '#6C6D71',
     'gold': '#FFBB55',
     'red': '#DC3C2D',
+    'btc-orange': '#F7931A',
   }
 }
 

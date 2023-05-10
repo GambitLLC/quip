@@ -13,6 +13,7 @@ interface User {
   avatar: Avatar,
   btcAddress: string,
   personalInfo: PersonalInfo,
+  balance: number,
 }
 
 interface UserStore {
@@ -44,6 +45,7 @@ const useUser = defineStore('user', {
           color: "green",
         },
         btcAddress: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
+        balance: 0.00,
         personalInfo: {
           legalName: 'Benjamin Kosten',
           dob: new Date('1995-01-01'),

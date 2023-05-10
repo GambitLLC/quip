@@ -7,8 +7,8 @@ import {useDisplay} from "vuetify";
 import {useTopbar} from "~/store/TopbarStore";
 
 const {mobile} = useDisplay()
-const route = useRoute()
-const isLanding = computed(() => route.name === "index" || route.name === "test")
+const router = useRouter()
+const isLanding = computed(() => router.currentRoute.value.name === "index" ||router.currentRoute.value.name === "test")
 
 const topbar = useTopbar()
 const homeRef = computed(() => topbar.homeRef)

@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import Topbar from "~/components/util/Topbar/Topbar.vue";
 
+const router = useRouter()
+const computedRoute = computed(() => router.currentRoute.value.name)
+
 const props = defineProps<{
   hasSafeArea?: boolean
 }>()
 </script>
 
 <template>
-  <div class="h-100 w-100 d-flex flex-column">
+  <div v-if="computedRoute !== 'index'" class="h-100 w-100 d-flex flex-column">
     <ClientOnly>
       <Topbar/>
     </ClientOnly>
@@ -16,6 +19,9 @@ const props = defineProps<{
         <slot/>
       </div>
     </div>
+  </div>
+  <div v-else>
+    <slot/>
   </div>
 </template>
 
