@@ -41,7 +41,7 @@ const display = useDisplay();
       </div>
       <div class="d-flex flex-column ml-5">
         <h3 class="hero-user-top text-jetblack">
-          +1.5K
+          +5K
         </h3>
         <p class="hero-user-bottom text-grey-dark">
           Users
