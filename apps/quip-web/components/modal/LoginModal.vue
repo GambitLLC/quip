@@ -5,6 +5,7 @@ import {LoginEvent, useAuth} from "~/store/AuthStore";
 import {useModal} from "~/store/ModalStore";
 import OTPInput from "~/components/util/Otp/OTPInput.vue";
 import {useTheme} from "vuetify";
+import {Icon} from "@iconify/vue";
 
 type LoginModalState = "login" | "otp" | "loading" | "error"
 
@@ -58,15 +59,16 @@ function login() {
         </QuipButton>
       </div>
       <div v-else-if="state === 'otp'" class="loginModal">
-        <div class="mt-12">
-          <img draggable="false" class="logo unselectable" src="/mobileLogo.svg" alt="Quip Logo" />
-        </div>
-        <div class="mt-10">
-          <OTPInput @otpDone="onSubmitOtp" class="" />
+        <div>
+<!--          <img draggable="false" class="logo unselectable" src="/mobileLogo.svg" alt="Quip Logo" />-->
+          <Icon icon="icon-park-twotone:mail-unpacking" class="mailIcon"/>
         </div>
         <h3 class="mb-2 otpText text-secondary-grey">
           Please enter the 6-digit code sent to your email address
         </h3>
+        <div class="">
+          <OTPInput @otpDone="onSubmitOtp" class="" />
+        </div>
       </div>
       <div v-else-if="state === 'loading'" class="loginModal">
         <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
@@ -82,6 +84,12 @@ function login() {
 
 .modalBase {
   transition: all 0.3s ease-in-out;
+}
+
+.mailIcon {
+  width: 58px;
+  height: 58px;
+  color: v-bind("colors['primary']");
 }
 
 .loginModal {
@@ -106,11 +114,11 @@ function login() {
 }
 
 .otpText {
-  max-width: 200px;
+  max-width: 280px;
   text-align: center;
   font-style: normal;
   font-weight: 400;
-  font-size: 12px;
+  font-size: 16px;
   line-height: 15px;
 }
 
