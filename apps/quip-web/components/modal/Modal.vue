@@ -8,6 +8,10 @@ const props = defineProps<{
   title?: string,
 }>()
 
+const emits = defineEmits<{
+  (e: 'close'): void
+}>()
+
 const {mobile} = useDisplay()
 
 const modal = useModal()
@@ -16,13 +20,13 @@ const grey = ref(colors["border-grey"])
 </script>
 
 <template>
-  <div v-on-click-outside="modal.close" class="bg-white modal" :class="{'pa-4': mobile, 'pa-6': !mobile}">
+  <div v-on-click-outside="() => {emits('close'); modal.close()}" class="bg-white modal" :class="{'pa-4': mobile, 'pa-6': !mobile}">
     <div class="d-flex align-center w-100 modalHeader mb-4">
       <h3 class="text-jetblack">
         {{title}}
       </h3>
       <div class="flex-grow-1"/>
-      <div v-ripple @click="modal.close()" class="closeIcon">
+      <div v-ripple @click="emits('close'); modal.close()" class="closeIcon">
         <Icon icon="material-symbols:close-rounded"/>
       </div>
     </div>

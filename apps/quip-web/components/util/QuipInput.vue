@@ -5,18 +5,27 @@ const props = defineProps<{
   type: string,
   label: string,
   modelValue: string,
+  focused?: boolean,
 }>()
 
 const emits = defineEmits<{ (e: 'update:modelValue', value: string): void }>()
 
 const colors = useTheme().current.value.colors
 const isMoved = computed(() => props.modelValue.length > 0)
+
+const inputRef = ref<HTMLInputElement | null>(null)
+
+onMounted(() => {
+  if (props.focused) {
+    inputRef.value?.focus()
+  }
+})
 </script>
 
 <template>
   <div class="quipInput rounded-pill position-relative d-flex align-center">
     <div class="px-4 position-absolute no-pointer label"><h3 class="px-2 text-secondary-grey" :class="{'movedLabel': isMoved}">{{label}}</h3></div>
-    <input :value="modelValue" @input="emits('update:modelValue', $event.target.value)" class=" px-6 text-secondary-grey co-headline" :type="type">
+    <input ref="inputRef" :value="modelValue" @input="emits('update:modelValue', $event.target.value)" class=" px-6 text-secondary-grey co-headline" :type="type">
     <slot></slot>
   </div>
 </template>

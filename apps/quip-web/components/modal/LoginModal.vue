@@ -1,35 +1,97 @@
 <script setup lang="ts">
 import QuipInput from "~/components/util/QuipInput.vue";
 import QuipButton from "~/components/util/QuipButton.vue";
-import {useAuth} from "~/store/AuthStore";
+import {LoginEvent, useAuth} from "~/store/AuthStore";
 import {useModal} from "~/store/ModalStore";
+import OTPInput from "~/components/util/Otp/OTPInput.vue";
+import {useTheme} from "vuetify";
+
+type LoginModalState = "login" | "otp" | "loading" | "error"
 
 const auth = useAuth()
 const modal = useModal()
+const colors = useTheme().current.value.colors
+
+const state = ref<LoginModalState>("login")
+const loginEvent = ref<LoginEvent | null>(null)
 
 const email = ref("")
 
-async function login() {
-  modal.close()
-  await auth.login(email.value)
+function onSubmitOtp(otp: string) {
+  loginEvent.value?.emit('verify-email-otp', otp);
+  state.value = "loading"
+}
+
+function login() {
+  loginEvent.value = auth.login(email.value)
+  state.value = "loading"
+
+  loginEvent.value
+    ?.on('email-otp-sent', () => {
+      state.value = "otp"
+    })
+    ?.on('invalid-email-otp', () => {
+      console.log("invalid email otp")
+      state.value = "error"
+      loginEvent.value?.emit('cancel');
+    })
+    ?.on('done', (result) => {
+      console.log("done", result)
+      modal.close()
+    })
+    ?.on('error', (error) => {
+      state.value = "error"
+    })
 }
 </script>
 
 <template>
-  <Modal class="d-flex flex-column">
-    <div class="h-100 w-100 d-flex flex-column flex-shrink-0 flex-grow-1 justify-space-around align-center">
-      <div>
-        <img draggable="false" class="logo unselectable" src="/mobileLogo.svg" alt="Quip Logo" />
+  <Modal @close="loginEvent?.emit('cancel')" class="d-flex flex-column modalBase">
+    <transition name="fade" mode="out-in">
+      <div v-if="state === 'login'" class="loginModal">
+        <div>
+          <img draggable="false" class="logo unselectable" src="/mobileLogo.svg" alt="Quip Logo" />
+        </div>
+        <QuipInput :focused="true" @keydown.enter="login" v-model="email" class="w-100" label="Email Address" type="email"/>
+        <QuipButton @click="login" class="login text-jetblack w-100">
+          <h3>Login</h3>
+        </QuipButton>
       </div>
-      <QuipInput v-model="email" class="w-100" label="Email Address" type="email"/>
-      <QuipButton @click="login" class="login text-jetblack w-100">
-        <h3>Login</h3>
-      </QuipButton>
-    </div>
+      <div v-else-if="state === 'otp'" class="loginModal">
+        <div class="mt-12">
+          <img draggable="false" class="logo unselectable" src="/mobileLogo.svg" alt="Quip Logo" />
+        </div>
+        <div class="mt-10">
+          <OTPInput @otpDone="onSubmitOtp" class="" />
+        </div>
+        <h3 class="mb-2 otpText text-secondary-grey">
+          Please enter the 6-digit code sent to your email address
+        </h3>
+      </div>
+      <div v-else-if="state === 'loading'" class="loginModal">
+        <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+      </div>
+      <div v-else class="loginModal">
+        <h3>Error</h3>
+      </div>
+    </transition>
   </Modal>
 </template>
 
 <style scoped lang="scss">
+
+.modalBase {
+  transition: all 0.3s ease-in-out;
+}
+
+.loginModal {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  flex-grow: 1;
+  justify-content: space-around;
+  align-items: center;
+}
 
 .row {
   height: 48px;
@@ -42,4 +104,51 @@ async function login() {
 .logo {
   height: 48px;
 }
+
+.otpText {
+  max-width: 200px;
+  text-align: center;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 15px;
+}
+
+//spinner
+.lds-ring {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  margin: 8px;
+  border: 8px solid v-bind("colors['primary']");
+  border-radius: 50%;
+  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: v-bind("colors['primary']") transparent transparent transparent;
+}
+.lds-ring div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+.lds-ring div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+.lds-ring div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+@keyframes lds-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 </style>
