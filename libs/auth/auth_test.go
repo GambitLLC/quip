@@ -1,20 +1,51 @@
 package auth
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"testing"
+	"time"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/magiclabs/magic-admin-go/token"
 	"github.com/stretchr/testify/require"
 )
 
-const didToken = `WyIweDhiYzQ0YzIxZjQ0OWJkZmVmNDU0YmY2Y2NhOGU5MDhjNmU0NjRkMjFhZjk1MmFjNjgwZTU4ZGQ2NTEzYTQxN2QyYmI0Njg4ZTAwNzAxYWQ5NTMyY2MxMTc1MjUzZGY2ZjZiNjZjY2Y5NDU3N2M0Y2JkMmM3NDUxN2U2NWQ2MmFjMWIiLCJ7XCJpYXRcIjoxNjgzNzUzNjQ1LFwiZXh0XCI6MTY4Mzc1NDU0NSxcImlzc1wiOlwiZGlkOmV0aHI6MHhkOTE4NTQzNTVjNUJFRTBlRjNEZEE3MUU5RTc3YjE5YUE2MjM0MTRmXCIsXCJzdWJcIjpcInQ0UFVqWGpUOTA1QjFIMllHd1pBS2FDYlpvdG1EOU5Nd1NzeWFkVlFiX3c9XCIsXCJhdWRcIjpcIkE1UTJ4QjdPMS1HYWl2aGN3TTZBMnZVWjZtbzhpNUxfNGNpYjlyVjBHMjg9XCIsXCJuYmZcIjoxNjgzNzUzNjQ1LFwidGlkXCI6XCIzZWQxYjkxNi1kY2FiLTRhZmMtYTUzMC00ZmViNmE2N2YyN2ZcIixcImFkZFwiOlwiMHgwMDc4MTNlMWUyZDZhYTMzZTQ5MzljYjkyZGE1YzMyYTIxZDJlMzNjMTczZmJkODM2MjhjZjI5N2FiZDY0MmM4N2RlZDg0Yzg5ODg0MWVkZDJhMTdjZjZiNDMzZDFjODE1NWFiNjVjMmU1NTMxNDViNjY3NjZlY2NhZjQ5YjY0YzFiXCJ9Il0=`
+func TestGenerateToken(t *testing.T) {
+	didToken := createDidToken(t)
 
-func TestToken(t *testing.T) {
 	token, err := ValidateMagicDIDToken(didToken)
-	require.NoError(t, err)
-
+	require.NoError(t, err, "validate did token failed")
 	t.Logf("%+v", token)
-	t.Logf("iss: %s", token.GetIssuer())
-	s, err := token.GetPublicAddress()
-	require.NoError(t, err, "get public address failed")
-	t.Logf("addr: %s", s)
+}
+
+func createDidToken(t *testing.T) string {
+	privKey, err := crypto.GenerateKey()
+	require.NoError(t, err, "GenerateKey failed")
+	addr := crypto.PubkeyToAddress(privKey.PublicKey)
+
+	claimObj := token.Claim{
+		Iat: time.Now().Unix(),
+		Ext: time.Now().Add(1 * time.Minute).Unix(),
+		Iss: fmt.Sprintf("did:ethr:%s", addr.String()),
+	}
+
+	jsonClaim, err := json.Marshal(claimObj)
+	require.NoError(t, err, "marshal claim failed")
+
+	claimHash := crypto.Keccak256Hash([]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(jsonClaim), jsonClaim)))
+	proof, err := crypto.Sign(claimHash.Bytes(), privKey)
+	require.NoError(t, err, "sign claim failed")
+	// crypto.Sign returns V = 0 or 1, validator excepts 27/28
+	if proof[64] == 0 || proof[64] == 1 {
+		proof[64] += 27
+	}
+
+	marshaledToken, err := json.Marshal([]string{hexutil.Encode(proof), string(jsonClaim)})
+	require.NoError(t, err, "marshal token failed")
+
+	didToken := base64.URLEncoding.EncodeToString(marshaledToken)
+	return didToken
 }
