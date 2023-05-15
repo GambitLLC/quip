@@ -1,17 +1,19 @@
 <script setup lang="ts">
 import QuipInput from "~/components/util/QuipInput.vue";
 import QuipButton from "~/components/util/QuipButton.vue";
-import {LoginEvent, useAuth} from "~/store/AuthStore";
 import {useModal} from "~/store/ModalStore";
 import OTPInput from "~/components/util/Otp/OTPInput.vue";
 import {useTheme} from "vuetify";
 import {Icon} from "@iconify/vue";
+import {LoginEvent} from "~/utils/magic";
 
 type LoginModalState = "login" | "otp" | "loading" | "error"
 
-const auth = useAuth()
+const router = useRouter()
 const modal = useModal()
 const colors = useTheme().current.value.colors
+
+const { $login } = useNuxtApp()
 
 const state = ref<LoginModalState>("login")
 const loginEvent = ref<LoginEvent | null>(null)
@@ -24,7 +26,7 @@ function onSubmitOtp(otp: string) {
 }
 
 function login() {
-  loginEvent.value = auth.login(email.value)
+  loginEvent.value = $login(email.value)
   state.value = "loading"
 
   loginEvent.value
@@ -37,8 +39,8 @@ function login() {
       loginEvent.value?.emit('cancel');
     })
     ?.on('done', (result) => {
-      console.log("done", result)
       modal.close()
+      router.push("/home")
     })
     ?.on('error', (error) => {
       state.value = "error"

@@ -25,14 +25,9 @@ const computedRoute = computed(() => router.currentRoute.value.name)
             Home
           </h3>
         </NuxtLink>
-        <NuxtLink to="/deposit" class="hover-underline-animation text-jetblack">
-          <h3 :class="{'text-primary': computedRoute === 'deposit'}">
-            Deposit
-          </h3>
-        </NuxtLink>
-        <NuxtLink to="/withdraw" class="hover-underline-animation text-jetblack">
-          <h3 :class="{'text-primary': computedRoute === 'withdraw'}">
-            Withdraw
+        <NuxtLink to="/wallet" class="hover-underline-animation text-jetblack">
+          <h3 :class="{'text-primary': computedRoute === 'wallet'}">
+            Wallet
           </h3>
         </NuxtLink>
         <NuxtLink to="/profile" class="hover-underline-animation text-jetblack">

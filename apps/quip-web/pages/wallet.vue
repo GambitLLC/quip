@@ -1,0 +1,172 @@
+<script setup lang="ts">
+import QuipCard from "~/components/util/QuipCard.vue";
+import {useTheme} from "vuetify";
+import {RPC_URL} from "~/utils/magic";
+import {MagicUserMetadata} from "@magic-sdk/types";
+import * as web3 from "@solana/web3.js";
+import QuipDivider from "~/components/util/QuipDivider.vue";
+import Tabs from "~/components/util/Tabs.vue";
+import QuipInput from "~/components/util/QuipInput.vue";
+import {Icon} from "@iconify/vue";
+import QuipButton from "~/components/util/QuipButton.vue";
+import QuipQrCode from "~/components/util/Topbar/QuipQrCode.client.vue";
+
+const colors = useTheme().current.value.colors
+const { $magic } = useNuxtApp()
+
+/* UI STATE */
+const walletTabs = ['Send', 'Receive'] as const
+type WalletTab = typeof walletTabs[number]
+const currentTab = ref<WalletTab>(walletTabs[0])
+
+const input = ref("")
+
+/* WEB3 SOLANA STUFF */
+const metadata = ref<MagicUserMetadata | null>(null)
+const connection = ref<web3.Connection | null>(null)
+const pubKey = ref<web3.PublicKey | null>(null)
+const balance = ref<number | null>(null)
+
+onBeforeMount(async () => {
+  metadata.value = await $magic.user.getMetadata();
+  connection.value = new web3.Connection(RPC_URL);
+  pubKey.value = new web3.PublicKey(metadata.value.publicAddress!!);
+  balance.value = await getBalance();
+})
+
+async function getBalance(): Promise<number | null> {
+  if (!connection.value || !pubKey.value) return null;
+  return await connection.value.getBalance(pubKey.value) / web3.LAMPORTS_PER_SOL;
+}
+
+const computedBalance = computed(() => {
+  if (!balance.value) return null;
+  return (balance.value * 21.36).toFixed(2);
+})
+
+const computedAddress = computed(() => {
+  if (!metadata.value || !metadata.value.publicAddress) return null;
+  return metadata.value.publicAddress.substring(0, 4) + "..." + metadata.value.publicAddress.substring(metadata.value.publicAddress.length - 4);
+})
+</script>
+
+<template>
+  <div class="w-100 h-100 d-flex align-center justify-center">
+    <QuipCard v-if="metadata" has-border class="bg-white wallet d-flex flex-column pa-6 walletCard">
+      <h3>Your Balance</h3>
+      <div class="d-flex mt-1">
+        <img class="solanaLogo my-auto mr-2" src="/solanaLogoMark.svg" alt="solana logo">
+        <h3 class="balance mr-2 text-primary">
+          {{ balance }} SOL
+        </h3>
+        <h3 class="mt-auto">
+          ${{ computedBalance }}
+        </h3>
+      </div>
+      <Tabs class="unselectable mt-6" :tabs="walletTabs" v-model="currentTab"/>
+      <QuipDivider class="mb-6"/>
+      <transition mode="out-in" name="fade-slide">
+        <div v-if="currentTab === 'Send'">
+          <div>
+            <h3 class="mb-2 subtext">
+              Choose Amount
+            </h3>
+            <QuipInput label="Amount (SOL)" v-model="input" type="number"/>
+          </div>
+          <div class="mt-6">
+            <h3 class="mb-2 subtext">
+              Wallet Address
+            </h3>
+            <div v-ripple class="address text-border-grey rounded-pill d-flex align-center px-6 unselectable justify-space-between">
+              <h3 class="addressText text-secondary-grey">
+                {{ computedAddress }}
+              </h3>
+              <Icon class="copyIcon text-primary" icon="material-symbols:content-copy-outline-rounded"/>
+            </div>
+          </div>
+          <div class="w-100 d-flex mt-6">
+            <QuipButton :icon-size="18" :prepend-icon="false" icon="akar-icons:paper-airplane" class="bg-primary w-100">
+              <h3 class="text-white">Send</h3>
+            </QuipButton>
+          </div>
+        </div>
+        <div v-else-if="currentTab === 'Receive'">
+          <div>
+            <h3 class="mb-2 subtext">
+              QR Code
+            </h3>
+            <div v-if="metadata.publicAddress" class="d-flex align-center justify-center">
+              <ClientOnly>
+                <QuipQrCode :data="metadata.publicAddress" :size="140"/>
+              </ClientOnly>
+            </div>
+          </div>
+          <div class="mt-6">
+            <h3 class="mb-2 subtext">
+              Wallet Address
+            </h3>
+            <div v-ripple class="address text-border-grey rounded-pill d-flex align-center px-6 unselectable justify-space-between">
+              <h3 class="addressText text-secondary-grey">
+                {{ computedAddress }}
+              </h3>
+              <Icon class="copyIcon text-primary" icon="material-symbols:content-copy-outline-rounded"/>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </QuipCard>
+  </div>
+</template>
+
+<style scoped lang="scss">
+.wallet {
+  min-width: 400px;
+  min-height: 500px;
+  border-radius: 24px;
+  box-shadow: 0 12px 56px rgba(119,118,122,.15);
+}
+
+h3 {
+  color: v-bind("colors.jetblack");
+}
+
+.solanaLogo {
+  width: 28px;
+  height: 28px;
+}
+
+.balance {
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 37px;
+}
+
+.address {
+  height: 48px;
+  border: 1px solid;
+  cursor: pointer;
+}
+
+.subtext {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 15px;
+  opacity: 0.4;
+}
+
+.addressText {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.copyIcon {
+  font-size: 24px;
+}
+
+.walletCard {
+  min-height: 444px !important;
+}
+</style>

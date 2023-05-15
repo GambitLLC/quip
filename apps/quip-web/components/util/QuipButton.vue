@@ -17,10 +17,24 @@ const props = defineProps({
     type: String,
     optional: true
   },
+  iconSize: {
+    type: Number,
+    optional: true,
+    default: 24
+  },
+  prependIcon: {
+    type: Boolean,
+    optional: true,
+    default: true
+  }
 })
 
 const computedWidth = computed(() => {
   return props.width !== undefined? props.width + 'px' : 'auto'
+})
+
+const computedIconSize = computed(() => {
+  return props.iconSize !== undefined? props.iconSize + 'px' : '24px'
 })
 </script>
 
@@ -32,9 +46,13 @@ const computedWidth = computed(() => {
     }"
     class="co-headline font-weight-bold unselectable"
   >
-    <div>
-      <Icon class="icon mr-2" v-if="props.icon !== undefined" :icon="props.icon ?? ''"/>
+    <div v-if="prependIcon">
+      <Icon class="mr-2 icon" :style="{fontSize: computedIconSize}" v-if="props.icon !== undefined" :icon="props.icon ?? ''"/>
       <slot />
+    </div>
+    <div v-else>
+      <slot />
+      <Icon class="ml-2 icon" :style="{fontSize: computedIconSize}" v-if="props.icon !== undefined" :icon="props.icon ?? ''"/>
     </div>
   </a>
 </template>
@@ -56,9 +74,5 @@ a > div {
   justify-content: center;
   width: 100%;
   height: 100%;
-}
-
-.icon {
-  font-size: 24px;
 }
 </style>

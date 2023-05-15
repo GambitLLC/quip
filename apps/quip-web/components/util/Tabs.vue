@@ -3,20 +3,15 @@ import {useTheme} from "vuetify";
 
 const props = defineProps<{
   tabs: string[],
-  activeTab: number,
+  modelValue: string,
 }>()
 
 const colors = useTheme().current.value.colors
 
-const emit = defineEmits<{
-  (e: 'tab', value: string): void
-}>()
-
-const currentTabIndex = ref(props.activeTab)
+const emits = defineEmits<{ (e: 'update:modelValue', value: string): void }>()
 
 function switchTab(i: number) {
-  currentTabIndex.value = i
-  emit('tab', props.tabs[i])
+  emits('update:modelValue', props.tabs[i])
 }
 </script>
 
@@ -25,7 +20,7 @@ function switchTab(i: number) {
     <h3
       @click="switchTab(i)"
       class="mr-10"
-      :class="{'text-primary': i === currentTabIndex, 'text-jetblack': i !== currentTabIndex}"
+      :class="{'text-primary': tab === modelValue, 'text-jetblack': tab !== modelValue}"
       v-for="(tab, i) in tabs"
       :key="i"
     >

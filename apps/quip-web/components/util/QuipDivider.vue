@@ -1,12 +1,13 @@
 <script setup lang="ts">
+
 </script>
 
 <template>
-  <div>
-    Withdraw
-  </div>
+  <v-divider class="text-border-grey divider"/>
 </template>
 
 <style scoped lang="scss">
-
+.divider {
+  opacity: 1 !important;
+}
 </style>

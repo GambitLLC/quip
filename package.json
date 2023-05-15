@@ -21,6 +21,7 @@
     "js-yaml": "^4.1.0",
     "magic-sdk": "^17.1.3",
     "pinia": "^2.0.35",
+    "qr-code-styling": "^1.6.0-rc.1",
     "redis": "^4.6.5",
     "sass": "^1.62.0",
     "socket.io": "^4.6.1",
