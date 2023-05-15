@@ -12,13 +12,9 @@ import PersonalTab from "~/components/profile/PersonalTab.vue";
 import PreferencesTab from "~/components/profile/PreferencesTab.vue";
 import ReferFriendTab from "~/components/profile/ReferFriendTab.vue";
 
-const currentTab = ref<ProfileTab>('General Info')
 const profileTabs = ['General Info', 'Personal Info', 'Preferences', 'Refer a Friend'] as const
 type ProfileTab = typeof profileTabs[number]
-
-function switchTab(tab: ProfileTab) {
-  currentTab.value = tab
-}
+const currentTab = ref<ProfileTab>(profileTabs[0])
 
 const colors = useTheme().current.value.colors
 const user = useUser().user
@@ -47,7 +43,7 @@ const modal = useModal()
         Edit Profile Picture
       </QuipButton>
     </div>
-    <Tabs class="mt-10 unselectable" :tabs="profileTabs" @tab="switchTab" :active-tab="0"/>
+    <Tabs class="mt-10 unselectable" :tabs="profileTabs" v-model="currentTab"/>
     <div class="dividerHolder">
       <v-divider class="text-border-grey divider fullDivider"/>
     </div>

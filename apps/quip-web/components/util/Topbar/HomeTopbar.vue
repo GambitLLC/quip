@@ -11,6 +11,7 @@ const router = useRouter()
 const user = useUser().user
 
 const computedRoute = computed(() => router.currentRoute.value.name)
+const {metadata, connection, pubKey, balance, getBalance} = useMagic()
 </script>
 
 <template>
@@ -25,14 +26,9 @@ const computedRoute = computed(() => router.currentRoute.value.name)
             Home
           </h3>
         </NuxtLink>
-        <NuxtLink to="/deposit" class="hover-underline-animation text-jetblack">
-          <h3 :class="{'text-primary': computedRoute === 'deposit'}">
-            Deposit
-          </h3>
-        </NuxtLink>
-        <NuxtLink to="/withdraw" class="hover-underline-animation text-jetblack">
-          <h3 :class="{'text-primary': computedRoute === 'withdraw'}">
-            Withdraw
+        <NuxtLink to="/wallet" class="hover-underline-animation text-jetblack">
+          <h3 :class="{'text-primary': computedRoute === 'wallet'}">
+            Wallet
           </h3>
         </NuxtLink>
         <NuxtLink to="/profile" class="hover-underline-animation text-jetblack">
@@ -54,6 +50,9 @@ const computedRoute = computed(() => router.currentRoute.value.name)
           <div class="ml-3">
             <h3 class="username">
               {{ user.name }}
+            </h3>
+            <h3 class="text-primary">
+              {{ balance ?? "..." }} SOL
             </h3>
           </div>
         </div>
