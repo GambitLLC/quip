@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import QuipCard from "~/components/util/QuipCard.vue";
 import {useTheme} from "vuetify";
-import {RPC_URL} from "~/utils/magic";
+import {RPC_URL, useTicker} from "~/utils/magic";
 import {MagicUserMetadata} from "@magic-sdk/types";
 import * as web3 from "@solana/web3.js";
 import QuipDivider from "~/components/util/QuipDivider.vue";
@@ -10,6 +10,7 @@ import QuipInput from "~/components/util/QuipInput.vue";
 import {Icon} from "@iconify/vue";
 import QuipButton from "~/components/util/QuipButton.vue";
 import QuipQrCode from "~/components/util/Topbar/QuipQrCode.client.vue";
+import CryptoInput from "~/components/util/CryptoInput.vue";
 
 const colors = useTheme().current.value.colors
 const { $magic } = useNuxtApp()
@@ -19,6 +20,7 @@ const walletTabs = ['Send', 'Receive'] as const
 type WalletTab = typeof walletTabs[number]
 const currentTab = ref<WalletTab>(walletTabs[0])
 
+const isUSD = ref<'USD' | 'SOL'>('SOL')
 const input = ref("")
 
 function copyAddress() {
@@ -27,26 +29,12 @@ function copyAddress() {
 }
 
 /* WEB3 SOLANA STUFF */
-const metadata = ref<MagicUserMetadata | null>(null)
-const connection = ref<web3.Connection | null>(null)
-const pubKey = ref<web3.PublicKey | null>(null)
-const balance = ref<number | null>(null)
-
-onBeforeMount(async () => {
-  metadata.value = await $magic.user.getMetadata();
-  connection.value = new web3.Connection(RPC_URL);
-  pubKey.value = new web3.PublicKey(metadata.value.publicAddress!!);
-  balance.value = await getBalance();
-})
-
-async function getBalance(): Promise<number | null> {
-  if (!connection.value || !pubKey.value) return null;
-  return await connection.value.getBalance(pubKey.value) / web3.LAMPORTS_PER_SOL;
-}
+const {metadata, connection, pubKey, balance, getBalance } = useMagic()
+const { usdPrice } = useTicker()
 
 const computedBalance = computed(() => {
   if (!balance.value) return null;
-  return (balance.value * 21.36).toFixed(2);
+  return (balance.value * usdPrice.value).toFixed(2);
 })
 
 const computedAddress = computed(() => {
@@ -60,12 +48,12 @@ const computedAddress = computed(() => {
     <QuipCard v-if="metadata" has-border class="bg-white wallet d-flex flex-column pa-6 walletCard">
       <h3>Your Balance</h3>
       <div class="d-flex mt-1">
-        <img class="solanaLogo my-auto mr-2" src="/solanaLogoMark.svg" alt="solana logo">
-        <h3 class="balance mr-2 text-primary">
+        <img class="solanaLogo my-auto mr-3" src="/solanaLogoMark.svg" alt="solana logo">
+        <h3 class="balance mr-3 text-primary">
           {{ balance }} SOL
         </h3>
         <h3 class="mt-auto">
-          ${{ computedBalance }}
+          ~${{ computedBalance }}
         </h3>
       </div>
       <Tabs class="unselectable mt-6" :tabs="walletTabs" v-model="currentTab"/>
@@ -76,7 +64,7 @@ const computedAddress = computed(() => {
             <h3 class="mb-2 subtext">
               Choose Amount
             </h3>
-            <QuipInput label="Amount (SOL)" v-model="input" type="number"/>
+            <CryptoInput :label="`Amount (${isUSD})`" v-model="input" type="number" v-model:is-u-s-d="isUSD as 'USD' | 'SOL'"/>
           </div>
           <div class="mt-6">
             <h3 class="mb-2 subtext">
@@ -101,9 +89,7 @@ const computedAddress = computed(() => {
               QR Code
             </h3>
             <div v-if="metadata.publicAddress" class="d-flex align-center justify-center">
-              <ClientOnly>
-                <QuipQrCode :data="metadata.publicAddress" :size="140"/>
-              </ClientOnly>
+              <QuipQrCode :data="metadata.publicAddress" :size="140"/>
             </div>
           </div>
           <div class="mt-6">

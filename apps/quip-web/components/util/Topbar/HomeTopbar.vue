@@ -11,6 +11,7 @@ const router = useRouter()
 const user = useUser().user
 
 const computedRoute = computed(() => router.currentRoute.value.name)
+const {metadata, connection, pubKey, balance, getBalance} = useMagic()
 </script>
 
 <template>
@@ -49,6 +50,9 @@ const computedRoute = computed(() => router.currentRoute.value.name)
           <div class="ml-3">
             <h3 class="username">
               {{ user.name }}
+            </h3>
+            <h3 class="text-primary">
+              {{ balance ?? "..." }} SOL
             </h3>
           </div>
         </div>

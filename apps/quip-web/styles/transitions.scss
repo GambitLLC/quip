@@ -1,4 +1,5 @@
 $transitionTime: 0.3s;
+$fastTransitionTime: 0.2s;
 
 .fade-enter-active,
 .fade-leave-active {
@@ -7,6 +8,16 @@ $transitionTime: 0.3s;
 
 .fade-enter-from,
 .fade-leave-to {
+  opacity: 0;
+}
+
+.fade-fast-enter-active,
+.fade-fast-leave-active {
+  transition: opacity $fastTransitionTime ease-in-out;
+}
+
+.fade-fast-enter-from,
+.fade-fast-leave-to {
   opacity: 0;
 }
 
