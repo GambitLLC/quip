@@ -21,6 +21,11 @@ const currentTab = ref<WalletTab>(walletTabs[0])
 
 const input = ref("")
 
+function copyAddress() {
+  if (!metadata.value || !metadata.value.publicAddress) return;
+  navigator.clipboard.writeText(metadata.value.publicAddress);
+}
+
 /* WEB3 SOLANA STUFF */
 const metadata = ref<MagicUserMetadata | null>(null)
 const connection = ref<web3.Connection | null>(null)
@@ -77,7 +82,7 @@ const computedAddress = computed(() => {
             <h3 class="mb-2 subtext">
               Wallet Address
             </h3>
-            <div v-ripple class="address text-border-grey rounded-pill d-flex align-center px-6 unselectable justify-space-between">
+            <div @click="copyAddress" v-ripple class="address text-border-grey rounded-pill d-flex align-center px-6 unselectable justify-space-between">
               <h3 class="addressText text-secondary-grey">
                 {{ computedAddress }}
               </h3>
@@ -105,7 +110,7 @@ const computedAddress = computed(() => {
             <h3 class="mb-2 subtext">
               Wallet Address
             </h3>
-            <div v-ripple class="address text-border-grey rounded-pill d-flex align-center px-6 unselectable justify-space-between">
+            <div @click="copyAddress" v-ripple class="address text-border-grey rounded-pill d-flex align-center px-6 unselectable justify-space-between">
               <h3 class="addressText text-secondary-grey">
                 {{ computedAddress }}
               </h3>
