@@ -20,7 +20,7 @@ const walletTabs = ['Send', 'Receive'] as const
 type WalletTab = typeof walletTabs[number]
 const currentTab = ref<WalletTab>(walletTabs[0])
 
-const isUSD = ref<'USD' | 'SOL'>('SOL')
+const isUSD = ref('SOL')
 const input = ref("")
 
 function copyAddress() {
@@ -64,7 +64,7 @@ const computedAddress = computed(() => {
             <h3 class="mb-2 subtext">
               Choose Amount
             </h3>
-            <CryptoInput :label="`Amount (${isUSD})`" v-model="input" type="number" v-model:is-u-s-d="isUSD as 'USD' | 'SOL'"/>
+            <CryptoInput :label="`Amount (${isUSD})`" v-model="input" type="number" v-model:is-u-s-d="isUSD"/>
           </div>
           <div class="mt-6">
             <h3 class="mb-2 subtext">
