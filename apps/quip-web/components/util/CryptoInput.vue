@@ -8,12 +8,12 @@ const props = defineProps<{
   label: string,
   modelValue: string,
   focused?: boolean,
-  isUSD: 'USD' | 'SOL'
+  isUSD: string
 }>()
 
 const emits = defineEmits<{
   (e: 'update:modelValue', value: string): void
-  (e: 'update:isUSD', value: 'USD' | 'SOL'): void
+  (e: 'update:isUSD', value: string): void
 }>()
 
 const colors = useTheme().current.value.colors
