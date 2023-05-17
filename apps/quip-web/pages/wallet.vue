@@ -18,7 +18,7 @@ const walletTabs = ['Send', 'Receive'] as const
 type WalletTab = typeof walletTabs[number]
 const currentTab = ref<WalletTab>(walletTabs[0])
 
-const isUSD = ref('SOL')
+const transferType = ref('SOL')
 const cryptoInput = ref(0)
 const addressInput = ref("")
 
@@ -71,7 +71,7 @@ function doSend() {
             <h3 class="mb-2 subtext">
               Choose Amount
             </h3>
-            <CryptoInput :label="`Amount (${isUSD})`" @update:model-value="value => cryptoInput = value" v-model:is-usd="isUSD as string"/>
+            <CryptoInput :label="`Amount (${transferType})`" @update:model-value="value => cryptoInput = value" v-model:is-usd="transferType"/>
           </div>
           <div class="mt-6">
             <h3 class="mb-2 subtext">
