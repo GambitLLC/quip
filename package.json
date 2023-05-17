@@ -16,6 +16,7 @@
     "@vueuse/components": "^10.1.0",
     "@vueuse/core": "^10.0.2",
     "axios": "^1.0.0",
+    "buffer": "^6.0.3",
     "config": "^3.3.9",
     "jose": "^4.13.1",
     "js-yaml": "^4.1.0",

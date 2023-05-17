@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import QuipCard from "~/components/util/QuipCard.vue";
 import {useTheme} from "vuetify";
-import {RPC_URL, useTicker} from "~/utils/magic";
-import {MagicUserMetadata} from "@magic-sdk/types";
-import * as web3 from "@solana/web3.js";
+import {useTicker} from "~/utils/magic";
 import QuipDivider from "~/components/util/QuipDivider.vue";
 import Tabs from "~/components/util/Tabs.vue";
 import QuipInput from "~/components/util/QuipInput.vue";
@@ -20,7 +18,7 @@ const walletTabs = ['Send', 'Receive'] as const
 type WalletTab = typeof walletTabs[number]
 const currentTab = ref<WalletTab>(walletTabs[0])
 
-const isUSD = ref<'USD' | 'SOL'>('SOL')
+const isUSD = ref('SOL')
 const cryptoInput = ref(0)
 const addressInput = ref("")
 
@@ -30,7 +28,7 @@ function copyAddress() {
 }
 
 /* WEB3 SOLANA STUFF */
-const {metadata, connection, pubKey, balance, getBalance } = useMagic()
+const {metadata, connection, pubKey, balance, getBalance, send } = useMagic()
 const { usdPrice } = useTicker()
 
 const computedBalance = computed(() => {
@@ -42,6 +40,10 @@ const computedAddress = computed(() => {
   if (!metadata.value || !metadata.value.publicAddress) return null;
   return metadata.value.publicAddress.substring(0, 4) + "..." + metadata.value.publicAddress.substring(metadata.value.publicAddress.length - 4);
 })
+
+function doSend() {
+  send(addressInput.value, cryptoInput.value)
+}
 </script>
 
 <template>
@@ -50,12 +52,16 @@ const computedAddress = computed(() => {
       <h3>Your Balance</h3>
       <div class="d-flex mt-1">
         <img class="solanaLogo my-auto mr-3" src="/solanaLogoMark.svg" alt="solana logo">
-        <h3 class="balance mr-3 text-primary">
-          {{ balance }} SOL
-        </h3>
-        <h3 class="mt-auto">
-          ~${{ computedBalance }}
-        </h3>
+        <transition mode="out-in" name="fade-fast">
+          <h3 :key="balance" class="balance mr-3 text-primary">
+            {{ balance }} SOL
+          </h3>
+        </transition>
+        <transition mode="out-in" name="fade-fast">
+          <h3 :key="computedBalance" class="mt-auto">
+            ~${{ computedBalance }}
+          </h3>
+        </transition>
       </div>
       <Tabs class="unselectable mt-6" :tabs="walletTabs" v-model="currentTab"/>
       <QuipDivider class="mb-6"/>
@@ -65,7 +71,7 @@ const computedAddress = computed(() => {
             <h3 class="mb-2 subtext">
               Choose Amount
             </h3>
-            <CryptoInput :label="`Amount (${isUSD})`" @update:model-value="value => cryptoInput = value" v-model:is-usd="isUSD as 'USD' | 'SOL'"/>
+            <CryptoInput :label="`Amount (${isUSD})`" @update:model-value="value => cryptoInput = value" v-model:is-usd="isUSD as string"/>
           </div>
           <div class="mt-6">
             <h3 class="mb-2 subtext">
@@ -74,7 +80,7 @@ const computedAddress = computed(() => {
             <QuipInput v-model="addressInput" label="Solana Address" type="text"/>
           </div>
           <div class="w-100 d-flex mt-6">
-            <QuipButton :icon-size="18" :prepend-icon="false" icon="akar-icons:paper-airplane" class="bg-primary w-100">
+            <QuipButton @click="doSend" :icon-size="18" :prepend-icon="false" icon="akar-icons:paper-airplane" class="bg-primary w-100">
               <h3 class="text-white">Send</h3>
             </QuipButton>
           </div>

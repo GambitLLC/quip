@@ -1,7 +1,10 @@
 import {PromiEvent} from "magic-sdk";
 import {LoginWithEmailOTPEvents, MagicUserMetadata} from "@magic-sdk/types";
-import { useWebSocket } from '@vueuse/core'
+import {useWebSocket} from '@vueuse/core'
 import * as web3 from "@solana/web3.js";
+
+import { Buffer } from 'buffer'
+globalThis.Buffer = Buffer
 
 const RPC_URL = 'https://api.devnet.solana.com'
 
@@ -70,6 +73,34 @@ const useMagic = () => {
     return await connection.value.getBalance(pubKey.value) / web3.LAMPORTS_PER_SOL;
   }
 
+  async function send(destinationAddress: string, sol: number): Promise<string | null> {
+    const lamports = sol * web3.LAMPORTS_PER_SOL;
+    if (!connection.value || !pubKey.value) return null;
+
+    const recipientPubKey = new web3.PublicKey(destinationAddress);
+    const hash = await connection.value.getLatestBlockhash()
+    let transactionMagic = new web3.Transaction({
+      feePayer: pubKey.value,
+      recentBlockhash: hash.blockhash,
+    })
+    const transaction = web3.SystemProgram.transfer({
+      fromPubkey: pubKey.value,
+      toPubkey: recipientPubKey,
+      lamports,
+    })
+
+    transactionMagic.add(...([transaction]))
+
+    const serializeConfig = {
+      requireAllSignatures: false,
+      verifySignatures: true,
+    }
+
+    const signedTransaction = await $magic.solana.signTransaction(transactionMagic, serializeConfig);
+    const tx = web3.Transaction.from(signedTransaction.rawTransaction);
+    return await connection.value.sendRawTransaction(tx.serialize());
+  }
+
   onBeforeMount(async () => {
     metadata.value = await $magic.user.getInfo();
     connection.value = new web3.Connection(RPC_URL);
@@ -87,6 +118,7 @@ const useMagic = () => {
     pubKey,
     balance,
     getBalance,
+    send
   }
 }
 

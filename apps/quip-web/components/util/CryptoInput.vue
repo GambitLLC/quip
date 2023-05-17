@@ -6,12 +6,12 @@ import {Icon} from "@iconify/vue";
 const props = defineProps<{
   label: string,
   focused?: boolean,
-  isUsd: 'USD' | 'SOL'
+  isUsd: string
 }>()
 
 const emits = defineEmits<{
   (e: 'update:modelValue', value: number): void
-  (e: 'update:isUsd', value: 'USD' | 'SOL'): void
+  (e: 'update:isUsd', value: string): void
 }>()
 
 const colors = useTheme().current.value.colors
