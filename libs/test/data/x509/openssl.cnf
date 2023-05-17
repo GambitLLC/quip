@@ -20,6 +20,7 @@ subjectAltName          = @server_alt_names
 
 [server_alt_names]
 DNS.1 = *.test.example.com
+DNS.2 = localhost
 
 [test_client]
 basicConstraints        = critical,CA:FALSE

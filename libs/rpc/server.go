@@ -1,15 +1,25 @@
 package rpc
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net"
 	"os"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 
 	"github.com/GambitLLC/quip/libs/config"
+)
+
+const (
+	serverPublicCertificateFileConfigKey = "api.tls.certificateFile"
+	serverPrivateKeyFileConfigKey        = "api.tls.privateKey"
+	serverRootCertificatePathConfigKey   = "api.tls.rootCertificateFile"
 )
 
 type GRPCHandler func(*grpc.Server)
@@ -18,26 +28,88 @@ type ServerParams struct {
 	logger   zerolog.Logger
 	ln       net.Listener
 	handlers []GRPCHandler
+
+	// Root CA public certificate in PEM format.
+	rootCertData []byte
+	// Public certificate in PEM format.
+	// If this field is the same as rootCaPublicCertificateFileData then the certificate is not backed by a CA.
+	publicCertData []byte
+	// Private key in PEM format.
+	privateKeyData []byte
+
+	authenticator grpc.UnaryServerInterceptor
 }
 
 func NewServerParams(cfg config.View, serviceName string) (*ServerParams, error) {
+	logger := zerolog.New(os.Stderr).With().
+		Str("component", serviceName).
+		Logger()
+
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GetInt(serviceName+".port")))
 	if err != nil {
 		return nil, errors.Errorf("listen failed: %s", err.Error())
 	}
 
-	// TODO: read cert files
+	params := &ServerParams{
+		ln:     ln,
+		logger: logger,
+	}
 
-	return &ServerParams{
-		ln: ln,
-		logger: zerolog.New(os.Stderr).With().
-			Str("component", serviceName).
-			Logger(),
-	}, nil
+	// Read TLS certificate data if provided
+	certFile := cfg.GetString(serverPublicCertificateFileConfigKey)
+	privateKeyFile := cfg.GetString(serverPrivateKeyFileConfigKey)
+	if len(certFile) > 0 && len(privateKeyFile) > 0 {
+		logger.Debug().
+			Str("cert_file", certFile).Str("priv_key", privateKeyFile).
+			Msg("Loading TLS certificate and private key")
+
+		params.publicCertData, err = os.ReadFile(certFile)
+		if err != nil {
+			if err := ln.Close(); err != nil {
+				logger.Error().Err(err).Msg("failed to close listener")
+			}
+
+			return nil, errors.WithMessagef(err, "failed to read server certificate file")
+		}
+
+		params.privateKeyData, err = os.ReadFile(privateKeyFile)
+		if err != nil {
+			if err := ln.Close(); err != nil {
+				logger.Error().Err(err).Msg("failed to close listener")
+			}
+
+			return nil, errors.WithMessagef(err, "failed to read server private key file")
+		}
+
+		// If there's no root CA certificate then use the public certificate as the trusted root.
+		rootCertData := params.publicCertData
+		rootCertFile := cfg.GetString(serverRootCertificatePathConfigKey)
+		if len(rootCertFile) > 0 {
+			logger.Debug().
+				Str("root_cert_file", rootCertFile).
+				Msg("Loading TLS root certificate")
+
+			rootCertData, err = os.ReadFile(rootCertFile)
+			if err != nil {
+				if err := ln.Close(); err != nil {
+					logger.Error().Err(err).Msg("failed to close listener")
+				}
+
+				return nil, errors.WithMessagef(err, "failed to read server root certificate file")
+			}
+		}
+		params.rootCertData = rootCertData
+	}
+
+	return params, nil
 }
 
 func (p *ServerParams) AddHandler(h GRPCHandler) {
 	p.handlers = append(p.handlers, h)
+}
+
+func (p *ServerParams) SetAuth(h grpc.UnaryServerInterceptor) {
+	p.authenticator = h
 }
 
 type Server struct {
@@ -45,7 +117,29 @@ type Server struct {
 }
 
 func (s *Server) Start(p *ServerParams) error {
-	s.srv = grpc.NewServer() // TODO: server options
+	opts := []grpc.ServerOption{
+		grpc.KeepaliveEnforcementPolicy(
+			keepalive.EnforcementPolicy{
+				MinTime:             10 * time.Second,
+				PermitWithoutStream: true,
+			},
+		),
+	}
+	if len(p.publicCertData) > 0 {
+		cert, err := tls.X509KeyPair(p.publicCertData, p.privateKeyData)
+		if err != nil {
+			return err
+		}
+
+		opts = append(opts, grpc.Creds(credentials.NewServerTLSFromCert(&cert)))
+	}
+
+	// TODO: chain with other unary interceptors
+	if p.authenticator != nil {
+		opts = append(opts, grpc.UnaryInterceptor(p.authenticator))
+	}
+
+	s.srv = grpc.NewServer(opts...)
 
 	for _, handler := range p.handlers {
 		handler(s.srv)
