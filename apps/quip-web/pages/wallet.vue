@@ -21,7 +21,8 @@ type WalletTab = typeof walletTabs[number]
 const currentTab = ref<WalletTab>(walletTabs[0])
 
 const isUSD = ref<'USD' | 'SOL'>('SOL')
-const input = ref("")
+const cryptoInput = ref(0)
+const addressInput = ref("")
 
 function copyAddress() {
   if (!metadata.value || !metadata.value.publicAddress) return;
@@ -64,18 +65,13 @@ const computedAddress = computed(() => {
             <h3 class="mb-2 subtext">
               Choose Amount
             </h3>
-            <CryptoInput :label="`Amount (${isUSD})`" v-model="input" type="number" v-model:is-u-s-d="isUSD as 'USD' | 'SOL'"/>
+            <CryptoInput :label="`Amount (${isUSD})`" @update:model-value="value => cryptoInput = value" v-model:is-usd="isUSD as 'USD' | 'SOL'"/>
           </div>
           <div class="mt-6">
             <h3 class="mb-2 subtext">
               Wallet Address
             </h3>
-            <div @click="copyAddress" v-ripple class="address text-border-grey rounded-pill d-flex align-center px-6 unselectable justify-space-between">
-              <h3 class="addressText text-secondary-grey">
-                {{ computedAddress }}
-              </h3>
-              <Icon class="copyIcon text-primary" icon="material-symbols:content-copy-outline-rounded"/>
-            </div>
+            <QuipInput v-model="addressInput" label="Solana Address" type="text"/>
           </div>
           <div class="w-100 d-flex mt-6">
             <QuipButton :icon-size="18" :prepend-icon="false" icon="akar-icons:paper-airplane" class="bg-primary w-100">

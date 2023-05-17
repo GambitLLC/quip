@@ -13,6 +13,10 @@ const props = defineProps({
     type: Number,
     optional: true,
   },
+  height: {
+    type: Number,
+    optional: true,
+  },
   color: {
     type: String,
     optional: true
@@ -33,6 +37,10 @@ const computedWidth = computed(() => {
   return props.width !== undefined? props.width + 'px' : 'auto'
 })
 
+const computedHeight = computed(() => {
+  return props.height !== undefined? props.height + 'px' : '42px'
+})
+
 const computedIconSize = computed(() => {
   return props.iconSize !== undefined? props.iconSize + 'px' : '24px'
 })
@@ -42,7 +50,8 @@ const computedIconSize = computed(() => {
   <a
     v-ripple
     :style="{
-      width: computedWidth
+      width: computedWidth,
+      height: computedHeight,
     }"
     class="co-headline font-weight-bold unselectable"
   >
@@ -64,7 +73,6 @@ a {
   cursor: pointer;
   border-radius: 70px;
   padding: 12px 24px;
-  height: 42px;
 }
 
 a > div {

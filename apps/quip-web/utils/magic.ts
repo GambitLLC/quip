@@ -71,7 +71,7 @@ const useMagic = () => {
   }
 
   onBeforeMount(async () => {
-    metadata.value = await $magic.user.getMetadata();
+    metadata.value = await $magic.user.getInfo();
     connection.value = new web3.Connection(RPC_URL);
     pubKey.value = new web3.PublicKey(metadata.value.publicAddress!!);
     balance.value = await getBalance();
