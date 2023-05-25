@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import QuipCard from "~/components/util/QuipCard.vue";
 import {useTheme} from "vuetify";
-import {useTicker} from "~/utils/magic";
 import QuipDivider from "~/components/util/QuipDivider.vue";
 import Tabs from "~/components/util/Tabs.vue";
 import QuipInput from "~/components/util/QuipInput.vue";
@@ -9,16 +7,18 @@ import {Icon} from "@iconify/vue";
 import QuipButton from "~/components/util/QuipButton.vue";
 import QuipQrCode from "~/components/util/QuipQrCode.client.vue";
 import CryptoInput from "~/components/util/CryptoInput.vue";
+import QuipAnimatedCard from "~/components/util/QuipAnimatedCard.vue";
 
 const colors = useTheme().current.value.colors
-const { $magic } = useNuxtApp()
+const { $crypto, $ticker } = useNuxtApp()
+const {metadata, balance, send} = $crypto
 
 /* UI STATE */
 const walletTabs = ['Send', 'Receive'] as const
 type WalletTab = typeof walletTabs[number]
 const currentTab = ref<WalletTab>(walletTabs[0])
 
-const transferType = ref('SOL')
+const transferType = ref<string>('SOL')
 const cryptoInput = ref(0)
 const addressInput = ref("")
 
@@ -28,12 +28,9 @@ function copyAddress() {
 }
 
 /* WEB3 SOLANA STUFF */
-const {metadata, connection, pubKey, balance, getBalance, send } = useMagic()
-const { usdPrice } = useTicker()
-
 const computedBalance = computed(() => {
-  if (!balance.value) return null;
-  return (balance.value * usdPrice.value).toFixed(2);
+  if (!balance.value) return '0.00';
+  return (balance.value * $ticker.usdPrice.value).toFixed(2);
 })
 
 const computedAddress = computed(() => {
@@ -44,70 +41,77 @@ const computedAddress = computed(() => {
 function doSend() {
   send(addressInput.value, cryptoInput.value)
 }
+
+onBeforeMount(() => {
+  $ticker.init()
+  $crypto.init()
+})
 </script>
 
 <template>
   <div class="w-100 h-100 d-flex align-center justify-center">
-    <QuipCard v-if="metadata" has-border class="bg-white wallet d-flex flex-column pa-6 walletCard">
-      <h3>Your Balance</h3>
-      <div class="d-flex mt-1">
-        <img class="solanaLogo my-auto mr-3" src="/solanaLogoMark.svg" alt="solana logo">
-        <transition mode="out-in" name="fade-fast">
-          <h3 :key="balance" class="balance mr-3 text-primary">
-            {{ balance }} SOL
-          </h3>
-        </transition>
-        <transition mode="out-in" name="fade-fast">
-          <h3 :key="computedBalance" class="mt-auto">
-            ~${{ computedBalance }}
-          </h3>
+    <QuipAnimatedCard v-if="metadata" has-border is-animated class="bg-white wallet d-flex flex-column walletCard">
+      <div class="pa-6">
+        <h3>Your Balance</h3>
+        <div class="d-flex mt-1">
+          <img class="solanaLogo my-auto mr-3" src="/solanaLogoMark.svg" alt="solana logo">
+          <transition mode="out-in" name="fade-fast">
+            <h3 :key="balance" class="balance mr-3 text-primary">
+              {{ balance }} SOL
+            </h3>
+          </transition>
+          <transition mode="out-in" name="fade-fast">
+            <h3 :key="computedBalance" class="mt-auto">
+              ~${{ computedBalance }}
+            </h3>
+          </transition>
+        </div>
+        <Tabs class="unselectable mt-6" :tabs="walletTabs" v-model="currentTab"/>
+        <QuipDivider class="mb-6"/>
+        <transition mode="out-in" name="fade-slide">
+          <div v-if="currentTab === 'Send'">
+            <div>
+              <h3 class="mb-2 subtext">
+                Choose Amount
+              </h3>
+              <CryptoInput :label="`Amount (${transferType})`" @update:model-value="value => cryptoInput = value" v-model:is-usd="transferType"/>
+            </div>
+            <div class="mt-6">
+              <h3 class="mb-2 subtext">
+                Wallet Address
+              </h3>
+              <QuipInput v-model="addressInput" label="Solana Address" type="text"/>
+            </div>
+            <div class="w-100 d-flex mt-6">
+              <QuipButton @click="doSend" :icon-size="18" :prepend-icon="false" icon="akar-icons:paper-airplane" class="bg-primary w-100">
+                <h3 class="text-white">Send</h3>
+              </QuipButton>
+            </div>
+          </div>
+          <div v-else-if="currentTab === 'Receive'">
+            <div>
+              <h3 class="mb-2 subtext">
+                QR Code
+              </h3>
+              <div v-if="metadata.publicAddress" class="d-flex align-center justify-center">
+                <QuipQrCode :data="metadata.publicAddress" :size="160"/>
+              </div>
+            </div>
+            <div class="mt-6">
+              <h3 class="mb-2 subtext">
+                Wallet Address
+              </h3>
+              <div @click="copyAddress" v-ripple class="address text-border-grey rounded-pill d-flex align-center px-6 unselectable justify-space-between">
+                <h3 class="addressText text-secondary-grey">
+                  {{ computedAddress }}
+                </h3>
+                <Icon class="copyIcon text-primary" icon="material-symbols:content-copy-outline-rounded"/>
+              </div>
+            </div>
+          </div>
         </transition>
       </div>
-      <Tabs class="unselectable mt-6" :tabs="walletTabs" v-model="currentTab"/>
-      <QuipDivider class="mb-6"/>
-      <transition mode="out-in" name="fade-slide">
-        <div v-if="currentTab === 'Send'">
-          <div>
-            <h3 class="mb-2 subtext">
-              Choose Amount
-            </h3>
-            <CryptoInput :label="`Amount (${transferType})`" @update:model-value="value => cryptoInput = value" v-model:is-usd="transferType"/>
-          </div>
-          <div class="mt-6">
-            <h3 class="mb-2 subtext">
-              Wallet Address
-            </h3>
-            <QuipInput v-model="addressInput" label="Solana Address" type="text"/>
-          </div>
-          <div class="w-100 d-flex mt-6">
-            <QuipButton @click="doSend" :icon-size="18" :prepend-icon="false" icon="akar-icons:paper-airplane" class="bg-primary w-100">
-              <h3 class="text-white">Send</h3>
-            </QuipButton>
-          </div>
-        </div>
-        <div v-else-if="currentTab === 'Receive'">
-          <div>
-            <h3 class="mb-2 subtext">
-              QR Code
-            </h3>
-            <div v-if="metadata.publicAddress" class="d-flex align-center justify-center">
-              <QuipQrCode :data="metadata.publicAddress" :size="140"/>
-            </div>
-          </div>
-          <div class="mt-6">
-            <h3 class="mb-2 subtext">
-              Wallet Address
-            </h3>
-            <div @click="copyAddress" v-ripple class="address text-border-grey rounded-pill d-flex align-center px-6 unselectable justify-space-between">
-              <h3 class="addressText text-secondary-grey">
-                {{ computedAddress }}
-              </h3>
-              <Icon class="copyIcon text-primary" icon="material-symbols:content-copy-outline-rounded"/>
-            </div>
-          </div>
-        </div>
-      </transition>
-    </QuipCard>
+    </QuipAnimatedCard>
   </div>
 </template>
 

@@ -8,7 +8,7 @@ const modal = useModal()
 </script>
 
 <template>
-  <div class="w-100 h-100 position-fixed modalView" :class="{'open': modal.modal !== null}">
+  <div @keydown.esc="modal.close()" class="w-100 h-100 position-fixed modalView" :class="{'open': modal.modal !== null}">
     <div class="safeArea d-flex align-center justify-center w-100 h-100">
       <transition name="fade-slide-up">
         <LoginModal v-if="modal.modal === 'Login'" title="Login"/>

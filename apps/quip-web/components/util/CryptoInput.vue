@@ -14,6 +14,8 @@ const emits = defineEmits<{
   (e: 'update:isUsd', value: string): void
 }>()
 
+const { $crypto, $ticker } = useNuxtApp()
+
 const colors = useTheme().current.value.colors
 const isMoved = computed(() => modelValue.value.length > 0)
 const inputRef = ref<HTMLInputElement | null>(null)
@@ -65,6 +67,24 @@ function onInput(value: string) {
     modelValue.value = value
   }
 }
+
+function maxValue() {
+  if (!inputRef.value) return
+
+  if (props.isUsd === 'USD') {
+    if ($crypto && $ticker && $crypto.balance.value !== null) {
+      modelValue.value = ($crypto.balance.value * $ticker.usdPrice.value).toFixed(2)
+      inputRef.value.value = modelValue.value
+    }
+  } else {
+    if ($crypto && $crypto.balance.value !== null) {
+      modelValue.value = $crypto.balance.value.toString()
+      inputRef.value.value = modelValue.value
+    }
+  }
+
+  console.log(modelValue.value)
+}
 </script>
 
 <template>
@@ -96,7 +116,10 @@ function onInput(value: string) {
       @input="onInput($event.target.value)"
     >
     <div class="position-absolute no-pointer w-100 h-100 d-flex align-center justify-end z-20 btnHolder">
-      <QuipButton @click="swap" class="bg-primary pa-0 is-pointer switchBtn" :width="80" :height="38">
+      <QuipButton @click="maxValue" class="bg-white pa-0 px-3 text-primary is-pointer mr-1" :height="32">
+        <h3 class="text-primary currency">MAX</h3>
+      </QuipButton>
+      <QuipButton @click="swap" class="bg-primary pa-0 is-pointer switchBtn" :width="80" :height="32">
         <transition mode="out-in" name="fade-fast">
           <div :key="isUsd" class="d-flex align-center">
             <Icon :icon="isUsd === 'USD' ? 'fa:usd' : 'mingcute:solana-sol-fill'" class="mr-1 currency"/>
@@ -117,7 +140,7 @@ function onInput(value: string) {
 }
 
 .switchBtn {
-  margin-right: 2px;
+  margin-right: 5px;
 }
 
 input {

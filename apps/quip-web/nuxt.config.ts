@@ -12,6 +12,10 @@ export default defineNuxtConfig({
   modules: [
     '@pinia/nuxt',
   ],
+  routeRules: {
+    '/': { prerender: true },
+    '/wallet': { ssr: false },
+  },
   app: {
     head: {
       meta: [

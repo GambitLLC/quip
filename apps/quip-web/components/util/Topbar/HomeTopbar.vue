@@ -9,9 +9,15 @@ const {colors} = useTheme().current.value
 
 const router = useRouter()
 const user = useUser().user
-
 const computedRoute = computed(() => router.currentRoute.value.name)
-const {metadata, connection, pubKey, balance, getBalance} = useMagic()
+
+const { $crypto, $ticker } = useNuxtApp()
+const { balance } = $crypto
+
+onBeforeMount(() => {
+  $ticker.init()
+  $crypto.init()
+})
 </script>
 
 <template>
@@ -51,9 +57,11 @@ const {metadata, connection, pubKey, balance, getBalance} = useMagic()
             <h3 class="username">
               {{ user.name }}
             </h3>
-            <h3 class="text-primary">
-              {{ balance ?? "..." }} SOL
-            </h3>
+            <transition mode="out-in" name="fade-fast">
+              <h3 :key="balance" class="text-primary">
+                {{ balance ?? "..." }} SOL
+              </h3>
+            </transition>
           </div>
         </div>
       </div>

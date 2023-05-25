@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import QuipInput from "~/components/util/QuipInput.vue";
 import QuipButton from "~/components/util/QuipButton.vue";
-import {useModal} from "~/store/ModalStore";
+import { useModal } from "~/store/ModalStore";
 import OTPInput from "~/components/util/Otp/OTPInput.vue";
-import {useTheme} from "vuetify";
-import {Icon} from "@iconify/vue";
-import {LoginEvent} from "~/utils/magic";
+import { useTheme } from "vuetify";
+import { Icon } from "@iconify/vue";
+import { LoginEvent } from "~/plugins/magic.client";
 
 type LoginModalState = "login" | "otp" | "loading" | "error"
 
@@ -13,7 +13,7 @@ const router = useRouter()
 const modal = useModal()
 const colors = useTheme().current.value.colors
 
-const { $login } = useNuxtApp()
+const { $login, $crypto, $ticker } = useNuxtApp()
 
 const state = ref<LoginModalState>("login")
 const loginEvent = ref<LoginEvent | null>(null)
@@ -38,9 +38,13 @@ function login() {
       state.value = "error"
       loginEvent.value?.emit('cancel');
     })
-    ?.on('done', (result) => {
+    ?.on('done', async (result) => {
+      // -- THIS LINE BELOW IS VERY IMPORTANT --
+      await Promise.all([$ticker.init(), $crypto.init()])
+      // -- THIS LINE ABOVE IS VERY IMPORTANT --
+
       modal.close()
-      router.push("/home")
+      await router.push("/home")
     })
     ?.on('error', (error) => {
       state.value = "error"
@@ -49,7 +53,7 @@ function login() {
 </script>
 
 <template>
-  <Modal @close="loginEvent?.emit('cancel')" class="d-flex flex-column modalBase">
+  <Modal @close="loginEvent?.emit?.('cancel')" class="d-flex flex-column modalBase">
     <transition name="fade" mode="out-in">
       <div v-if="state === 'login'" class="loginModal">
         <div>
@@ -62,7 +66,6 @@ function login() {
       </div>
       <div v-else-if="state === 'otp'" class="loginModal">
         <div>
-<!--          <img draggable="false" class="logo unselectable" src="/mobileLogo.svg" alt="Quip Logo" />-->
           <Icon icon="icon-park-twotone:mail-unpacking" class="mailIcon"/>
         </div>
         <h3 class="mb-2 otpText text-secondary-grey">
