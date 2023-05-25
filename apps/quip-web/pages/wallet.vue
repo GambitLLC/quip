@@ -7,7 +7,7 @@ import Tabs from "~/components/util/Tabs.vue";
 import QuipInput from "~/components/util/QuipInput.vue";
 import {Icon} from "@iconify/vue";
 import QuipButton from "~/components/util/QuipButton.vue";
-import QuipQrCode from "~/components/util/Topbar/QuipQrCode.client.vue";
+import QuipQrCode from "~/components/util/QuipQrCode.client.vue";
 import CryptoInput from "~/components/util/CryptoInput.vue";
 
 const colors = useTheme().current.value.colors
