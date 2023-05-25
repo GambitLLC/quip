@@ -10,6 +10,9 @@ import { RedisMemoryServer } from 'redis-memory-server';
 process.env.ALLOW_CONFIG_MUTATIONS = 'true';
 import config from 'config';
 
+import { Magic } from '@magic-sdk/admin';
+const magic = new Magic();
+
 import {
   FrontendService,
   FrontendServer,
@@ -18,8 +21,6 @@ import {
 import { Empty } from '@quip/pb/google/protobuf/empty';
 import Server from './server';
 import Client from './client';
-import { exportJWK, generateKeyPair, KeyLike, SignJWT } from 'jose';
-import { randomBytes } from 'crypto';
 
 interface Call {
   player: string;
@@ -32,7 +33,10 @@ function trackCall(
   call: ServerSurfaceCall,
   req: string
 ): ServerStatusResponse | null {
-  const player = call.metadata.get('Player-Id');
+  const player = magic.token.getIssuer(
+    call.metadata.get('authorization')[0].toString().substring(7)
+  );
+
   if (player.length < 1) {
     return {
       details: 'Player-Id not found',
@@ -42,7 +46,7 @@ function trackCall(
 
   calls.push({
     request: req,
-    player: player[0].toString(),
+    player: player,
   });
 
   return null;
@@ -89,33 +93,32 @@ const mockFrontend: FrontendServer = {
   },
 };
 
-// spin up http server to provide jwksT
-const alg = 'RS256';
-let publicKey: KeyLike, privateKey: KeyLike;
-beforeAll(async () => {
-  ({ publicKey, privateKey } = await generateKeyPair(alg));
-  const jwk = await exportJWK(publicKey);
-  jwk.alg = alg;
+import { randomUUID } from 'crypto';
 
-  const server = createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ keys: [jwk] }));
+import Web3 from 'web3';
+const web3 = new Web3();
+
+export function generateDIDToken(): { player: string; token: string } {
+  const account = web3.eth.accounts.create();
+  const { address, sign } = account;
+  const player = `did:ethr:${address}`;
+  const claim = JSON.stringify({
+    iat: Math.floor(Date.now() / 1000),
+    ext: Math.floor(Date.now() / 1000) + 1000,
+    iss: player,
+    sub: 'sub',
+    aud: 'aud',
+    nbf: Math.floor(Date.now() / 1000),
+    tid: randomUUID(),
+    add: 'add',
   });
-
-  await new Promise<void>((resolve) => {
-    server.listen(() => {
-      const { port } = server.address() as AddressInfo;
-
-      config.util.extendDeep(config, {
-        auth: {
-          jwks_uri: `http://localhost:${port}/`,
-        },
-      });
-
-      resolve();
-    });
-  });
-});
+  return {
+    player,
+    token: Buffer.from(JSON.stringify([sign(claim).signature, claim])).toString(
+      'base64'
+    ),
+  };
+}
 
 describe('socket listener', () => {
   let io: Server,
@@ -123,18 +126,12 @@ describe('socket listener', () => {
     redis: RedisMemoryServer,
     sockets: Client[] = [];
 
-  async function getClient(player: string): Promise<Client> {
-    // create token holding player info
-    const token = await new SignJWT({})
-      .setProtectedHeader({ alg })
-      .setSubject(player)
-      .setIssuer(config.get('auth.issuer'))
-      .setAudience(config.get('auth.audience'))
-      .sign(privateKey);
+  async function getClient(): Promise<{ client: Client; player: string }> {
+    const { player, token } = generateDIDToken();
 
     const client = Client(config, {
       auth: {
-        token,
+        token: `Bearer ${token}`,
       },
     });
 
@@ -145,7 +142,7 @@ describe('socket listener', () => {
 
     sockets.push(client);
 
-    return client;
+    return { client, player };
   }
 
   beforeAll(async () => {
@@ -235,8 +232,7 @@ describe('socket listener', () => {
   });
 
   test('should receive status', async () => {
-    const player = randomBytes(18).toString('hex');
-    const client = await getClient(player);
+    const { player, client } = await getClient();
 
     await new Promise<void>((resolve, reject) => {
       client.emit('getStatus', (err) => {

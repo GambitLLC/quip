@@ -1,19 +1,39 @@
 {
-  "plugins": ["@nx-go/nx-go"],
+  "plugins": [
+    "@nx-go/nx-go"
+  ],
   "npmScope": "quip",
   "namedInputs": {
-    "default": ["{projectRoot}/**/*", "sharedGlobals"],
-    "production": ["default"],
-    "makefile": ["{workspaceRoot}/Makefile"],
-    "sharedGlobals": ["{workspaceRoot}/go.mod"]
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
+    "production": [
+      "default"
+    ],
+    "makefile": [
+      "{workspaceRoot}/Makefile"
+    ],
+    "sharedGlobals": [
+      "{workspaceRoot}/go.mod"
+    ]
   },
   "targetDefaults": {
     "make": {
-      "inputs": ["makefile"]
+      "inputs": [
+        "makefile"
+      ]
     },
     "build": {
-      "dependsOn": ["^make", "make", "^build"],
-      "inputs": ["production", "^production"]
+      "dependsOn": [
+        "^make",
+        "make",
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ]
     },
     "lint": {
       "inputs": [
@@ -23,18 +43,32 @@
       ]
     },
     "test": {
-      "dependsOn": ["^make", "make"],
-      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"]
+      "dependsOn": [
+        "^make",
+        "make"
+      ],
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.js"
+      ]
     },
     "e2e": {
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "^build"
+      ]
     }
   },
   "tasksRunnerOptions": {
     "default": {
       "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["build", "lint", "test", "e2e"]
+        "cacheableOperations": [
+          "build",
+          "lint",
+          "test",
+          "e2e"
+        ]
       }
     }
   },

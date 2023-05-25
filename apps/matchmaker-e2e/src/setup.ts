@@ -3,7 +3,6 @@ process.env.NODE_CONFIG_ENV = 'e2e';
 
 import { join } from 'path';
 import { execSync, spawn } from 'child_process';
-import { startServer } from './auth';
 import { createWriteStream } from 'fs';
 
 module.exports = async function (globalConfig, projectConfig) {
@@ -19,10 +18,7 @@ module.exports = async function (globalConfig, projectConfig) {
     }),
   ]);
 
-  // spin up authServer first as it modifies config
-  const authServer = await startServer();
-
-  // spin up background procs which also modify config
+  // spin up background procs which modify config
   const backgroundProcs = spawn(
     join(process.cwd(), `build/e2e/bin/e2e-setup`),
     {
@@ -35,7 +31,6 @@ module.exports = async function (globalConfig, projectConfig) {
     execSync(join(process.cwd(), 'build/e2e/bin/e2e-validate'));
   } catch (err) {
     // make sure to end background procs if validate fails
-    authServer.kill();
     backgroundProcs.kill();
     outputStream.close();
     errorStream.close();
@@ -73,7 +68,6 @@ module.exports = async function (globalConfig, projectConfig) {
   );
 
   globalThis.__CMDS__ = [
-    authServer,
     socketServerProc,
     backgroundProcs,
     ...minimatchProcs,

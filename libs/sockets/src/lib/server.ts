@@ -4,7 +4,7 @@ import { Server as httpsServer } from 'https';
 import { Server as SocketIoServer } from 'socket.io';
 import { credentials, Metadata } from '@grpc/grpc-js';
 import { IConfig } from 'config';
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { Magic } from '@magic-sdk/admin';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 
@@ -58,23 +58,19 @@ export const Server = (
   );
 
   // setup authentication
-  io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    const jwks = createRemoteJWKSet(new URL(config.get('auth.jwks_uri')));
+  const magic = new Magic();
 
-    jwtVerify(token, jwks, {
-      issuer: config.get('auth.issuer'),
-      audience: config.get('auth.audience'),
-    }).then(
-      ({ payload }) => {
-        socket.data.player = payload.sub;
-        socket.join(payload.sub);
-        next();
-      },
-      (err) => {
-        next(err);
-      }
-    );
+  io.use((socket, next) => {
+    // verify authorization header, assumes format "Bearer "
+    const token = socket.handshake.auth?.token?.substring(7);
+    try {
+      const issuer = magic.token.getIssuer(token);
+      socket.data.player = issuer;
+      socket.join(issuer);
+      next();
+    } catch (err) {
+      next(err);
+    }
   });
 
   // listen to broker for status and queue updates
@@ -83,6 +79,7 @@ export const Server = (
       'status_update',
       (message) => {
         const update = StatusUpdate.decode(message);
+        console.log(update);
         io.to(update.targets).emit('statusUpdate', update);
       },
       true
@@ -131,7 +128,7 @@ export const Server = (
 
   io.on('connection', (socket) => {
     const md = new Metadata();
-    md.set('Player-Id', socket.data.player);
+    md.set('Authorization', socket.handshake.auth.token);
 
     socket.on('getStatus', (cb) => {
       rpc.getStatus(Empty.create(), md, (err, resp) => {
