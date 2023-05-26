@@ -2,6 +2,7 @@
 import {useTheme} from "vuetify";
 import QuipButton from "~/components/util/QuipButton.vue";
 import {Icon} from "@iconify/vue";
+import {computed} from "vue";
 
 const props = defineProps<{
   label: string,
@@ -17,7 +18,7 @@ const emits = defineEmits<{
 const { $crypto, $ticker } = useNuxtApp()
 
 const colors = useTheme().current.value.colors
-const isMoved = computed(() => modelValue.value.length > 0)
+const isMoved = computed(() => computedModelValue.value.length > 0)
 const inputRef = ref<HTMLInputElement | null>(null)
 
 onMounted(() => {
@@ -26,71 +27,98 @@ onMounted(() => {
   }
 })
 
+function trimCurrencyInput(value: string) {
+  const indexOfPeriod = value.indexOf('.')
+
+  if (internalIsUSDProp.value === 'USD') {
+    //if input has more than 2 decimal places trim it
+    if (indexOfPeriod !== -1 && value.length - indexOfPeriod > 3) {
+      value = value.slice(0, indexOfPeriod + 3)
+    }
+  } else {
+    //if input has more than 9 decimal places trim it
+    if (indexOfPeriod !== -1 && value.length - indexOfPeriod > 10) {
+      value = value.slice(0, indexOfPeriod + 10)
+    }
+  }
+
+  return value
+}
+
+function solToUSD(sol: number) {
+  return sol * $ticker.usdPrice.value
+}
+
+function usdToSol(usd: number) {
+  return usd / $ticker.usdPrice.value
+}
+
 function swap() {
   // clear input
-  modelValue.value = ''
-
-  if (props.isUsd === 'USD') {
+  if (internalIsUSDProp.value === 'USD') {
+    //swapped to sol
     emits('update:isUsd', 'SOL')
+    internalIsUSDProp.value = 'SOL'
+    computedModelValue.value = usdToSol(Number(computedModelValue.value)).toFixed(9)
   } else {
+    //swapped to usd
     emits('update:isUsd', 'USD')
+    internalIsUSDProp.value = 'USD'
+    computedModelValue.value = solToUSD(Number(computedModelValue.value)).toFixed(2)
   }
 }
 
-
+const internalIsUSDProp = ref(props.isUsd)
 const modelValue = ref<string>("")
 
-watch(modelValue, (newValue) => {
-  emits('update:modelValue', newValue === ''? 0 : parseFloat(newValue))
+const computedModelValue = computed({
+  get: () => {
+    return trimCurrencyInput(modelValue.value.toString())
+  },
+  set: (value) => {
+    const trimmed = trimCurrencyInput(value.toString())
+    modelValue.value = trimmed
+
+    if (inputRef.value) {
+      inputRef.value.value = trimmed
+    }
+
+    emits('update:modelValue', trimmed === ''? 0 : parseFloat(trimmed))
+  }
 })
 
 function onInput(value: string) {
-  if (!inputRef.value) return
-
-  if (props.isUsd === 'USD') {
-    //if input has more than 2 decimal places, set value to previous value
-    const indexOfPeriod = value.indexOf('.')
-    if (indexOfPeriod !== -1 && value.length - indexOfPeriod > 3) {
-      inputRef.value.value = inputRef.value.value.slice(0, -1)
-      return
-    }
-
-    modelValue.value = value
-  } else {
-    //if input has more than 9 decimal places, set value to previous value
-    const indexOfPeriod = value.indexOf('.')
-    if (indexOfPeriod !== -1 && value.length - indexOfPeriod > 10) {
-      inputRef.value.value = inputRef.value.value.slice(0, -1)
-      return
-    }
-
-    modelValue.value = value
+  //filter out characters that are not numbers or periods
+  value = value.replace(/[^0-9.]/g, '')
+  //if a period is entered more than once, filter it out
+  if (value.split('.').length > 2) {
+    value = value.slice(0, value.length - 1)
   }
+
+  computedModelValue.value = value
 }
 
 function maxValue() {
-  if (!inputRef.value) return
-
-  if (props.isUsd === 'USD') {
+  if (internalIsUSDProp.value === 'USD') {
     if ($crypto && $ticker && $crypto.balance.value !== null) {
-      modelValue.value = ($crypto.balance.value * $ticker.usdPrice.value).toFixed(2)
-      inputRef.value.value = modelValue.value
+      computedModelValue.value = ($crypto.balance.value * $ticker.usdPrice.value).toFixed(2)
     }
   } else {
     if ($crypto && $crypto.balance.value !== null) {
-      modelValue.value = $crypto.balance.value.toString()
-      inputRef.value.value = modelValue.value
+      computedModelValue.value = $crypto.balance.value.toString()
     }
   }
 
-  console.log(modelValue.value)
+  console.log(computedModelValue.value)
 }
 </script>
 
 <template>
   <div class="quipInput rounded-pill position-relative d-flex align-center">
     <transition mode="out-in" name="fade-fast">
-      <Icon :key="isUsd" class="ml-6 currency text-secondary-grey position-absolute no-pointer" :icon="isUsd === 'USD' ? 'fa:usd' : 'mingcute:solana-sol-fill'"/>
+      <div :key="isUsd" class="currencyIcon position-absolute">
+        <Icon class="currency text-secondary-grey no-pointer" :icon="isUsd === 'USD' ? 'fa:usd' : 'mingcute:solana-sol-fill'"/>
+      </div>
     </transition>
     <div class="px-4 position-absolute no-pointer label">
       <div class="bg-white trans-all" :class="{'movedLabel': isMoved}">
@@ -99,22 +127,18 @@ function maxValue() {
         </transition>
       </div>
     </div>
-    <input
-      v-if="isUsd === 'USD'"
-      ref="inputRef"
-      class=" pl-9 pr-6 text-secondary-grey co-headline"
-      min="0.01" step="0.01"
-      type="number"
-      @input="onInput($event.target.value)"
-    >
-    <input
-      v-else
-      ref="inputRef"
-      class=" pl-11 pr-6 text-secondary-grey co-headline"
-      min="0.000000001" step="0.000000001"
-      type="number"
-      @input="onInput($event.target.value)"
-    >
+    <transition mode="out-in" name="fade-fast">
+      <input
+        :key="internalIsUSDProp"
+        ref="inputRef"
+        :class="isUsd === 'USD' ? 'pl-11 pr-6 text-secondary-grey co-headline' : 'pl-11 pr-6 text-secondary-grey co-headline'"
+        :min="isUsd === 'USD' ? '0.01' : '0.000000001'"
+        :step="isUsd === 'USD' ? '0.01' : '0.000000001'"
+        type="text"
+        :value="computedModelValue"
+        @input="onInput($event.target.value)"
+      >
+    </transition>
     <div class="position-absolute no-pointer w-100 h-100 d-flex align-center justify-end z-20 btnHolder">
       <QuipButton @click="maxValue" class="bg-white pa-0 px-3 text-primary is-pointer mr-1" :height="32">
         <h3 class="text-primary currency">MAX</h3>
@@ -214,6 +238,15 @@ input[type=number] {
 
 .btnHolder {
   padding-right: 2px;
+}
+
+.currencyIcon {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  left: 20px;
 }
 
 .currency {

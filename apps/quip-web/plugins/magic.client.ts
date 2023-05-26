@@ -162,7 +162,6 @@ const useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): Cr
 
     if (process.client) {
       window.addEventListener('focus', async () => {
-        console.log(`Focus in! ${new Date().toString()}`)
         balance.value = await getBalance();
       })
     }
