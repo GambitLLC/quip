@@ -1,7 +1,6 @@
 import { Client } from '@quip/sockets';
 import config from 'config';
-import { newToken } from '../auth';
-import { randomBytes } from 'crypto';
+import { generateDIDToken } from '../auth';
 import { BackendClient, DeleteMatchRequest } from '@quip/pb/matchmaker/backend';
 import {
   StartQueueRequest,
@@ -17,10 +16,10 @@ import * as grpc from '@grpc/grpc-js';
 const sockets: Map<string, Client> = new Map();
 
 async function newClient(): Promise<{ client: Client; player: string }> {
-  const player = randomBytes(10).toString('hex');
+  const { player, token } = generateDIDToken();
   const client = Client(config, {
     auth: {
-      token: await newToken(player),
+      token: `Bearer ${token}`,
     },
   });
 

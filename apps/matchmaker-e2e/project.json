@@ -20,7 +20,7 @@
       }
     },
     "e2e": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
       "options": {
         "jestConfig": "apps/matchmaker-e2e/jest.config.ts",
@@ -30,7 +30,7 @@
       "dependsOn": ["^build", "build-setup"]
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["apps/matchmaker-e2e/**/*.{js,ts}"]

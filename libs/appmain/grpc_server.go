@@ -6,6 +6,7 @@ import (
 	"syscall"
 
 	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc"
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/rpc"
@@ -48,6 +49,10 @@ func (b *GRPCBindings) AddHandler(h rpc.GRPCHandler) {
 
 func (b *GRPCBindings) AddCloser(closer func() error) {
 	b.s.closers = append(b.s.closers, closer)
+}
+
+func (b *GRPCBindings) SetAuth(h grpc.UnaryServerInterceptor) {
+	b.sp.SetAuth(h)
 }
 
 func newGRPCService(serviceName string, cfg config.View, bind BindGRPC) (*service, error) {
