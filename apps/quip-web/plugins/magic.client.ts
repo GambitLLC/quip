@@ -92,6 +92,7 @@ const useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): Cr
   const connection = ref<Connection | null>(null)
   const pubKey = ref<PublicKey | null>(null)
   const balance = ref<number | null>(null)
+  const interval = ref<NodeJS.Timer | null>(null)
   let isInitialized = false
 
   async function getBalance(): Promise<number | null> {
@@ -159,6 +160,13 @@ const useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): Cr
     connection.value.onAccountChange(pubKey.value, async (accountInfo) => {
       balance.value = accountInfo.lamports / LAMPORTS_PER_SOL;
     })
+
+    if (process.client) {
+      window.addEventListener('focus', async () => {
+        console.log(`Focus in! ${new Date().toString()}`)
+        balance.value = await getBalance();
+      })
+    }
 
     console.log("Initialized Crypto!")
   }
