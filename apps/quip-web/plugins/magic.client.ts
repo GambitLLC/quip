@@ -92,7 +92,6 @@ const useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): Cr
   const connection = ref<Connection | null>(null)
   const pubKey = ref<PublicKey | null>(null)
   const balance = ref<number | null>(null)
-  const interval = ref<NodeJS.Timer | null>(null)
   let isInitialized = false
 
   async function getBalance(): Promise<number | null> {
