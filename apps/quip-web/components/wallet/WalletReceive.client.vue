@@ -1,0 +1,79 @@
+<script setup lang="ts">
+import QuipQrCode from "~/components/util/QuipQrCode.client.vue";
+import {Icon} from "@iconify/vue";
+import {useTheme} from "vuetify";
+
+const colors = useTheme().current.value.colors
+const { $crypto, $ticker } = useNuxtApp()
+const {metadata, balance, send} = $crypto
+
+function copyAddress() {
+  if (!metadata.value || !metadata.value.publicAddress) return;
+  navigator.clipboard.writeText(metadata.value.publicAddress);
+}
+
+const computedAddress = computed(() => {
+  if (!metadata.value || !metadata.value.publicAddress) return null;
+  return metadata.value.publicAddress.substring(0, 4) + "..." + metadata.value.publicAddress.substring(metadata.value.publicAddress.length - 4);
+})
+
+onBeforeMount(async () => {
+  $ticker.init()
+  $crypto.init()
+})
+</script>
+
+<template>
+  <div>
+    <div>
+      <h3 class="mb-2 subtext">
+        QR Code
+      </h3>
+      <div v-if="metadata.publicAddress" class="d-flex align-center justify-center">
+        <QuipQrCode :data="metadata.publicAddress" :size="160"/>
+      </div>
+    </div>
+    <div class="mt-6">
+      <h3 class="mb-2 subtext">
+        Wallet Address
+      </h3>
+      <div @click="copyAddress" v-ripple class="address text-border-grey rounded-pill d-flex align-center px-6 unselectable justify-space-between">
+        <h3 class="addressText text-secondary-grey">
+          {{ computedAddress }}
+        </h3>
+        <Icon class="copyIcon text-primary" icon="material-symbols:content-copy-outline-rounded"/>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped lang="scss">
+h3 {
+  color: v-bind("colors.jetblack");
+}
+
+.subtext {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 15px;
+  opacity: 0.4;
+}
+
+.address {
+  height: 48px;
+  border: 1px solid;
+  cursor: pointer;
+}
+
+.addressText {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.copyIcon {
+  font-size: 24px;
+}
+</style>
