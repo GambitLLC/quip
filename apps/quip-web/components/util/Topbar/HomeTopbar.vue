@@ -3,6 +3,8 @@ import {useScroll} from "~/utils/scroll";
 import {useTheme} from "vuetify";
 import Avatar from "~/components/util/Avatar/Avatar.vue";
 import {useUser} from "~/store/UserStore";
+import Skeleton from "~/components/util/Skeleton.vue";
+import {Icon} from "@iconify/vue";
 
 const { isScrolled } = useScroll()
 const {colors} = useTheme().current.value
@@ -57,11 +59,14 @@ onBeforeMount(() => {
             <h3 class="username">
               {{ user.name }}
             </h3>
-            <transition mode="out-in" name="fade-fast">
-              <h3 :key="balance" class="text-primary">
-                {{ balance ?? "..." }} SOL
-              </h3>
-            </transition>
+            <div class="d-flex align-center">
+              <Icon class="mr-1 balanceIcon text-primary" icon="mingcute:solana-sol-fill"/>
+              <Skeleton width="100px" height="20px" :loading="balance === null">
+                <transition mode="out-in" name="fade-fast">
+                  <h3 :title="balance + ' SOL'" :key="balance" class="text-primary balanceHover">{{ balance.toFixed(4) }}...</h3>
+                </transition>
+              </Skeleton>
+            </div>
           </div>
         </div>
       </div>
@@ -148,5 +153,9 @@ h3 {
   font-weight: 600;
   font-size: 18px;
   line-height: 22px;
+}
+
+.balanceHover {
+  cursor: pointer;
 }
 </style>

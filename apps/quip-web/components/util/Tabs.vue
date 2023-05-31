@@ -4,6 +4,7 @@ import {useTheme} from "vuetify";
 const props = defineProps<{
   tabs: string[],
   modelValue: string,
+  marginRight?: string,
 }>()
 
 const colors = useTheme().current.value.colors
@@ -13,19 +14,20 @@ const emits = defineEmits<{ (e: 'update:modelValue', value: string): void }>()
 function switchTab(i: number) {
   emits('update:modelValue', props.tabs[i])
 }
+
+const computedRightMargin = computed(() => props.marginRight ? props.marginRight : 'mr-10')
 </script>
 
 <template>
   <div class="d-flex">
-    <h3
-      @click="switchTab(i)"
-      class="mr-10"
-      :class="{'text-primary': tab === modelValue, 'text-jetblack': tab !== modelValue}"
+    <div
       v-for="(tab, i) in tabs"
       :key="i"
+      @click="switchTab(i)"
+      :class="computedRightMargin"
     >
-      {{tab}}
-    </h3>
+      <h3 :class="{'text-primary': tab === modelValue, 'text-jetblack': tab !== modelValue}">{{tab}}</h3>
+    </div>
   </div>
 </template>
 
