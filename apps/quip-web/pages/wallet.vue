@@ -14,12 +14,12 @@ const { $crypto, $ticker } = useNuxtApp()
 const {metadata, balance, send} = $crypto
 
 /* UI STATE */
-const walletTabs = ['Send', 'Receive'] as const
+const walletTabs = ['Receive', 'Send'] as const
 type WalletTab = typeof walletTabs[number]
 const currentTab = ref<WalletTab>(walletTabs[0])
 
 const transferType = ref<string>('SOL')
-const cryptoInput = ref(0)
+const solValue = ref<number>(0)
 const addressInput = ref("")
 
 function copyAddress() {
@@ -39,7 +39,7 @@ const computedAddress = computed(() => {
 })
 
 function doSend() {
-  send(addressInput.value, cryptoInput.value)
+  send(addressInput.value, solValue.value)
 }
 
 onBeforeMount(() => {
@@ -74,7 +74,7 @@ onBeforeMount(() => {
               <h3 class="mb-2 subtext">
                 Choose Amount
               </h3>
-              <CryptoInput :label="`Amount (${transferType})`" @update:model-value="value => cryptoInput = value" v-model:is-usd="transferType"/>
+              <CryptoInput :label="`Amount (${transferType})`" @update:sol-value="value => solValue = value" v-model:is-usd="transferType"/>
             </div>
             <div class="mt-6">
               <h3 class="mb-2 subtext">

@@ -11,15 +11,19 @@ const props = defineProps<{
 }>()
 
 const emits = defineEmits<{
-  (e: 'update:modelValue', value: number): void
+  (e: 'update:solValue', value: number): void
   (e: 'update:isUsd', value: string): void
 }>()
 
 const { $crypto, $ticker } = useNuxtApp()
 
 const colors = useTheme().current.value.colors
-const isMoved = computed(() => computedModelValue.value.length > 0)
+const isMoved = computed(() => computedSolValue.value.length > 0)
 const inputRef = ref<HTMLInputElement | null>(null)
+
+const internalIsUSDProp = ref(props.isUsd)
+const untrimmedUsdValue = ref<string>("")
+const solValue = ref<string>("")
 
 onMounted(() => {
   if (props.focused) {
@@ -27,10 +31,10 @@ onMounted(() => {
   }
 })
 
-function trimCurrencyInput(value: string) {
+function trimCurrencyInput(value: string, type: 'USD' | 'SOL') {
   const indexOfPeriod = value.indexOf('.')
 
-  if (internalIsUSDProp.value === 'USD') {
+  if (type === 'USD') {
     //if input has more than 2 decimal places trim it
     if (indexOfPeriod !== -1 && value.length - indexOfPeriod > 3) {
       value = value.slice(0, indexOfPeriod + 3)
@@ -53,41 +57,49 @@ function usdToSol(usd: number) {
   return usd / $ticker.usdPrice.value
 }
 
-function swap() {
-  // clear input
-  if (internalIsUSDProp.value === 'USD') {
-    //swapped to sol
-    emits('update:isUsd', 'SOL')
-    internalIsUSDProp.value = 'SOL'
-    computedModelValue.value = usdToSol(Number(computedModelValue.value)).toFixed(9)
-  } else {
-    //swapped to usd
-    emits('update:isUsd', 'USD')
-    internalIsUSDProp.value = 'USD'
-    computedModelValue.value = solToUSD(Number(computedModelValue.value)).toFixed(2)
-  }
-}
-
-const internalIsUSDProp = ref(props.isUsd)
-const modelValue = ref<string>("")
-
-const computedModelValue = computed({
+const computedUsdValue = computed<string>({
   get: () => {
-    return trimCurrencyInput(modelValue.value.toString())
+    return trimCurrencyInput(untrimmedUsdValue.value.toString(), 'USD')
   },
   set: (value) => {
-    const trimmed = trimCurrencyInput(value.toString())
-    modelValue.value = trimmed
+    const trimmed = trimCurrencyInput(value.toString(), 'USD')
+
+    //update untrimmed usd value
+    untrimmedUsdValue.value = trimmed
+
+    //update sol value
+    solValue.value = trimCurrencyInput(usdToSol(Number(trimmed)).toString(), 'SOL')
 
     if (inputRef.value) {
       inputRef.value.value = trimmed
     }
 
-    emits('update:modelValue', trimmed === ''? 0 : parseFloat(trimmed))
+    emits("update:solValue", solValue.value === ''? 0 : parseFloat(solValue.value))
   }
 })
 
-function onInput(value: string) {
+const computedSolValue = computed<string>({
+  get: () => {
+     return trimCurrencyInput(solValue.value.toString(), 'SOL')
+  },
+  set: (value) => {
+    const trimmed = trimCurrencyInput(value.toString(), 'SOL')
+
+    //update the sol value
+    solValue.value = trimmed
+
+    //update untrimmed usd value
+    untrimmedUsdValue.value = solToUSD(Number(trimmed)).toString()
+
+    if (inputRef.value) {
+      inputRef.value.value = trimmed
+    }
+
+    emits("update:solValue", trimmed === ''? 0 : parseFloat(trimmed))
+  }
+})
+
+function onInput(value: string, type: 'USD' | 'SOL') {
   //filter out characters that are not numbers or periods
   value = value.replace(/[^0-9.]/g, '')
   //if a period is entered more than once, filter it out
@@ -95,21 +107,49 @@ function onInput(value: string) {
     value = value.slice(0, value.length - 1)
   }
 
-  computedModelValue.value = value
+  if (type === 'USD') {
+    computedUsdValue.value = value
+  } else {
+    computedSolValue.value = value
+  }
+}
+
+// function maxValue() {
+//   if (internalIsUSDProp.value === 'USD') {
+//     if ($crypto && $ticker && $crypto.balance.value !== null) {
+//       computedModelValue.value = ($crypto.balance.value * $ticker.usdPrice.value).toFixed(2)
+//     }
+//   } else {
+//     if ($crypto && $crypto.balance.value !== null) {
+//       computedModelValue.value = $crypto.balance.value.toString()
+//     }
+//   }
+//
+//   console.log(computedModelValue.value)
+// }
+
+function swap() {
+  // TODO: swap between USD and SOL
+  if (internalIsUSDProp.value === 'USD') {
+    //swapped to sol
+    emits('update:isUsd', 'SOL')
+    internalIsUSDProp.value = 'SOL'
+  } else {
+    //swapped to usd
+    emits('update:isUsd', 'USD')
+    internalIsUSDProp.value = 'USD'
+  }
 }
 
 function maxValue() {
   if (internalIsUSDProp.value === 'USD') {
-    if ($crypto && $ticker && $crypto.balance.value !== null) {
-      computedModelValue.value = ($crypto.balance.value * $ticker.usdPrice.value).toFixed(2)
-    }
-  } else {
-    if ($crypto && $crypto.balance.value !== null) {
-      computedModelValue.value = $crypto.balance.value.toString()
-    }
-  }
+    if (!$crypto || !$ticker || $crypto.balance.value === null) return
 
-  console.log(computedModelValue.value)
+    computedUsdValue.value = ($crypto.balance.value * $ticker.usdPrice.value).toString()
+  } else {
+    if (!$crypto || $crypto.balance.value === null) return
+    computedSolValue.value = $crypto.balance.value.toString()
+  }
 }
 </script>
 
@@ -129,14 +169,22 @@ function maxValue() {
     </div>
     <transition mode="out-in" name="fade-fast">
       <input
-        :key="internalIsUSDProp"
+        v-if="isUsd === 'USD'"
         ref="inputRef"
-        :class="isUsd === 'USD' ? 'pl-11 pr-6 text-secondary-grey co-headline' : 'pl-11 pr-6 text-secondary-grey co-headline'"
-        :min="isUsd === 'USD' ? '0.01' : '0.000000001'"
-        :step="isUsd === 'USD' ? '0.01' : '0.000000001'"
+        class="pl-11 pr-6 text-secondary-grey co-headline"
+        min="0.01" step="0.01"
         type="text"
-        :value="computedModelValue"
-        @input="onInput($event.target.value)"
+        :value="computedUsdValue"
+        @input="onInput($event.target.value, 'USD')"
+      >
+      <input
+        v-else
+        ref="inputRef"
+        class="pl-11 pr-6 text-secondary-grey co-headline"
+        min="0.000000001" step="0.000000001"
+        type="text"
+        :value="computedSolValue"
+        @input="onInput($event.target.value, 'SOL')"
       >
     </transition>
     <div class="position-absolute no-pointer w-100 h-100 d-flex align-center justify-end z-20 btnHolder">
