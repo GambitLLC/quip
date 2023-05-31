@@ -47,7 +47,7 @@ func ReadFile(name string) (*viper.Viper, error) {
 	cfg := viper.New()
 	cfg.SetConfigType("yaml")
 	cfg.AddConfigPath("./config")
-	cfg.AddConfigPath("/app/config") // config path should math volume mount path in k8s
+	cfg.AddConfigPath("/app/config") // config path should map volume mount path in k8s
 	cfg.SetConfigName(name)
 
 	if err := cfg.ReadInConfig(); err != nil {
