@@ -52,7 +52,7 @@ onBeforeMount(async () => {
           </div>
         </div>
         <Tabs class="unselectable mt-6" margin-right="mr-8" :tabs="walletTabs" v-model="currentTab"/>
-        <QuipDivider class="mb-6"/>
+        <QuipDivider class="mb-7"/>
 
         <transition mode="out-in" name="fade">
           <LdsSpinner class="d-flex align-center justify-center mx-auto flex-grow-1 spinnerSpace" v-if="metadata === null"/>

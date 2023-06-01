@@ -25,18 +25,18 @@ onBeforeMount(async () => {
 <template>
   <div>
     <div>
-      <h3 class="mb-2 subtext">
+      <h3 class="mb-4 subtext">
         Choose Amount
       </h3>
       <CryptoInput :label="`Amount (${transferType})`" @update:sol-value="value => solValue = value" v-model:is-usd="transferType"/>
     </div>
-    <div class="mt-6">
-      <h3 class="mb-2 subtext">
+    <div class="mt-7">
+      <h3 class="mb-4 subtext">
         Wallet Address
       </h3>
       <QuipInput v-model="addressInput" label="Solana Address" type="text"/>
     </div>
-    <div class="w-100 d-flex mt-6">
+    <div class="w-100 d-flex mt-7">
       <QuipButton @click="doSend" :icon-size="18" :prepend-icon="false" icon="akar-icons:paper-airplane" class="bg-primary w-100">
         <h3 class="text-white">Send</h3>
       </QuipButton>
