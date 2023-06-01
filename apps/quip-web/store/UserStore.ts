@@ -49,7 +49,7 @@ const useUser = defineStore('user', {
         personalInfo: {
           legalName: 'Benjamin Kosten',
           dob: new Date('1995-01-01'),
-          address: '61 Olive Place, Forest Hills, NY',
+          address: '123 Olive Street, NY',
         },
       },
     }
