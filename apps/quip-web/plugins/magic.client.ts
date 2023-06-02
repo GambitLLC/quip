@@ -15,10 +15,25 @@ type LoginEvent = PromiEvent<string | null, LoginWithEmailOTPEvents & {
   settled: () => void;
 }>
 
+type LogoutEvent = PromiEvent<boolean, {
+  done: (result: boolean) => void;
+  error: (reason: any) => void;
+  settled: () => void;
+}>
+
 declare module '#app' {
   interface NuxtApp {
     $login (email: string): LoginEvent,
-    $logout (): Promise<void>,
+    $logout (): LogoutEvent,
+    $ticker: Ticker,
+    $crypto: Crypto,
+  }
+}
+
+declare module 'vue' {
+  interface ComponentCustomProperties {
+    $login (email: string): LoginEvent,
+    $logout (): LogoutEvent,
     $ticker: Ticker,
     $crypto: Crypto,
   }
@@ -39,7 +54,7 @@ interface Crypto {
   init: () => Promise<void>
 }
 
-const useTicker = (): Ticker => {
+const _useTicker = (): Ticker => {
   const usdPrice = ref<number>(0)
   const interval = ref<NodeJS.Timer | null>(null)
   let isInitialized = false
@@ -88,7 +103,7 @@ const useTicker = (): Ticker => {
   return { usdPrice, init }
 }
 
-const useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): Crypto => {
+const _useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): Crypto => {
   const metadata = ref<MagicUserMetadata | null>(null)
   const connection = ref<Connection | null>(null)
   const pubKey = ref<PublicKey | null>(null)
@@ -196,11 +211,11 @@ export default defineNuxtPlugin(nuxtApp => {
     ],
   })
 
-  const ticker = useTicker()
-  const crypto = useMagic(magic)
+  const ticker = _useTicker()
+  const crypto = _useMagic(magic)
 
-  const login = (email: string) => magic.auth.loginWithEmailOTP({email, showUI: false})
-  const logout = async () => { await magic.user.logout() }
+  const login = (email: string): LoginEvent => magic.auth.loginWithEmailOTP({email, showUI: false})
+  const logout = (): LogoutEvent => magic.user.logout()
 
   nuxtApp.provide('login', login)
   nuxtApp.provide('logout', logout)
@@ -209,5 +224,8 @@ export default defineNuxtPlugin(nuxtApp => {
 })
 
 export {
-  LoginEvent
+  LoginEvent,
+  LogoutEvent,
+  Crypto,
+  Ticker
 }

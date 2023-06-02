@@ -4,22 +4,19 @@ import {Icon} from "@iconify/vue";
 import {useTheme} from "vuetify";
 
 const colors = useTheme().current.value.colors
-const { $crypto, $ticker } = useNuxtApp()
-const {metadata, balance, send} = $crypto
+
+const crypto = useCrypto()
+const ticker = useTicker()
+const {metadata, balance, send} = crypto
 
 function copyAddress() {
-  if (!metadata.value || !metadata.value.publicAddress) return;
-  navigator.clipboard.writeText(metadata.value.publicAddress);
+  if (!metadata.value || !metadata.value?.publicAddress) return;
+  navigator.clipboard.writeText(metadata.value?.publicAddress ?? "");
 }
 
 const computedAddress = computed(() => {
-  if (!metadata.value || !metadata.value.publicAddress) return null;
-  return metadata.value.publicAddress.substring(0, 4) + "..." + metadata.value.publicAddress.substring(metadata.value.publicAddress.length - 4);
-})
-
-onBeforeMount(async () => {
-  $ticker.init()
-  $crypto.init()
+  if (!metadata.value || !metadata.value?.publicAddress) return null;
+  return metadata.value?.publicAddress.substring(0, 4) + "..." + metadata.value?.publicAddress.substring(metadata.value?.publicAddress.length - 4);
 })
 </script>
 
@@ -29,7 +26,7 @@ onBeforeMount(async () => {
       <h3 class="mb-2 subtext">
         QR Code
       </h3>
-      <div v-if="metadata.publicAddress" class="d-flex align-center justify-center">
+      <div v-if="metadata?.publicAddress" class="d-flex align-center justify-center">
         <QuipQrCode :data="metadata.publicAddress" :size="160"/>
       </div>
     </div>

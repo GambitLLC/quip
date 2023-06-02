@@ -14,7 +14,7 @@ const router = useRouter()
 const modal = useModal()
 const colors = useTheme().current.value.colors
 
-const { $login, $crypto, $ticker } = useNuxtApp()
+const login = useLogin()
 
 const state = ref<LoginModalState>("login")
 const loginEvent = ref<LoginEvent | null>(null)
@@ -26,8 +26,10 @@ function onSubmitOtp(otp: string) {
   state.value = "loading"
 }
 
-function login() {
-  loginEvent.value = $login(email.value)
+function loginAction() {
+  console.log(login)
+
+  loginEvent.value = login(email.value)
   state.value = "loading"
 
   loginEvent.value
@@ -41,7 +43,7 @@ function login() {
     })
     ?.on('done', async (result) => {
       // -- THIS LINE BELOW IS VERY IMPORTANT --
-      await Promise.all([$ticker.init(), $crypto.init()])
+      await Promise.all([useTicker(), useCrypto()])
       // -- THIS LINE ABOVE IS VERY IMPORTANT --
 
       modal.close()
@@ -61,8 +63,8 @@ function login() {
         <div>
           <img draggable="false" class="logo unselectable" src="/mobileLogo.svg" alt="Quip Logo" />
         </div>
-        <QuipInput :focused="true" @keydown.enter="login" v-model="email" class="w-100" label="Email Address" type="email"/>
-        <QuipButton @click="login" class="login text-jetblack w-100">
+        <QuipInput :focused="true" @keydown.enter="loginAction" v-model="email" class="w-100" label="Email Address" type="email"/>
+        <QuipButton @click="loginAction" class="login text-jetblack w-100">
           <h3>Login</h3>
         </QuipButton>
       </div>

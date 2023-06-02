@@ -4,13 +4,12 @@ import QuipDivider from "~/components/util/QuipDivider.vue";
 import Tabs from "~/components/util/Tabs.vue";
 import {Icon} from "@iconify/vue";
 import QuipAnimatedCard from "~/components/util/QuipAnimatedCard.vue";
-import {VSkeletonLoader} from "vuetify/labs/VSkeletonLoader";
 import Skeleton from "~/components/util/Skeleton.vue";
 import LdsSpinner from "~/components/util/LdsSpinner.vue";
 
 const colors = useTheme().current.value.colors
-const { $crypto, $ticker } = useNuxtApp()
-const {metadata, balance, send} = $crypto
+const {metadata, balance, send} = useCrypto()
+const ticker = useTicker()
 
 /* UI STATE */
 const walletTabs = ['Receive', 'Send'] as const
@@ -20,12 +19,7 @@ const currentTab = ref<WalletTab>(walletTabs[0])
 /* WEB3 SOLANA STUFF */
 const computedBalance = computed(() => {
   if (!balance.value) return '0.00';
-  return (balance.value * $ticker.usdPrice.value).toFixed(2);
-})
-
-onBeforeMount(async () => {
-  $ticker.init()
-  $crypto.init()
+  return (balance.value * ticker.usdPrice.value).toFixed(2);
 })
 </script>
 
@@ -71,7 +65,7 @@ onBeforeMount(async () => {
 <style scoped lang="scss">
 .wallet {
   min-width: 400px;
-  min-height: 500px;
+  min-height: 550px;
   border-radius: 24px;
   box-shadow: 0 12px 56px rgba(119,118,122,.15);
 }

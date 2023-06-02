@@ -15,7 +15,8 @@ const emits = defineEmits<{
   (e: 'update:isUsd', value: string): void
 }>()
 
-const { $crypto, $ticker } = useNuxtApp()
+const crypto = useCrypto()
+const ticker = useTicker()
 
 const colors = useTheme().current.value.colors
 const isMoved = computed(() => computedSolValue.value.length > 0)
@@ -50,11 +51,11 @@ function trimCurrencyInput(value: string, type: 'USD' | 'SOL') {
 }
 
 function solToUSD(sol: number) {
-  return sol * $ticker.usdPrice.value
+  return sol * ticker.usdPrice.value
 }
 
 function usdToSol(usd: number) {
-  return usd / $ticker.usdPrice.value
+  return usd / ticker.usdPrice.value
 }
 
 const computedUsdValue = computed<string>({
@@ -114,22 +115,7 @@ function onInput(value: string, type: 'USD' | 'SOL') {
   }
 }
 
-// function maxValue() {
-//   if (internalIsUSDProp.value === 'USD') {
-//     if ($crypto && $ticker && $crypto.balance.value !== null) {
-//       computedModelValue.value = ($crypto.balance.value * $ticker.usdPrice.value).toFixed(2)
-//     }
-//   } else {
-//     if ($crypto && $crypto.balance.value !== null) {
-//       computedModelValue.value = $crypto.balance.value.toString()
-//     }
-//   }
-//
-//   console.log(computedModelValue.value)
-// }
-
 function swap() {
-  // TODO: swap between USD and SOL
   if (internalIsUSDProp.value === 'USD') {
     //swapped to sol
     emits('update:isUsd', 'SOL')
@@ -143,12 +129,12 @@ function swap() {
 
 function maxValue() {
   if (internalIsUSDProp.value === 'USD') {
-    if (!$crypto || !$ticker || $crypto.balance.value === null) return
+    if (!crypto || !ticker || crypto.balance.value === null) return
 
-    computedUsdValue.value = ($crypto.balance.value * $ticker.usdPrice.value).toString()
+    computedUsdValue.value = (crypto.balance.value * ticker.usdPrice.value).toString()
   } else {
-    if (!$crypto || $crypto.balance.value === null) return
-    computedSolValue.value = $crypto.balance.value.toString()
+    if (!crypto || crypto.balance.value === null) return
+    computedSolValue.value = crypto.balance.value.toString()
   }
 }
 </script>

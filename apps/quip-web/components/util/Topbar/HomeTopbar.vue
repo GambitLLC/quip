@@ -13,12 +13,17 @@ const router = useRouter()
 const user = useUser().user
 const computedRoute = computed(() => router.currentRoute.value.name)
 
-const { $crypto, $ticker } = useNuxtApp()
-const { balance } = $crypto
+const crypto = useCrypto()
+const { balance } = crypto
 
-onBeforeMount(() => {
-  $ticker.init()
-  $crypto.init()
+const computedBalance = computed(() => {
+  const bal = balance.value
+  if (bal === null) return null
+
+  //if bal contains a decimal with more than 4 places display the fixed string
+  if (bal.toString().split('.')[1]?.length > 4) return bal.toFixed(4) + '...'
+  //otherwise display the string
+  return bal.toString()
 })
 </script>
 
@@ -61,9 +66,9 @@ onBeforeMount(() => {
             </h3>
             <div class="d-flex align-center">
               <Icon class="mr-1 balanceIcon text-primary" icon="mingcute:solana-sol-fill"/>
-              <Skeleton width="100px" height="20px" :loading="balance === null">
+              <Skeleton width="75px" height="20px" :loading="balance === null">
                 <transition mode="out-in" name="fade-fast">
-                  <h3 :title="balance + ' SOL'" :key="balance" class="text-primary balanceHover">{{ balance.toFixed(4) }}...</h3>
+                  <h3 :title="balance + ' SOL'" :key="balance" class="text-primary balanceHover">{{ computedBalance }}</h3>
                 </transition>
               </Skeleton>
             </div>

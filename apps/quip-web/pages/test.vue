@@ -1,16 +1,8 @@
 <script setup lang="ts">
-import Match from "~/components/util/Match.vue";
-import QuipInput from "~/components/util/QuipInput.vue";
-const a = ref(0)
-
-const {$logout} = useNuxtApp()
+const logout = useLogout()
 
 function test() {
   $fetch('/api/login', { method: 'post', body: { test: 123 } })
-}
-
-async function logout() {
-  await $logout()
 }
 </script>
 
