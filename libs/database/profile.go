@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/GambitLLC/quip/libs/config"
+	"github.com/mitchellh/mapstructure"
 )
 
 const (
@@ -15,8 +16,8 @@ const (
 )
 
 type Profile struct {
-	ID          string `bson:"_id,omitempty"`
-	DisplayName string `bson:"display_name"`
+	Id          string `bson:"_id,omitempty" mapstructure:"_id,omitempty"`
+	DisplayName string `mapstructure:"displayName,omitempty"`
 }
 
 type ProfileService struct {
@@ -51,16 +52,16 @@ func (s *ProfileService) GetProfile(ctx context.Context, id string) (*Profile, e
 }
 
 func (s *ProfileService) UpdateProfile(ctx context.Context, profile Profile) error {
-	// https://stackoverflow.com/questions/53110020/mongodb-go-driver-bson-struct-to-bson-document-encoding
-	// conversion of structs to bson Documents currently not supported ...
-	// must manually fill out the fields
-	// TODO: consider update just taking in a map of changes?
+	var changes bson.M
+	if err := mapstructure.Decode(profile, &changes); err != nil {
+		return err
+	}
+
 	_, err := s.collection.UpdateByID(
 		ctx,
-		profile.ID,
+		profile.Id,
 		bson.D{
-
-			{Key: "$set", Value: bson.M{"display_name": profile.DisplayName}},
+			{Key: "$set", Value: changes},
 		},
 		options.Update().SetUpsert(true),
 	)

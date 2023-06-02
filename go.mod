@@ -12,6 +12,7 @@ require (
 	github.com/go-redsync/redsync/v4 v4.8.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/magiclabs/magic-admin-go v0.2.0
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/xid v1.4.0
 	github.com/rs/zerolog v1.29.1
@@ -48,7 +49,6 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.18 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
