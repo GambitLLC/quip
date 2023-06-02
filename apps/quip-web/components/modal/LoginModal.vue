@@ -49,6 +49,7 @@ function login() {
     })
     ?.on('error', (error) => {
       state.value = "error"
+      console.error(error)
     })
 }
 </script>
