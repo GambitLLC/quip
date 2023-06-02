@@ -1,5 +1,22 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  runtimeConfig: {
+    public: {
+      RPC_URL: 'https://api.devnet.solana.com',
+      WSS_BINANCE: 'wss://ws-api.binance.us:443/ws-api/v3',
+      PK_MAGIC: 'pk_live_79385C11B09DBB96'
+
+    }
+  },
+  nitro: {
+    storage: {
+      db: {
+        driver: "azureCosmos",
+        endpoint: "https://quip-db.documents.azure.com:443/",
+        accountKey: "8ObmGZbuHC29WoFNWZUeuYDAosTU2mCyOzCnJ76tbzAW9Ht7BIfIXsqlMD2kHv4JXfMIJpuhIteAACDb16wI1g=="
+      }
+    }
+  },
   css: ['vuetify/lib/styles/main.sass', '@/styles/main.scss'],
   build: {
     transpile: ['vuetify'],

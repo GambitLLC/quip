@@ -9,8 +9,6 @@ import { Buffer } from 'buffer'
 import {Ref} from "vue";
 globalThis.Buffer = Buffer
 
-const RPC_URL = 'https://api.devnet.solana.com'
-
 type LoginEvent = PromiEvent<string | null, LoginWithEmailOTPEvents & {
   done: (result: string | null) => void;
   error: (reason: any) => void;
@@ -50,8 +48,11 @@ const useTicker = (): Ticker => {
     if (isInitialized) return
     isInitialized = true
 
+    const runtimeConfig = useRuntimeConfig()
+    const { WSS_BINANCE} = runtimeConfig.public
+
     //track solana price
-    const { status, data, send, open, close } = useWebSocket('wss://ws-api.binance.us:443/ws-api/v3', {
+    const { status, data, send, open, close } = useWebSocket(WSS_BINANCE, {
       autoReconnect: true,
       onConnected: () => {
         send(JSON.stringify({
@@ -151,6 +152,9 @@ const useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): Cr
     if (isInitialized) return
     isInitialized = true
 
+    const runtimeConfig = useRuntimeConfig()
+    const { RPC_URL} = runtimeConfig.public
+
     metadata.value = await magic.user.getInfo();
     connection.value = new Connection(RPC_URL);
     pubKey.value = new PublicKey(metadata.value.publicAddress!!);
@@ -181,7 +185,10 @@ const useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): Cr
 }
 
 export default defineNuxtPlugin(nuxtApp => {
-  const magic = new Magic('pk_live_79385C11B09DBB96', {
+  const runtimeConfig = useRuntimeConfig()
+  const { RPC_URL, PK_MAGIC} = runtimeConfig.public
+
+  const magic = new Magic(PK_MAGIC, {
     extensions: [
       new SolanaExtension({
         rpcUrl: RPC_URL,

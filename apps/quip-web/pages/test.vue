@@ -2,26 +2,16 @@
 import Match from "~/components/util/Match.vue";
 import QuipInput from "~/components/util/QuipInput.vue";
 const a = ref(0)
+
+function test() {
+  $fetch('/api/login', { method: 'post', body: { test: 123 } })
+}
 </script>
 
 <template>
   <div class="w-100 h-100 d-flex flex-column align-center justify-center">
 <!--    <AvatarCreator/>-->
-    <div @click="a = (a + 1) % 3">
-      Click me! {{a}}
-    </div>
-    <QuipInput/>
-    <Match :match="a">
-      <div :case="0">
-        Case 0
-      </div>
-      <div :case="1">
-        Case 1
-      </div>
-      <div>
-        Case default
-      </div>
-    </Match>
+    <div @click="test()">Click me!</div>
   </div>
 </template>
 
