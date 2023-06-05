@@ -146,7 +146,7 @@ test: install-npm
 
 ## graph/generated.go
 
-graph/generated.go: graph/schema.graphqls
+graph/generated.go: graph/schema.graphqls gqlgen.yml
 	$(GO) run github.com/99designs/gqlgen generate .
 
 ## ####################################

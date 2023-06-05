@@ -3,6 +3,15 @@ auth:
   audience: http://quip.gg
   jwks_uri: http://quip.gg
 
+api:
+  graph:
+    hostname:
+    port: 8080
+  tls:
+    certificateFile:
+    privateKeyFile:
+    rootCertificateFile:
+
 matchmaker:
   frontend:
     hostname:

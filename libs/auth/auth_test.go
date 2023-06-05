@@ -15,6 +15,7 @@ import (
 
 func TestGenerateToken(t *testing.T) {
 	didToken := createDidToken(t)
+	t.Logf("didToken: %s", didToken)
 
 	token, err := ValidateMagicDIDToken(didToken)
 	require.NoError(t, err, "validate did token failed")
@@ -28,7 +29,7 @@ func createDidToken(t *testing.T) string {
 
 	claimObj := token.Claim{
 		Iat: time.Now().Unix(),
-		Ext: time.Now().Add(1 * time.Minute).Unix(),
+		Ext: time.Now().Add(10 * time.Minute).Unix(),
 		Iss: fmt.Sprintf("did:ethr:%s", addr.String()),
 	}
 

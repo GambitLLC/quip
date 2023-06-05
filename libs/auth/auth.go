@@ -33,9 +33,13 @@ var tokenContextKey contextKey = "didToken"
 func TokenContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-		ctx := context.WithValue(r.Context(), tokenContextKey, token)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r.WithContext(NewTokenContext(r.Context(), token)))
 	})
+}
+
+// NewTokenContext adds the given token to the context.
+func NewTokenContext(ctx context.Context, token string) context.Context {
+	return context.WithValue(ctx, tokenContextKey, token)
 }
 
 // TokenFromContext retrieves the DIDToken from the context.
