@@ -18,7 +18,7 @@ import (
 
 const (
 	serverPublicCertificateFileConfigKey = "api.tls.certificateFile"
-	serverPrivateKeyFileConfigKey        = "api.tls.privateKey"
+	serverPrivateKeyFileConfigKey        = "api.tls.privateKeyFile"
 	serverRootCertificatePathConfigKey   = "api.tls.rootCertificateFile"
 )
 
