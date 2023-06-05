@@ -29,8 +29,6 @@ type ServerParams struct {
 	ln       net.Listener
 	handlers []GRPCHandler
 
-	// Root CA public certificate in PEM format.
-	rootCertData []byte
 	// Public certificate in PEM format.
 	// If this field is the same as rootCaPublicCertificateFileData then the certificate is not backed by a CA.
 	publicCertData []byte
