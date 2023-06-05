@@ -31,8 +31,8 @@ const computedDob = computed(() => {
 
 const computedAddress = computed(() => {
   if (!showAddress.value && user.user?.personalInfo) {
-    const split = user.user.personalInfo.address.split(", ")
-    return "*".repeat(split[0].length) + ", " + "*".repeat(split[1].length) + ", " + split[2]
+    //replace all non space or comma characters with '*'
+    return user.user?.personalInfo.address.replace(/[^ ,]/g, "*")
   }
 
   return user.user?.personalInfo.address
@@ -48,24 +48,24 @@ const computedAddress = computed(() => {
     <div class="px-8 cardRow">
       <h3 class="subtext">Legal Name</h3>
       <div class="d-flex align-center">
-        <VisibilityIcon v-model="showName"/>
         <h3 class="info">{{computedName}}</h3>
+        <VisibilityIcon v-model="showName"/>
       </div>
     </div>
     <v-divider class="text-border-grey divider"/>
     <div class="px-8 cardRow">
       <h3 class="subtext">Date of Birth</h3>
       <div class="d-flex align-center">
-        <VisibilityIcon v-model="showDOB"/>
         <h3 class="info">{{computedDob}}</h3>
+        <VisibilityIcon v-model="showDOB"/>
       </div>
     </div>
     <v-divider class="text-border-grey divider"/>
     <div class="px-8 cardRow">
       <h3 class="subtext">Address</h3>
       <div class="d-flex align-center">
-        <VisibilityIcon v-model="showAddress"/>
         <h3 class="info">{{computedAddress}}</h3>
+        <VisibilityIcon v-model="showAddress"/>
       </div>
     </div>
   </QuipCard>

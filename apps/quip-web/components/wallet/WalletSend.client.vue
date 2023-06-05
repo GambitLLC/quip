@@ -5,8 +5,7 @@ import QuipInput from "~/components/util/QuipInput.vue";
 import {useTheme} from "vuetify";
 
 const colors = useTheme().current.value.colors
-const {metadata, balance, send} = useCrypto()
-const ticker = useTicker()
+const { send } = useCrypto()
 
 const transferType = ref<string>('SOL')
 const solValue = ref<number>(0)

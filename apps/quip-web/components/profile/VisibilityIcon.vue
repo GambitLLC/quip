@@ -6,7 +6,7 @@ const emits = defineEmits<{ (e: 'update:modelValue', value: boolean): void }>()
 </script>
 
 <template>
-  <div @click="emits('update:modelValue', !modelValue)" v-ripple class="visibilityIcon text-primary mr-2">
+  <div @click="emits('update:modelValue', !modelValue)" v-ripple class="visibilityIcon text-primary ml-2">
     <Icon :icon="modelValue? 'material-symbols:visibility-outline' : 'material-symbols:visibility-off-outline'"/>
   </div>
 </template>

@@ -6,7 +6,7 @@ import {useWebSocket} from "@vueuse/core";
 import { Connection, PublicKey, LAMPORTS_PER_SOL, Transaction, SystemProgram } from "@solana/web3.js";
 
 import { Buffer } from 'buffer'
-import {Ref} from "vue";
+import { ComputedRef, Ref } from "vue";
 globalThis.Buffer = Buffer
 
 type LoginEvent = PromiEvent<string | null, LoginWithEmailOTPEvents & {
@@ -50,6 +50,8 @@ interface Crypto {
   connection: Ref<Connection | null>,
   pubKey: Ref<PublicKey | null>,
   balance: Ref<number | null>,
+  address: ComputedRef<string | null>,
+  shortAddress: ComputedRef<string | null>
   send: (destinationAddress: string, sol: number) => Promise<string | null>,
   init: () => Promise<void>
 }
@@ -108,7 +110,13 @@ const _useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): C
   const connection = ref<Connection | null>(null)
   const pubKey = ref<PublicKey | null>(null)
   const balance = ref<number | null>(null)
-  let isInitialized = false
+  const address = computed(() => metadata.value?.publicAddress ?? null)
+  const shortAddress = computed(
+    () =>
+      address.value !== null ?
+        address.value.substring(0, 4) + "..." + address.value.substring(address.value.length - 4)
+        : null
+  )
 
   async function getBalance(): Promise<number | null> {
     if (!connection.value || !pubKey.value) return null;
@@ -163,6 +171,8 @@ const _useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): C
     return await connection.value.sendRawTransaction(tx.serialize());
   }
 
+  let isInitialized = false
+
   async function init() {
     if (isInitialized) return
     isInitialized = true
@@ -194,6 +204,8 @@ const _useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): C
     connection,
     pubKey,
     balance,
+    address,
+    shortAddress,
     send,
     init
   } as Crypto

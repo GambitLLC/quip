@@ -5,7 +5,6 @@ export default defineNuxtConfig({
       RPC_URL: 'https://api.devnet.solana.com',
       WSS_BINANCE: 'wss://ws-api.binance.us:443/ws-api/v3',
       PK_MAGIC: 'pk_live_79385C11B09DBB96'
-
     }
   },
   nitro: {
@@ -32,6 +31,7 @@ export default defineNuxtConfig({
   routeRules: {
     '/': { prerender: true },
     '/wallet': { ssr: false },
+    '/profile': { ssr: false }
   },
   app: {
     head: {
