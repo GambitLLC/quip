@@ -1,37 +1,53 @@
 <script setup lang="ts">
-import QuipQrCode from "~/components/util/QuipQrCode.client.vue";
-import {Icon} from "@iconify/vue";
-import {useTheme} from "vuetify";
+import QuipQrCode from '~/components/util/QuipQrCode.client.vue';
+import { Icon } from '@iconify/vue';
+import { useTheme } from 'vuetify';
+import {
+  Notification,
+  NotificationType,
+  useNotifications,
+} from '~/store/NotificationStore';
 
-const colors = useTheme().current.value.colors
+const notifications = useNotifications();
 
-const {address, shortAddress} = useCrypto()
+const colors = useTheme().current.value.colors;
+
+const { address, shortAddress } = useCrypto();
+
+const notifThrottle = createThrottle()
 
 function copyAddress() {
   if (address.value === null) return;
   navigator.clipboard.writeText(address.value);
+
+  notifThrottle(() => {
+    notifications.addNotification(new Notification(NotificationType.SUCCESS, "Copied Address!"));
+  }, 500)
 }
 </script>
 
 <template>
   <div>
     <div>
-      <h3 class="mb-2 subtext">
-        QR Code
-      </h3>
+      <h3 class="mb-2 subtext">QR Code</h3>
       <div v-if="address" class="d-flex align-center justify-center">
-        <QuipQrCode :data="address" :size="160"/>
+        <QuipQrCode :data="address" :size="160" />
       </div>
     </div>
     <div class="mt-6">
-      <h3 class="mb-2 subtext">
-        Wallet Address
-      </h3>
-      <div @click="copyAddress" v-ripple class="address text-border-grey rounded-pill d-flex align-center px-6 unselectable justify-space-between">
+      <h3 class="mb-2 subtext">Wallet Address</h3>
+      <div
+        @click="copyAddress"
+        v-ripple
+        class="address text-border-grey rounded-pill d-flex align-center px-6 unselectable justify-space-between"
+      >
         <h3 class="addressText text-secondary-grey">
           {{ shortAddress }}
         </h3>
-        <Icon class="copyIcon text-primary" icon="material-symbols:content-copy-outline-rounded"/>
+        <Icon
+          class="copyIcon text-primary"
+          icon="material-symbols:content-copy-outline-rounded"
+        />
       </div>
     </div>
   </div>
@@ -39,7 +55,7 @@ function copyAddress() {
 
 <style scoped lang="scss">
 h3 {
-  color: v-bind("colors.jetblack");
+  color: v-bind('colors.jetblack');
 }
 
 .subtext {

@@ -73,6 +73,7 @@ onMounted(() => {
 
 <template>
   <ModalView/>
+  <NotificationView/>
   <transition name="fade-slide" mode="out-in">
     <View :key="isLandingPage">
       <router-view v-slot="{ Component }">
