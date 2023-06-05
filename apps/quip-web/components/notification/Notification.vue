@@ -76,7 +76,7 @@ const timerPercentage = computed(() => {
       <h3 class="message text-white">{{ message }}</h3>
       <v-spacer/>
       <div v-if="dismissable" v-ripple @click="dismiss" class="ml-3 rounded-circle">
-        <Icon icon="material-symbols:close-rounded" class="notificationIcon text-white rounded-circle"/>
+        <Icon icon="material-symbols:close-rounded" class="notificationIcon paddingIcon text-white rounded-circle"/>
       </div>
     </div>
     <v-progress-linear :model-value="timerPercentage" class="mt-1 width-transition text-white"/>
@@ -96,15 +96,6 @@ const timerPercentage = computed(() => {
   pointer-events: all;
   position: relative;
   border-radius: 6px;
-
-
-  @include md-up {
-    max-width: 380px;
-  }
-
-  @include sm-down {
-    width: 100%;
-  }
 }
 
 .notificationIcon {
@@ -113,6 +104,10 @@ const timerPercentage = computed(() => {
   align-items: center;
   width: 24px;
   height: 24px;
+}
+
+.paddingIcon {
+  padding: 2px;
 }
 
 .message {

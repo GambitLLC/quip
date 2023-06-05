@@ -68,4 +68,5 @@ export {
   useNotifications,
   NotificationType,
   Notification,
+  INotification,
 }

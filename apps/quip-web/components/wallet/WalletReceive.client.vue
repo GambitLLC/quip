@@ -14,15 +14,11 @@ const colors = useTheme().current.value.colors;
 
 const { address, shortAddress } = useCrypto();
 
-const notifThrottle = createThrottle()
-
 function copyAddress() {
   if (address.value === null) return;
   navigator.clipboard.writeText(address.value);
 
-  notifThrottle(() => {
-    notifications.addNotification(new Notification(NotificationType.SUCCESS, "Copied Address!"));
-  }, 500)
+  notifications.addNotification(new Notification(NotificationType.SUCCESS, "Copied Address!"));
 }
 </script>
 

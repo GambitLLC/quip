@@ -1,16 +1,23 @@
 <script setup lang="ts">
-const logout = useLogout()
+import { useNotifications, Notification, NotificationType } from "~/store/NotificationStore";
 
-function test() {
-  $fetch('/api/login', { method: 'post', body: { test: 123 } })
+
+const notifications = useNotifications()
+
+function testNotification() {
+  const length = 50
+  //set the length to be a random number from 1 to 50
+  const randomLength = Math.floor(Math.random() * length) + 1
+
+  const randomMessage = Array(randomLength).fill(0).map(() => Math.random().toString(36)[2]).join('')
+
+  notifications.addNotification(new Notification(NotificationType.SUCCESS, randomMessage));
 }
 </script>
 
 <template>
-  <div class="w-100 h-100 d-flex flex-column align-center justify-center">
-<!--    <AvatarCreator/>-->
-    <div @click="test()">Click me!</div>
-    <div v-ripple @click="logout()">Logout</div>
+  <div>
+    <div @click="testNotification" v-ripple>Click me!</div>
   </div>
 </template>
 

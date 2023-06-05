@@ -49,3 +49,19 @@ $fastTransitionTime: 0.2s;
   opacity: 0;
   transform: translateY(1em);
 }
+
+.notification-move,
+.notification-enter-active,
+.notification-leave-active {
+  transition: all $transitionTime ease;
+}
+
+.notification-enter-from,
+.notification-leave-to {
+  opacity: 0;
+  transform: translateX(1em);
+}
+
+.notification-leave-active {
+  position: absolute !important;
+}
