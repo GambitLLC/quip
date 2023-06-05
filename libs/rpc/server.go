@@ -29,8 +29,6 @@ type ServerParams struct {
 	ln       net.Listener
 	handlers []GRPCHandler
 
-	// Root CA public certificate in PEM format.
-	rootCertData []byte
 	// Public certificate in PEM format.
 	// If this field is the same as rootCaPublicCertificateFileData then the certificate is not backed by a CA.
 	publicCertData []byte
@@ -80,25 +78,6 @@ func NewServerParams(cfg config.View, serviceName string) (*ServerParams, error)
 
 			return nil, errors.WithMessagef(err, "failed to read server private key file")
 		}
-
-		// If there's no root CA certificate then use the public certificate as the trusted root.
-		rootCertData := params.publicCertData
-		rootCertFile := cfg.GetString(serverRootCertificatePathConfigKey)
-		if len(rootCertFile) > 0 {
-			logger.Debug().
-				Str("root_cert_file", rootCertFile).
-				Msg("Loading TLS root certificate")
-
-			rootCertData, err = os.ReadFile(rootCertFile)
-			if err != nil {
-				if err := ln.Close(); err != nil {
-					logger.Error().Err(err).Msg("failed to close listener")
-				}
-
-				return nil, errors.WithMessagef(err, "failed to read server root certificate file")
-			}
-		}
-		params.rootCertData = rootCertData
 	}
 
 	return params, nil
