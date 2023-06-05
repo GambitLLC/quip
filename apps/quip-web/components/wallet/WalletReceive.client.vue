@@ -5,19 +5,12 @@ import {useTheme} from "vuetify";
 
 const colors = useTheme().current.value.colors
 
-const crypto = useCrypto()
-const ticker = useTicker()
-const {metadata, balance, send} = crypto
+const {address, shortAddress} = useCrypto()
 
 function copyAddress() {
-  if (!metadata.value || !metadata.value?.publicAddress) return;
-  navigator.clipboard.writeText(metadata.value?.publicAddress ?? "");
+  if (address.value === null) return;
+  navigator.clipboard.writeText(address.value);
 }
-
-const computedAddress = computed(() => {
-  if (!metadata.value || !metadata.value?.publicAddress) return null;
-  return metadata.value?.publicAddress.substring(0, 4) + "..." + metadata.value?.publicAddress.substring(metadata.value?.publicAddress.length - 4);
-})
 </script>
 
 <template>
@@ -26,8 +19,8 @@ const computedAddress = computed(() => {
       <h3 class="mb-2 subtext">
         QR Code
       </h3>
-      <div v-if="metadata?.publicAddress" class="d-flex align-center justify-center">
-        <QuipQrCode :data="metadata.publicAddress" :size="160"/>
+      <div v-if="address" class="d-flex align-center justify-center">
+        <QuipQrCode :data="address" :size="160"/>
       </div>
     </div>
     <div class="mt-6">
@@ -36,7 +29,7 @@ const computedAddress = computed(() => {
       </h3>
       <div @click="copyAddress" v-ripple class="address text-border-grey rounded-pill d-flex align-center px-6 unselectable justify-space-between">
         <h3 class="addressText text-secondary-grey">
-          {{ computedAddress }}
+          {{ shortAddress }}
         </h3>
         <Icon class="copyIcon text-primary" icon="material-symbols:content-copy-outline-rounded"/>
       </div>

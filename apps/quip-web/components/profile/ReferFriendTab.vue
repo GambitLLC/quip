@@ -32,6 +32,8 @@ function formatDate(date: Date) {
 const tableRef = ref<HTMLElement | null>(null)
 const {width, height} = useElementSize(tableRef)
 const computedHeight = computed(() => `${height.value - 16 - 20 - 25}px`)
+
+const emailToSend = ref("")
 </script>
 
 <template>
@@ -42,7 +44,7 @@ const computedHeight = computed(() => `${height.value - 16 - 20 - 25}px`)
         $3.00</h3>
       <div class="mb-4">
         <h3 class="subtext inviteText mb-2">Send Invites</h3>
-        <QuipInput label="Email Address" type="email">
+        <QuipInput v-model="emailToSend" label="Email Address" type="email">
           <QuipButton class="bg-primary ma-1" :style="{height: '38px'}" :width="78"><h3 class="sendBtn">Send</h3></QuipButton>
         </QuipInput>
       </div>
