@@ -7,6 +7,7 @@ import (
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -15,6 +16,10 @@ import (
 const (
 	clientTrustedCertificatePathConfigKey = serverRootCertificatePathConfigKey
 )
+
+var clientLogger = zerolog.New(os.Stderr).With().
+	Str("component", "rpc.client").
+	Logger()
 
 func GRPCClientFromConfig(cfg config.View, prefix string) (*grpc.ClientConn, error) {
 	addr := fmt.Sprintf(
@@ -27,9 +32,9 @@ func GRPCClientFromConfig(cfg config.View, prefix string) (*grpc.ClientConn, err
 
 	trustedCertFile := cfg.GetString(clientTrustedCertificatePathConfigKey)
 	if len(trustedCertFile) > 0 {
-		// logger.Debug().
-		// 	Str("trusted_cert_file", trustedCertFile).
-		// 	Msg("Loading TLS trusted certificate file")
+		clientLogger.Debug().
+			Str("trusted_cert_file", trustedCertFile).
+			Msg("Loading TLS trusted certificate file")
 
 		trustedCertData, err := os.ReadFile(trustedCertFile)
 		if err != nil {
