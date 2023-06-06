@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {useDisplay, useTheme} from "vuetify";
-import {useWindowScroll} from "@vueuse/core";
+import { useEventListener, useWindowScroll } from "@vueuse/core";
 import {computed} from "vue";
 import View from "~/components/util/View.vue";
 
@@ -19,7 +19,6 @@ const doAnimate = ref(false)
 const isLandingPage = computed(() => router.currentRoute.value.name === 'index')
 
 const computedBG = computed(() => {
-  if (!isLandingPage.value) return nonBG
   if (mobile.value) return topBG
 
   if (y.value <= 0) {
@@ -54,6 +53,15 @@ watch(doAnimate, (value) => {
   if (value) document.body.classList.add("doAnimate")
   else document.body.classList.remove("doAnimate")
 })
+
+//disable multi-touch (pinch to zoom)
+function zoomHandler(event: TouchEvent) {
+  if (event.touches.length > 1) {
+    event.preventDefault();
+  }
+}
+
+useEventListener('touchmove', zoomHandler, { passive: false });
 
 onMounted(() => {
   if (!isLandingPage.value) {

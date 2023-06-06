@@ -2,11 +2,13 @@
 import {useDisplay, useTheme} from "vuetify";
 import QuipButton from "~/components/util/QuipButton.vue"
 import IconButton from "~/components/util/IconButton.vue"
-import {onScroll, useScroll} from "~/utils/scroll";
+import {useScroll} from "~/utils/scroll";
 import { Tab } from "~/utils/types";
 import { capitalize } from "~/utils/text";
 import { vOnClickOutside } from '@vueuse/components'
 import {useModal} from "~/store/ModalStore";
+import { Icon } from "@iconify/vue";
+import { useEventListener } from "@vueuse/core";
 
 const props = defineProps<{
   tabSections: [Tab, HTMLElement | null][]
@@ -33,8 +35,14 @@ function changeTab(tab: Tab) {
 }
 
 const tabs: Tab[] = ['home', 'about', 'games', 'faq']
+const tabIcons = {
+  home: 'material-symbols:home-outline-rounded',
+  about: 'material-symbols:info-outline-rounded',
+  games: 'material-symbols:videogame-asset-outline-rounded',
+  faq: 'material-symbols:help-outline-rounded',
+}
 
-onScroll((e) => {
+useEventListener('scroll', (e) => {
   if (isOpen.value) isOpen.value = false
 })
 
@@ -68,6 +76,11 @@ const intersectedTab = computed(() => {
   return closest
 })
 
+function openLoginModal() {
+  isOpen.value = false
+  modal.open('Login')
+}
+
 function goHome() {
   changeTab('home')
 }
@@ -86,7 +99,7 @@ function goHome() {
               </h3>
             </a>
             <QuipButton href="https://www.apple.com/app-store/" target="_blank" icon="material-symbols:download-rounded" class="bg-primary mr-3">
-              <h3 class="font-weight-bold">
+              <h3 class="font-weight-bold text-white">
                 Download App
               </h3>
             </QuipButton>
@@ -105,10 +118,17 @@ function goHome() {
               <IconButton @click="toggleMobileMenu" :icon="isOpen? 'material-symbols:close-rounded' : 'material-symbols:menu'" class="login text-jetblack"/>
             </div>
           </div>
-          <transition-group tag="div" name="fade-slide" :style="{ '--total': tabs.length }">
-            <div class="d-flex" v-for="(tab, i) in tabs" :key="i" :style="{'--i': i}" v-if="isOpen" @click="changeTab(tab)">
+          <transition-group tag="div" name="fade-slide" :style="{ '--total': tabs.length+1 }">
+            <div class="d-flex align-center" v-for="(tab, i) in tabs" :key="i" :style="{'--i': i}" v-if="isOpen" @click="changeTab(tab)">
+              <Icon class="mobileIcon unselectable mr-2" :icon="tabIcons[tab]" :class="{'text-primary': intersectedTab === tab, 'subtext': intersectedTab !== tab}"/>
               <a class="py-4">
-                <h3 class="unselectable" :class="{'text-primary': intersectedTab === tab}">{{ capitalize(tab) }}</h3>
+                <h3 class="unselectable" :class="{'text-primary': intersectedTab === tab, 'subtext': intersectedTab !== tab}">{{ capitalize(tab) }}</h3>
+              </a>
+            </div>
+            <div class="d-flex align-center" :key="tabs.length" :style="{'--i': tabs.length}" v-if="isOpen" @click="openLoginModal">
+              <Icon class="mobileIcon unselectable mr-2" icon="material-symbols:login-rounded"/>
+              <a class="py-4">
+                <h3 class="unselectable">Login</h3>
               </a>
             </div>
           </transition-group>
@@ -176,10 +196,21 @@ function goHome() {
 .topbarMobile {
   height: 40px;
   transition: height $transitionTime ease-in-out;
+  transition-delay: .35s;
 }
 
 .topbarMobileOpen {
-  height: 264px;
+  height: 316px;
+  transition-delay: 0s;
+}
+
+.mobileIcon {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color $transitionTime ease-in-out, inopacity $transitionTime ease--out;
 }
 
 .logo {
@@ -196,6 +227,8 @@ a {
   @include sm-down {
     padding: 0;
   }
+
+  transition: color $transitionTime ease-in-out, inopacity $transitionTime ease--out;
 }
 
 h3 {
@@ -207,7 +240,12 @@ h3 {
     line-height: 20px;
   }
 
-  transition: color $transitionTime ease-in-out;
+  transition: color $transitionTime ease-in-out, inopacity $transitionTime ease--out;
+  color: v-bind("colors.jetblack");
+}
+
+.subtext {
+  opacity: .4;
 }
 
 .buttons {
