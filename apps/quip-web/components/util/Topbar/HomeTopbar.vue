@@ -8,7 +8,8 @@ import {Icon} from "@iconify/vue";
 import { vOnClickOutside } from '@vueuse/components'
 import IconButton from "~/components/util/IconButton.vue";
 import { capitalize } from "~/utils/text";
-import { HomeTab, Tab } from "~/utils/types";
+import { HomeTab } from "~/utils/types";
+import { useEventListener } from "@vueuse/core";
 
 const {mobile} = useDisplay()
 
@@ -49,6 +50,10 @@ function pushTab(tab: HomeTab) {
   router.push({name: tab})
   isOpen.value = false
 }
+
+useEventListener('scroll', (e) => {
+  if (isOpen.value) isOpen.value = false
+})
 </script>
 
 <template>

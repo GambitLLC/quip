@@ -2,12 +2,13 @@
 import {useDisplay, useTheme} from "vuetify";
 import QuipButton from "~/components/util/QuipButton.vue"
 import IconButton from "~/components/util/IconButton.vue"
-import {onScroll, useScroll} from "~/utils/scroll";
+import {useScroll} from "~/utils/scroll";
 import { Tab } from "~/utils/types";
 import { capitalize } from "~/utils/text";
 import { vOnClickOutside } from '@vueuse/components'
 import {useModal} from "~/store/ModalStore";
 import { Icon } from "@iconify/vue";
+import { useEventListener } from "@vueuse/core";
 
 const props = defineProps<{
   tabSections: [Tab, HTMLElement | null][]
@@ -41,7 +42,7 @@ const tabIcons = {
   faq: 'material-symbols:help-outline-rounded',
 }
 
-onScroll((e) => {
+useEventListener('scroll', (e) => {
   if (isOpen.value) isOpen.value = false
 })
 

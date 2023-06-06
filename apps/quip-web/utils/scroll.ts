@@ -22,18 +22,7 @@ function scrollIntoViewWithOffset(element?: HTMLElement | null, offset?: number)
   })
 }
 
-function onScroll(callback: (event: Event) => void) {
-  onMounted(() => {
-    window.addEventListener("scroll", callback)
-  })
-
-  onUnmounted(() => {
-    window.removeEventListener("scroll", callback)
-  })
-}
-
 export {
   useScroll,
   scrollIntoViewWithOffset,
-  onScroll,
 }
