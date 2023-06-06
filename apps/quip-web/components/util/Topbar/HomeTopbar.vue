@@ -11,6 +11,8 @@ import { capitalize } from "~/utils/text";
 import { HomeTab } from "~/utils/types";
 import { useEventListener } from "@vueuse/core";
 
+const logout = useLogout()
+
 const {mobile} = useDisplay()
 
 const { isScrolled } = useScroll()
@@ -42,8 +44,13 @@ function toggleMobileMenu() {
 const tabs: HomeTab[] = ['home', 'wallet', 'profile']
 const tabIcons = {
   home: 'material-symbols:home-outline-rounded',
-  wallet: 'material-symbols:account-balance-wallet-outline-rounded',
+  wallet: 'material-symbols:wallet',
   profile: 'material-symbols:account-circle',
+}
+
+function doLogout() {
+  logout()
+  router.push({name: 'index'})
 }
 
 function pushTab(tab: HomeTab) {
@@ -128,11 +135,17 @@ useEventListener('scroll', (e) => {
               <IconButton @click="toggleMobileMenu" :icon="isOpen? 'material-symbols:close-rounded' : 'material-symbols:menu'" class="login text-jetblack ml-2"/>
             </div>
           </div>
-          <transition-group tag="div" name="fade-slide" :style="{ '--total': tabs.length }">
+          <transition-group tag="div" name="fade-slide" :style="{ '--total': tabs.length+1 }">
             <div @click="pushTab(tab)" class="d-flex align-center" v-for="(tab, i) in tabs" :key="i" :style="{'--i': i}" v-if="isOpen">
               <Icon class="mobileIcon unselectable mr-2" :icon="tabIcons[tab]" :class="{'text-primary': computedRoute === tab, 'subtext': computedRoute !== tab}"/>
               <a class="py-4">
                 <h3 class="unselectable" :class="{'text-primary': computedRoute === tab, 'subtext': computedRoute !== tab}">{{capitalize(tab)}}</h3>
+              </a>
+            </div>
+            <div @click="doLogout" class="d-flex align-center" :key="3" :style="{'--i': 3}" v-if="isOpen">
+              <Icon class="mobileIcon unselectable mr-2 text-jetblack" icon="material-symbols:logout-rounded"/>
+              <a class="py-4">
+                <h3 class="unselectable">Logout</h3>
               </a>
             </div>
           </transition-group>
@@ -221,6 +234,8 @@ h3 {
     font-size: 16px;
     line-height: 20px;
   }
+
+  color: v-bind("colors.jetblack");
 }
 
 .buttons {
@@ -248,7 +263,7 @@ h3 {
 }
 
 .topbarMobileOpen {
-  height: 212px;
+  height: 264px;
   transition-delay: 0s;
 }
 

@@ -24,7 +24,7 @@ const computedBalance = computed(() => {
 </script>
 
 <template>
-  <div class="w-100 h-100 d-flex align-center justify-center">
+  <div class="w-100 h-100 d-flex align-center justify-center pa-4">
     <QuipAnimatedCard has-border is-animated class="bg-white wallet d-flex flex-column">
       <div class="pa-4 h-100 d-flex flex-column">
         <div class="my-10">
@@ -63,11 +63,17 @@ const computedBalance = computed(() => {
 </template>
 
 <style scoped lang="scss">
+@import "@/styles/mixins.scss";
+
 .wallet {
   min-width: 400px;
   min-height: 550px;
   border-radius: 24px;
   box-shadow: 0 12px 56px rgba(119,118,122,.15);
+
+  @include sm-down {
+    min-width: 100%;
+  }
 }
 
 h3 {

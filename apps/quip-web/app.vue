@@ -19,7 +19,6 @@ const doAnimate = ref(false)
 const isLandingPage = computed(() => router.currentRoute.value.name === 'index')
 
 const computedBG = computed(() => {
-  if (!isLandingPage.value) return nonBG
   if (mobile.value) return topBG
 
   if (y.value <= 0) {
