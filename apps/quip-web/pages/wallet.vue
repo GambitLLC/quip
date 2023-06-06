@@ -21,6 +21,8 @@ const computedBalance = computed(() => {
   if (!balance.value) return '0.00';
   return (balance.value * ticker.usdPrice.value).toFixed(2);
 })
+
+disableScroll()
 </script>
 
 <template>

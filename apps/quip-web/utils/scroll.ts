@@ -1,4 +1,4 @@
-import {useWindowScroll} from "@vueuse/core";
+import { useEventListener, useWindowScroll } from "@vueuse/core";
 
 function useScroll() {
   const { x, y } = useWindowScroll()
@@ -22,7 +22,29 @@ function scrollIntoViewWithOffset(element?: HTMLElement | null, offset?: number)
   })
 }
 
+function disableScroll() {
+  const wheelEvent = 'onwheel' in document.createElement('div') ? 'wheel' : 'mousewheel';
+
+  function preventDefault(e: Event) {
+    e.preventDefault();
+  }
+
+  function preventDefaultForScrollKeys(e: KeyboardEvent) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+    }
+  }
+
+  //@ts-ignore
+  useEventListener('DOMMouseScroll', preventDefault, false) // older FF
+  //@ts-ignore
+  useEventListener(wheelEvent, preventDefault, { passive: false })
+  useEventListener('touchmove', preventDefault, { passive: false })
+  useEventListener('keydown', preventDefaultForScrollKeys, { passive: false })
+}
+
 export {
   useScroll,
   scrollIntoViewWithOffset,
+  disableScroll
 }

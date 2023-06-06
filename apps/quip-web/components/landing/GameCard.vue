@@ -38,6 +38,7 @@ function calcCardRot() {
 }
 
 onBeforeMount(calcCardRot)
+onMounted(calcCardRot)
 const { width, height } = useWindowSize()
 watch(width, calcCardRot)
 watch(height, calcCardRot)
