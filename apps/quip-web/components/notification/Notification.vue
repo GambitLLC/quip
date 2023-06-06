@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { NotificationType } from "~/store/NotificationStore";
 import { Icon } from "@iconify/vue";
+import { useElementBounding, useWindowSize } from "@vueuse/core";
 
 const props = withDefaults(defineProps<{
   message: string,
@@ -11,6 +12,10 @@ const props = withDefaults(defineProps<{
   dismissable: true,
   dismissAfter: 5000,
 })
+
+const notificationRef = ref<HTMLElement | null>(null)
+const {width, height} = useWindowSize()
+const cachedTop = ref("0px")
 
 const emit = defineEmits<{
   (e: 'dismiss'): void,
@@ -23,7 +28,17 @@ const counter = ref(0)
 function dismiss() {
   if (timer.value) clearTimeout(timer.value)
   if (interval.value) clearInterval(interval.value)
-  emit('dismiss')
+
+  if (notificationRef.value) {
+    const bottom = notificationRef.value.getBoundingClientRect().bottom
+    cachedTop.value = `${height.value - (bottom + 12 + 16)}px`
+
+    console.log(cachedTop.value)
+  }
+
+  nextTick(() => {
+    emit('dismiss')
+  })
 }
 
 const computedIcon = computed(() => {
@@ -64,22 +79,23 @@ const timerPercentage = computed(() => {
 </script>
 
 <template>
-  <div class="notification text-white elevation-3 pa-3" :class="{
+  <div ref="notificationRef" class="mb-3 d-flex justify-end notif">
+    <div class="notification text-white elevation-3 pa-3" :class="{
         'bg-success': status === NotificationType.SUCCESS,
         'bg-warning': status === NotificationType.WARNING,
         'bg-error': status === NotificationType.ERROR,
         'bg-info': status === NotificationType.INFO,
         'pb-2': dismissable,
     }">
-    <div class="d-flex align-center">
-      <Icon :icon="computedIcon" class="notificationIcon mr-2"/>
-      <h3 class="message text-white">{{ message }}</h3>
-      <v-spacer/>
-      <div v-if="dismissable" v-ripple @click="dismiss" class="ml-3 rounded-circle">
-        <Icon icon="material-symbols:close-rounded" class="notificationIcon paddingIcon text-white rounded-circle"/>
+      <div class="notificationRow">
+        <Icon :icon="computedIcon" class="notificationIcon mr-2"/>
+        <h3 class="message text-white">{{ message }}</h3>
+        <div v-if="dismissable" v-ripple @click="dismiss" class="ml-2 rounded-circle">
+          <Icon icon="material-symbols:close-rounded" class="notificationIcon paddingIcon text-white rounded-circle"/>
+        </div>
       </div>
+      <v-progress-linear :model-value="timerPercentage" class="mt-1 width-transition text-white"/>
     </div>
-    <v-progress-linear :model-value="timerPercentage" class="mt-1 width-transition text-white"/>
   </div>
 </template>
 
@@ -92,10 +108,21 @@ const timerPercentage = computed(() => {
 <style scoped lang="scss">
 @import "@/styles/mixins.scss";
 
+.notif {
+  bottom: v-bind(cachedTop) !important;
+  right: 0 !important;
+}
+
 .notification {
   pointer-events: all;
   position: relative;
   border-radius: 6px;
+}
+
+.notificationRow {
+  display: flex;
+  align-items: center;
+  justify-content: end;
 }
 
 .notificationIcon {
@@ -104,6 +131,7 @@ const timerPercentage = computed(() => {
   align-items: center;
   width: 24px;
   height: 24px;
+  flex-shrink: 0;
 }
 
 .paddingIcon {
@@ -113,5 +141,6 @@ const timerPercentage = computed(() => {
 .message {
   font-size: 14px;
   font-weight: 500;
+  word-break: break-all;
 }
 </style>

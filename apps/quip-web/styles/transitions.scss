@@ -64,4 +64,5 @@ $fastTransitionTime: 0.2s;
 
 .notification-leave-active {
   position: absolute !important;
+  pointer-events: none;
 }
