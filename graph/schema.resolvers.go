@@ -7,77 +7,41 @@ package graph
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/GambitLLC/quip/graph/model"
+	"github.com/GambitLLC/quip/libs/auth"
 )
 
-// Results is the resolver for the results field.
-func (r *matchResolver) Results(ctx context.Context, obj *model.Match) (*model.MatchResults, error) {
-	panic(fmt.Errorf("not implemented: Results - results"))
-}
-
-// AddFriend is the resolver for the addFriend field.
-func (r *mutationResolver) AddFriend(ctx context.Context, userID string) (*bool, error) {
-	panic(fmt.Errorf("not implemented: AddFriend - addFriend"))
-}
-
-// RemoveFriend is the resolver for the removeFriend field.
-func (r *mutationResolver) RemoveFriend(ctx context.Context, userID string) (*bool, error) {
-	panic(fmt.Errorf("not implemented: RemoveFriend - removeFriend"))
-}
-
-// CreateDuel is the resolver for the createDuel field.
-func (r *mutationResolver) CreateDuel(ctx context.Context, gamemode string) (*model.Duel, error) {
-	panic(fmt.Errorf("not implemented: CreateDuel - createDuel"))
-}
-
-// InviteToDuel is the resolver for the inviteToDuel field.
-func (r *mutationResolver) InviteToDuel(ctx context.Context, userID string) (*model.Duel, error) {
-	panic(fmt.Errorf("not implemented: InviteToDuel - inviteToDuel"))
-}
-
-// StartDuel is the resolver for the startDuel field.
-func (r *mutationResolver) StartDuel(ctx context.Context) (*model.Match, error) {
-	panic(fmt.Errorf("not implemented: StartDuel - startDuel"))
-}
-
-// Player is the resolver for the player field.
-func (r *queryResolver) Player(ctx context.Context) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: Player - player"))
+// UpdateProfile is the resolver for the updateProfile field.
+func (r *mutationResolver) UpdateProfile(ctx context.Context, changes map[string]interface{}) (bool, error) {
+	log.Printf("%+v", changes)
+	return true, nil
 }
 
 // User is the resolver for the user field.
-func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
+func (r *queryResolver) User(ctx context.Context, id *string) (*model.User, error) {
+	if id == nil {
+		userId := auth.UserFromContext(ctx)
+		id = &userId
+	}
+
+	return &model.User{
+		ID: *id,
+	}, nil
 }
 
-// Match is the resolver for the match field.
-func (r *queryResolver) Match(ctx context.Context, id string) (*model.Match, error) {
-	panic(fmt.Errorf("not implemented: Match - match"))
+// Profile is the resolver for the profile field.
+func (r *userResolver) Profile(ctx context.Context, obj *model.User) (*model.Profile, error) {
+	return &model.Profile{
+		Username: fmt.Sprintf("user: %s", obj.ID),
+		Dob: &model.Date{
+			Year:  2003,
+			Month: 1,
+			Day:   2,
+		},
+	}, nil
 }
-
-// Status is the resolver for the status field.
-func (r *subscriptionResolver) Status(ctx context.Context) (<-chan *model.Status, error) {
-	panic(fmt.Errorf("not implemented: Status - status"))
-}
-
-// Status is the resolver for the status field.
-func (r *userResolver) Status(ctx context.Context, obj *model.User) (*model.Status, error) {
-	panic(fmt.Errorf("not implemented: Status - status"))
-}
-
-// Friends is the resolver for the friends field.
-func (r *userResolver) Friends(ctx context.Context, obj *model.User) ([]*model.User, error) {
-	panic(fmt.Errorf("not implemented: Friends - friends"))
-}
-
-// MatchHistory is the resolver for the matchHistory field.
-func (r *userResolver) MatchHistory(ctx context.Context, obj *model.User) ([]*model.Match, error) {
-	panic(fmt.Errorf("not implemented: MatchHistory - matchHistory"))
-}
-
-// Match returns MatchResolver implementation.
-func (r *Resolver) Match() MatchResolver { return &matchResolver{r} }
 
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
@@ -85,24 +49,9 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-// Subscription returns SubscriptionResolver implementation.
-func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
-
 // User returns UserResolver implementation.
 func (r *Resolver) User() UserResolver { return &userResolver{r} }
 
-type matchResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type subscriptionResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *matchResolver) Teams(ctx context.Context, obj *model.Match) ([][]*model.User, error) {
-	panic(fmt.Errorf("not implemented: Teams - teams"))
-}

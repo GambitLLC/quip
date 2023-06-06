@@ -1,120 +1,36 @@
-scalar Time
+directive @goModel(
+  model: String
+  models: [String!]
+) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
+
+directive @goField(
+  forceResolver: Boolean
+  name: String
+  omittable: Boolean
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
 type User {
   id: ID!
-  status: Status!
-  friends: [User!]
-  matchHistory: [Match!]
+  profile: Profile! @goField(forceResolver: true)
 }
 
-enum StatusState {
-  OFFLINE
-
-  "Online on mobile application"
-  IDLE
-
-  "Searching for a match"
-  SEARCHING
-
-  "Creating a custom duel"
-  CREATING
-
-  "Currently in a match"
-  PLAYING
+type Profile {
+  username: String!
+  dob: Date
 }
 
-union StatusDetails = Queue | Duel | Match
-
-type Status {
-  state: StatusState!
-
-  details: StatusDetails
-}
-
-"""
-Represents a custom match in the process of being created.
-"""
-type Duel {
-  id: ID!
-  gamemode: String!
-  players: [User!]
-  invitations: [User!]
-
-  # TODO: additional details like bet amount
-}
-
-type Queue {
-  gamemode: String!
-  players: [User!]!
-  startTime: Time!
-
-  # TODO: additional details like bet amount
-}
-
-type Match {
-  id: ID!
-  gamemode: String!
-
-  connection: String
-
-  teams: [[User!]!]!
-
-  state: MatchState!
-  results: MatchResults
-}
-
-enum MatchState {
-  PENDING
-  IN_PROGRESS
-  FINISHED
-  FAILED
-}
-
-"""
-TODO: determine schema for match results
-type MatchResults {
-  placements: [MatchPlacement!]
-}
-
-type MatchPlacement {
-  players: [User!]
-  place: Int!
-  earnings?
-}
-"""
-type MatchResults {
-  winner: String
-}
+scalar Date @goModel(model: "github.com/GambitLLC/quip/graph/model.Date")
 
 type Query {
-  "Get the currently authenticated User"
-  player: User!
+  # Query for the specified User or currently logged in user if not specified.
+  user(id: String): User
+}
 
-  "Query for a specific user"
-  user(id: ID!): User
-
-  "Query specific matches"
-  match(id: ID!): Match
+input ProfileChanges @goModel(model: "map[string]interface{}") {
+  username: String
+  dob: Date
 }
 
 type Mutation {
-  "Send a friend request to the specified user"
-  addFriend(userId: ID!): Boolean
-
-  "Remove specified user as a friend"
-  removeFriend(userId: ID!): Boolean
-
-  "Creates a duel with the given options"
-  createDuel(gamemode: String!): Duel!
-
-  "Invite specified user to duel the current player is part of"
-  inviteToDuel(userId: ID!): Duel!
-
-  "Starts the duel the current user is part of"
-  startDuel: Match!
-}
-
-type Subscription {
-  "Status of the currently authenticated User"
-  status: Status!
+  updateProfile(changes: ProfileChanges!): Boolean!
 }

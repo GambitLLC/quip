@@ -47,8 +47,8 @@ func main() {
 			},
 		},
 		InitFunc: func(ctx context.Context, initPayload transport.InitPayload) (context.Context, error) {
-			// Pass along authorization header from websocket payload
-			return auth.NewTokenContext(ctx, strings.TrimPrefix(initPayload.Authorization(), "Bearer ")), nil
+			// Get token and user id from authorization header in payload
+			return auth.NewTokenContext(ctx, strings.TrimPrefix(initPayload.Authorization(), "Bearer "))
 		},
 	})
 	srv.Use(extension.Introspection{})
