@@ -114,7 +114,7 @@ const _useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): C
   const shortAddress = computed(
     () =>
       address.value !== null ?
-        address.value.substring(0, 4) + "..." + address.value.substring(address.value.length - 4)
+        address.value.substring(0, 4) + "..." + address.value.slice(-4)
         : null
   )
 
