@@ -103,7 +103,7 @@ function goHome() {
                 Download App
               </h3>
             </QuipButton>
-            <QuipButton @click="modal.open('Login')" :width="130" class="login text-jetblack">
+            <QuipButton @click="openLoginModal" :width="130" class="login text-jetblack">
               <h3 class="font-weight-bold">
                 Login
               </h3>

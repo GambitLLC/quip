@@ -47,13 +47,14 @@ interface Ticker {
 interface Crypto {
   magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>,
   metadata: Ref<MagicUserMetadata | null>,
+  isLoggedIn: Ref<boolean>,
   connection: Ref<Connection | null>,
   pubKey: Ref<PublicKey | null>,
   balance: Ref<number | null>,
   address: ComputedRef<string | null>,
   shortAddress: ComputedRef<string | null>
   send: (destinationAddress: string, sol: number) => Promise<string | null>,
-  init: () => Promise<void>
+  init: () => Promise<void>,
 }
 
 const _useTicker = (): Ticker => {
@@ -107,6 +108,7 @@ const _useTicker = (): Ticker => {
 
 const _useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): Crypto => {
   const metadata = ref<MagicUserMetadata | null>(null)
+  const isLoggedIn = ref(false)
   const connection = ref<Connection | null>(null)
   const pubKey = ref<PublicKey | null>(null)
   const balance = ref<number | null>(null)
@@ -117,6 +119,10 @@ const _useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): C
         address.value.substring(0, 4) + "..." + address.value.slice(-4)
         : null
   )
+
+  magic.user.isLoggedIn().on("done", (result: boolean) => {
+    isLoggedIn.value = result
+  })
 
   async function getBalance(): Promise<number | null> {
     if (!connection.value || !pubKey.value) return null;
@@ -201,6 +207,7 @@ const _useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): C
   return {
     magic,
     metadata,
+    isLoggedIn,
     connection,
     pubKey,
     balance,

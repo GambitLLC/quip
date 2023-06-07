@@ -16,7 +16,7 @@ const colors = useTheme().current.value.colors
 
 const login = useLogin()
 
-const state = ref<LoginModalState>("login")
+const state = ref<LoginModalState>("loading")
 const loginEvent = ref<LoginEvent | null>(null)
 
 const email = ref("")
@@ -26,9 +26,18 @@ function onSubmitOtp(otp: string) {
   state.value = "loading"
 }
 
-function loginAction() {
-  console.log(login)
+async function permitLogin(result: string | null) {
+  state.value = "loading"
 
+  // -- THIS LINE BELOW IS VERY IMPORTANT --
+  await Promise.all([useTicker(), useCrypto()])
+  // -- THIS LINE ABOVE IS VERY IMPORTANT --
+
+  modal.close()
+  await router.push("/home")
+}
+
+function loginAction() {
   loginEvent.value = login(email.value)
   state.value = "loading"
 
@@ -41,19 +50,22 @@ function loginAction() {
       state.value = "error"
       loginEvent.value?.emit('cancel');
     })
-    ?.on('done', async (result) => {
-      // -- THIS LINE BELOW IS VERY IMPORTANT --
-      await Promise.all([useTicker(), useCrypto()])
-      // -- THIS LINE ABOVE IS VERY IMPORTANT --
-
-      modal.close()
-      await router.push("/home")
-    })
+    ?.on('done', permitLogin)
     ?.on('error', (error) => {
       state.value = "error"
       console.error(error)
     })
 }
+
+const { $crypto } = useNuxtApp()
+
+watch($crypto.isLoggedIn, async (newValue) => {
+  if (newValue) {
+    await permitLogin(null)
+  } else {
+    state.value = "login"
+  }
+}, { immediate: true })
 </script>
 
 <template>
@@ -63,7 +75,7 @@ function loginAction() {
         <div>
           <img draggable="false" class="logo unselectable" src="/mobileLogo.svg" alt="Quip Logo" />
         </div>
-        <QuipInput :focused="true" @keydown.enter="loginAction" v-model="email" class="w-100" label="Email Address" type="email"/>
+        <QuipInput :focused="true" @keydown.enter="loginAction" v-model="email" class="w-100" label="Email Address" type="email" autocomplete="email"/>
         <QuipButton @click="loginAction" class="login text-jetblack w-100">
           <h3>Login</h3>
         </QuipButton>
