@@ -1,20 +1,24 @@
 <script setup lang="ts">
 import {useTheme} from "vuetify";
 import QuipDivider from "~/components/util/QuipDivider.vue";
-import Tabs from "~/components/util/Tabs.vue";
 import {Icon} from "@iconify/vue";
 import QuipAnimatedCard from "~/components/util/QuipAnimatedCard.vue";
 import Skeleton from "~/components/util/Skeleton.vue";
+import Tabs from "../components/util/Tabs/Tabs.vue";
+import Tab from "~/components/util/Tabs/Tab.vue";
 import LdsSpinner from "~/components/util/LdsSpinner.vue";
+import WalletReceive from "~/components/wallet/WalletReceive.client.vue"
+import WalletSend from "~/components/wallet/WalletSend.client.vue"
+import WalletOnramp from "~/components/wallet/WalletOnramp.client.vue"
 
 const colors = useTheme().current.value.colors
-const {metadata, balance, send} = useCrypto()
+const { metadata, balance } = useCrypto()
 const ticker = useTicker()
 
 /* UI STATE */
-const walletTabs = ['Receive', 'Send'] as const
-type WalletTab = typeof walletTabs[number]
-const currentTab = ref<WalletTab>(walletTabs[0])
+type WalletFlow = "send" | "deposit" | "buy"
+const walletFlows: WalletFlow[] = ["send", "deposit", "buy"]
+const currentState = ref<WalletFlow>("send")
 
 /* WEB3 SOLANA STUFF */
 const computedBalance = computed(() => {
@@ -47,15 +51,17 @@ disableScroll()
             </Skeleton>
           </div>
         </div>
-        <Tabs class="unselectable mt-6" margin-right="mr-8" :tabs="walletTabs" v-model="currentTab"/>
+        <Tabs v-model="currentState" :tabs="walletFlows" v-slot="slotProps">
+          <Tab :text="slotProps.tab" :selected-value="currentState" class="mx-4 walletTab" :class="slotProps.first ? 'ml-0' : ''"/>
+        </Tabs>
         <QuipDivider class="mb-7"/>
-
         <transition mode="out-in" name="fade">
           <LdsSpinner class="d-flex align-center justify-center mx-auto flex-grow-1 spinnerSpace" v-if="metadata === null"/>
           <div v-else>
             <transition mode="out-in" name="fade">
-              <WalletReceive v-if="currentTab === 'Receive'"/>
-              <WalletSend v-else/>
+              <WalletReceive v-if="currentState === 'deposit'"/>
+              <WalletSend v-else-if="currentState === 'send'"/>
+              <WalletOnramp v-else-if="currentState === 'buy'"/>
             </transition>
           </div>
         </transition>
@@ -66,6 +72,14 @@ disableScroll()
 
 <style scoped lang="scss">
 @import "@/styles/mixins.scss";
+
+.flowBtn {
+  transition: background-color 0.3s ease-in-out;
+}
+
+.walletTab {
+  height: 38px;
+}
 
 .wallet {
   min-width: 400px;
@@ -80,6 +94,11 @@ disableScroll()
 
 h3 {
   color: v-bind("colors.jetblack");
+}
+
+.flowLabel {
+  font-size: 14px;
+  letter-spacing: 1.2px;
 }
 
 .balance {

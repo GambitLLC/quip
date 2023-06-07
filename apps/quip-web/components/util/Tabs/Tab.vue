@@ -1,34 +1,17 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
 import {useTheme} from "vuetify";
+import {capitalize} from "~/utils/text";
 
 const props = defineProps<{
-  tabs: string[],
-  modelValue: string,
-  marginRight?: string,
+  text: T,
+  selectedValue: T
 }>()
 
 const colors = useTheme().current.value.colors
-
-const emits = defineEmits<{ (e: 'update:modelValue', value: string): void }>()
-
-function switchTab(i: number) {
-  emits('update:modelValue', props.tabs[i])
-}
-
-const computedRightMargin = computed(() => props.marginRight ? props.marginRight : 'mr-10')
 </script>
 
 <template>
-  <div class="d-flex">
-    <div
-      v-for="(tab, i) in tabs"
-      :key="i"
-      @click="switchTab(i)"
-      :class="computedRightMargin"
-    >
-      <h3 :class="{'text-primary': tab === modelValue, 'text-jetblack': tab !== modelValue}">{{tab}}</h3>
-    </div>
-  </div>
+  <h3 :class="text === selectedValue ? 'text-primary' : 'text-jetblack'">{{capitalize(text)}}</h3>
 </template>
 
 <style scoped lang="scss">
