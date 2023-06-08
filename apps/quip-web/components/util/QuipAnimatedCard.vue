@@ -17,7 +17,7 @@ const computedHeight = computed(() => `${height.value}px`)
 
 <template>
   <div class="animateCard" :class="{'quipBorder': hasBorder}">
-    <div ref="cardRef" class="card">
+    <div ref="cardRef" class="card h-100">
       <slot />
     </div>
   </div>

@@ -10,15 +10,28 @@ import LdsSpinner from "~/components/util/LdsSpinner.vue";
 import WalletReceive from "~/components/wallet/WalletReceive.client.vue"
 import WalletSend from "~/components/wallet/WalletSend.client.vue"
 import WalletOnramp from "~/components/wallet/WalletOnramp.client.vue"
+import QuipButton from "~/components/util/QuipButton.vue";
+import { watchOnce } from "@vueuse/core";
 
 const colors = useTheme().current.value.colors
 const { metadata, balance } = useCrypto()
 const ticker = useTicker()
 
 /* UI STATE */
-type WalletFlow = "send" | "deposit" | "buy"
-const walletFlows: WalletFlow[] = ["send", "deposit", "buy"]
-const currentState = ref<WalletFlow>("send")
+type WalletFlow =  "info" | "loading" | "send" | "deposit" | "buy"
+const walletFlows: WalletFlow[] = ["info", "send", "deposit", "buy"]
+const walletFlowIcons = ["material-symbols:info-outline-rounded", "material-symbols:arrow-upward-rounded", "material-symbols:arrow-downward-rounded", "material-symbols:credit-card-outline"]
+const currentState = ref<WalletFlow>("loading")
+
+function changeFlow(flow: WalletFlow) {
+  if (currentState.value === "loading") return;
+
+  currentState.value = flow
+}
+
+watch(metadata, (newMetadata) => {
+  newMetadata ? currentState.value = "info" : currentState.value = "loading"
+}, {immediate: true})
 
 /* WEB3 SOLANA STUFF */
 const computedBalance = computed(() => {
@@ -51,19 +64,19 @@ disableScroll()
             </Skeleton>
           </div>
         </div>
-        <Tabs v-model="currentState" :tabs="walletFlows" v-slot="slotProps">
-          <Tab :text="slotProps.tab" :selected-value="currentState" class="mx-4 walletTab" :class="slotProps.first ? 'ml-0' : ''"/>
-        </Tabs>
-        <QuipDivider class="mb-7"/>
-        <transition mode="out-in" name="fade">
-          <LdsSpinner class="d-flex align-center justify-center mx-auto flex-grow-1 spinnerSpace" v-if="metadata === null"/>
-          <div v-else>
-            <transition mode="out-in" name="fade">
-              <WalletReceive v-if="currentState === 'deposit'"/>
-              <WalletSend v-else-if="currentState === 'send'"/>
-              <WalletOnramp v-else-if="currentState === 'buy'"/>
-            </transition>
+        <div class="d-flex align-center justify-space-between text-primary">
+          <div v-ripple v-for="(flow, i) in walletFlows" :key="flow" @click="changeFlow(flow)" class="d-flex flex-column align-center px-4 py-2 unselectable walletFlow">
+            <Icon class="iconLabel mb-1" :class="{'flowLabelSelected': (currentState === flow) || (flow === 'info' && currentState === 'loading')}" :icon="walletFlowIcons[i]"/>
+            <h3 class="flowLabel text-primary" :class="{'flowLabelSelected': (currentState === flow) || (flow === 'info' && currentState === 'loading')}">{{capitalize(flow)}}</h3>
           </div>
+        </div>
+        <QuipDivider class="mb-3"/>
+        <transition mode="out-in" name="fade">
+          <LdsSpinner class="d-flex align-center justify-center mx-auto flex-grow-1 spinnerSpace" v-if="currentState === 'loading'"/>
+          <WalletInfo v-else-if="currentState === 'info'"/>
+          <WalletReceive v-else-if="currentState === 'deposit'"/>
+          <WalletSend v-else-if="currentState === 'send'"/>
+          <WalletOnramp v-else-if="currentState === 'buy'"/>
         </transition>
       </div>
     </QuipAnimatedCard>
@@ -75,10 +88,6 @@ disableScroll()
 
 .flowBtn {
   transition: background-color 0.3s ease-in-out;
-}
-
-.walletTab {
-  height: 38px;
 }
 
 .wallet {
@@ -96,9 +105,27 @@ h3 {
   color: v-bind("colors.jetblack");
 }
 
+.walletFlow {
+  cursor: pointer;
+  border-radius: 10px 10px 0px 0px;
+}
+
 .flowLabel {
-  font-size: 14px;
+  transition: opacity 0.25s ease-in-out;
+  font-size: 12px;
   letter-spacing: 1.2px;
+  opacity: .4;
+}
+
+.iconLabel {
+  transition: opacity 0.25s ease-in-out;
+  font-size: 24px;
+  letter-spacing: 1.2px;
+  opacity: .4;
+}
+
+.flowLabelSelected {
+  opacity: 1;
 }
 
 .balance {
