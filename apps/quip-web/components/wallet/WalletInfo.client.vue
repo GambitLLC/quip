@@ -28,10 +28,10 @@ watchOnce(canvasRef, (newCanvasRef) => {
   console.log('new chart');
 
   //duplicate the first and last values to make the graph look better
-  // priceData.unshift(priceData[0])
-  // priceData.push(priceData[priceData.length - 1])
-  // labels.unshift(labels[0])
-  // labels.push(labels[labels.length - 1])
+  priceData.unshift(priceData[0])
+  priceData.push(priceData[priceData.length - 1])
+  labels.unshift(labels[0])
+  labels.push(labels[labels.length - 1])
 
   const chart = new Chart(newCanvasRef, {
     type: 'line',
@@ -66,75 +66,39 @@ watchOnce(canvasRef, (newCanvasRef) => {
         },
         tooltip: {
           enabled: true,
-          // external: function (context) {
-          //   const price = Number((context.tooltip.body[1].lines[0]).split(" ")[1])
-          //   console.log(context.tooltip)
-          //
-          //   let tooltipEl = document.getElementById('chartjs-tooltip');
-          //
-          //   // Create element on first render
-          //   if (!tooltipEl) {
-          //     tooltipEl = document.createElement('div');
-          //     tooltipEl.classList.add('tooltipChart');
-          //     tooltipEl.id = 'chartjs-tooltip';
-          //     tooltipEl.innerHTML = '<table></table>';
-          //     document.body.appendChild(tooltipEl);
-          //   }
-          //
-          //   // Hide if no tooltip
-          //   const tooltipModel = context.tooltip;
-          //   if (tooltipModel.opacity === 0) {
-          //     console.log("hide")
-          //     tooltipEl.style.opacity = "0";
-          //     return;
-          //   }
-          //
-          //   // Set caret Position
-          //   tooltipEl.classList.remove('above', 'below', 'no-transform');
-          //   if (tooltipModel.yAlign) {
-          //     tooltipEl.classList.add(tooltipModel.yAlign);
-          //   } else {
-          //     tooltipEl.classList.add('no-transform');
-          //   }
-          //
-          //   function getBody(bodyItem) {
-          //     return bodyItem.lines;
-          //   }
-          //
-          //   // Set Text
-          //   if (tooltipModel.body) {
-          //     const titleLines = tooltipModel.title || [];
-          //     const bodyLines = tooltipModel.body.map(getBody);
-          //
-          //     let innerHtml = '<thead>';
-          //
-          //     titleLines.forEach(function(title) {
-          //       innerHtml += '<tr><th>' + title + '</th></tr>';
-          //     });
-          //     innerHtml += '</thead><tbody>';
-          //
-          //     bodyLines.forEach(function(body, i) {
-          //       if (i > 0) return
-          //       const span = '<span>$' + price.toFixed(2) + '</span>';
-          //       innerHtml += '<tr><td>' + span + '</td></tr>';
-          //     });
-          //     innerHtml += '</tbody>';
-          //
-          //     let tableRoot = tooltipEl.querySelector('table');
-          //     if (tableRoot) tableRoot.innerHTML = innerHtml;
-          //   }
-          //
-          //   const position = context.chart.canvas.getBoundingClientRect();
-          //
-          //   // Display, position, and set styles for font
-          //   tooltipEl.style.opacity = "1";
-          //   tooltipEl.style.position = 'absolute';
-          //   tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
-          //   tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
-          //   tooltipEl.style.font = 'co-headline';
-          //   tooltipEl.style.padding = tooltipModel.padding + 'px ' + tooltipModel.padding + 'px';
-          //   tooltipEl.style.pointerEvents = 'none';
-          // },
+          usePointStyle: true,
+          displayColors: false,
+
+          callbacks: {
+            label: (context) => `Solana: ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y)}`,
+            labelColor: (context) => {
+              return {
+                borderColor: 'rgb(174, 80, 253)',
+                backgroundColor: 'rgb(174, 80, 253)',
+
+              }
+            },
+            labelPointStyle: (context) => {
+              //disable the point style
+              return {
+                pointStyle: "circle",
+                rotation: 0,
+              };
+            }
+          },
+          filter: (tooltipItem, i) => {
+            return i === 1
+          },
+          padding: 10,
+          titleMarginBottom: 6,
+          titleFont: {
+            size: 14,
+            family: 'co-headline'
+          },
+          bodyFont: {
+            size: 14,
+            family: 'co-headline'
+          },
         },
       },
       scales: {
@@ -245,7 +209,7 @@ canvas {
   position: absolute;
   width: 100%;
   height: 100%;
-  bottom: 0px;
+  bottom: 25px;
 }
 </style>
 
