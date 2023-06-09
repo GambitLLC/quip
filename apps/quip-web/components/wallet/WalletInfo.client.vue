@@ -16,8 +16,8 @@ watchOnce(canvasRef, (newCanvasRef) => {
       hour: 'numeric',
       hour12: true,
       minute: 'numeric',
-      day: '2-digit',
-      month: '2-digit',
+      day: 'numeric',
+      month: 'numeric',
     });
   });
 
@@ -100,17 +100,13 @@ watchOnce(canvasRef, (newCanvasRef) => {
 });
 
 const currentPrice = computed(() => {
-  if (ticker.klines.value === null) return 'Loading...';
-  return `${ticker.klines.value[
-    ticker.klines.value.length - 1
-  ].closePrice.toFixed(2)} USD`;
+  return `${(ticker.usdPrice.value).toFixed(2)} USD/SOL`;
 });
 
 const deltaChange = computed(() => {
   if (ticker.klines.value === null) return 'Loading...';
   const firstPrice = ticker.klines.value[0].closePrice;
-  const lastPrice =
-    ticker.klines.value[ticker.klines.value.length - 1].closePrice;
+  const lastPrice = ticker.usdPrice.value;
   const delta = lastPrice - firstPrice;
   const percentChange = (delta / firstPrice) * 100;
   return `${delta.toFixed(2)} (${percentChange.toFixed(2)}%)`;
@@ -119,8 +115,7 @@ const deltaChange = computed(() => {
 const deltaChangeIcon = computed(() => {
   if (ticker.klines.value === null) return 'Loading...';
   const firstPrice = ticker.klines.value[0].closePrice;
-  const lastPrice =
-    ticker.klines.value[ticker.klines.value.length - 1].closePrice;
+  const lastPrice = ticker.usdPrice.value;
   const delta = lastPrice - firstPrice;
   if (delta > 0) {
     return 'material-symbols:arrow-upward-rounded';

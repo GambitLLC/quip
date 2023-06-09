@@ -39,6 +39,10 @@ export default defineNuxtConfig({
         { name: 'theme-color', content: 'black-translucent'},
         { name: 'viewport', content: 'width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no' },
       ],
+      script: [
+        { src: "https://js.stripe.com/v3/" },
+        { src: "https://crypto-js.stripe.com/crypto-onramp-outer.js" }
+      ],
       title: 'quip.gg',
       link: [
         //Preconnect to Google Fonts

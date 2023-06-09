@@ -14,12 +14,12 @@ import QuipButton from "~/components/util/QuipButton.vue";
 import { watchOnce } from "@vueuse/core";
 
 const colors = useTheme().current.value.colors
-const { metadata, balance } = useCrypto()
+const { metadata, balance, address } = useCrypto()
 const ticker = useTicker()
 
 /* UI STATE */
 type WalletFlow =  "info" | "loading" | "send" | "deposit" | "buy"
-const walletFlows: WalletFlow[] = ["info", "send", "deposit", "buy"]
+const walletFlows: WalletFlow[] = ["info", "deposit", "send", "buy"]
 const walletFlowIcons = ["material-symbols:info-outline-rounded", "material-symbols:arrow-upward-rounded", "material-symbols:arrow-downward-rounded", "material-symbols:credit-card-outline"]
 const currentState = ref<WalletFlow>("loading")
 

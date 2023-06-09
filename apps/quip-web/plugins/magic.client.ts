@@ -142,7 +142,7 @@ const _useTicker = (): Ticker => {
       if (response.status === 200) {
         switch (response.id) {
           case "price":
-            usdPrice.value = response.result.price
+            usdPrice.value = Number(response.result.price)
             break
           case "klines":
             klines.value = response.result.map((kline: number[]) => {
