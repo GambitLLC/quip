@@ -71,20 +71,6 @@ watchOnce(canvasRef, (newCanvasRef) => {
 
           callbacks: {
             label: (context) => `Solana: ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y)}`,
-            labelColor: (context) => {
-              return {
-                borderColor: 'rgb(174, 80, 253)',
-                backgroundColor: 'rgb(174, 80, 253)',
-
-              }
-            },
-            labelPointStyle: (context) => {
-              //disable the point style
-              return {
-                pointStyle: "circle",
-                rotation: 0,
-              };
-            }
           },
           filter: (tooltipItem, i) => {
             return i === 1
