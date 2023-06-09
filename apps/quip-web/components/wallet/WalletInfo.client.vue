@@ -47,6 +47,9 @@ watchOnce(canvasRef, (newCanvasRef) => {
       ],
     },
     options: {
+      interaction: {
+        mode: 'x'
+      },
       elements: {
         point: {
           pointStyle: false,
@@ -62,12 +65,76 @@ watchOnce(canvasRef, (newCanvasRef) => {
           display: false,
         },
         tooltip: {
-          mode: 'x',
-          enabled: false,
-          external: function (context) {
-            const price = Number((context.tooltip.body[1].lines[0]).split(" ")[1])
-            console.log(price)
-          },
+          enabled: true,
+          // external: function (context) {
+          //   const price = Number((context.tooltip.body[1].lines[0]).split(" ")[1])
+          //   console.log(context.tooltip)
+          //
+          //   let tooltipEl = document.getElementById('chartjs-tooltip');
+          //
+          //   // Create element on first render
+          //   if (!tooltipEl) {
+          //     tooltipEl = document.createElement('div');
+          //     tooltipEl.classList.add('tooltipChart');
+          //     tooltipEl.id = 'chartjs-tooltip';
+          //     tooltipEl.innerHTML = '<table></table>';
+          //     document.body.appendChild(tooltipEl);
+          //   }
+          //
+          //   // Hide if no tooltip
+          //   const tooltipModel = context.tooltip;
+          //   if (tooltipModel.opacity === 0) {
+          //     console.log("hide")
+          //     tooltipEl.style.opacity = "0";
+          //     return;
+          //   }
+          //
+          //   // Set caret Position
+          //   tooltipEl.classList.remove('above', 'below', 'no-transform');
+          //   if (tooltipModel.yAlign) {
+          //     tooltipEl.classList.add(tooltipModel.yAlign);
+          //   } else {
+          //     tooltipEl.classList.add('no-transform');
+          //   }
+          //
+          //   function getBody(bodyItem) {
+          //     return bodyItem.lines;
+          //   }
+          //
+          //   // Set Text
+          //   if (tooltipModel.body) {
+          //     const titleLines = tooltipModel.title || [];
+          //     const bodyLines = tooltipModel.body.map(getBody);
+          //
+          //     let innerHtml = '<thead>';
+          //
+          //     titleLines.forEach(function(title) {
+          //       innerHtml += '<tr><th>' + title + '</th></tr>';
+          //     });
+          //     innerHtml += '</thead><tbody>';
+          //
+          //     bodyLines.forEach(function(body, i) {
+          //       if (i > 0) return
+          //       const span = '<span>$' + price.toFixed(2) + '</span>';
+          //       innerHtml += '<tr><td>' + span + '</td></tr>';
+          //     });
+          //     innerHtml += '</tbody>';
+          //
+          //     let tableRoot = tooltipEl.querySelector('table');
+          //     if (tableRoot) tableRoot.innerHTML = innerHtml;
+          //   }
+          //
+          //   const position = context.chart.canvas.getBoundingClientRect();
+          //
+          //   // Display, position, and set styles for font
+          //   tooltipEl.style.opacity = "1";
+          //   tooltipEl.style.position = 'absolute';
+          //   tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
+          //   tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
+          //   tooltipEl.style.font = 'co-headline';
+          //   tooltipEl.style.padding = tooltipModel.padding + 'px ' + tooltipModel.padding + 'px';
+          //   tooltipEl.style.pointerEvents = 'none';
+          // },
         },
       },
       scales: {
@@ -178,6 +245,42 @@ canvas {
   position: absolute;
   width: 100%;
   height: 100%;
-  bottom: 60px;
+  bottom: 0px;
+}
+</style>
+
+<style lang="scss">
+.tooltipChart {
+  pointer-events: none;
+  background-color: rgba(0, 0, 0, 0.8);
+
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-family: "co-headline";
+
+  //transform: translateY(-50px);
+
+  table {
+    thead {
+      tr {
+        th {
+          color: white;
+          font-size: 12px;
+        }
+      }
+    }
+
+    tbody {
+      tr {
+        td {
+          span {
+            color: white;
+            background: none !important;
+            font-size: 12px;
+          }
+        }
+      }
+    }
+  }
 }
 </style>
