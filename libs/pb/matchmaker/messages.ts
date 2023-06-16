@@ -4,44 +4,44 @@ import { Timestamp } from "../google/protobuf/timestamp";
 
 export const protobufPackage = "quip.matchmaker";
 
-export enum Status {
+export enum State {
   OFFLINE = 0,
   IDLE = 1,
   SEARCHING = 2,
   PLAYING = 3,
 }
 
-export function statusFromJSON(object: any): Status {
+export function stateFromJSON(object: any): State {
   switch (object) {
     case 0:
-    case "STATUS_OFFLINE":
-      return Status.OFFLINE;
+    case "STATE_OFFLINE":
+      return State.OFFLINE;
     case 1:
-    case "STATUS_IDLE":
-      return Status.IDLE;
+    case "STATE_IDLE":
+      return State.IDLE;
     case 2:
-    case "STATUS_SEARCHING":
-      return Status.SEARCHING;
+    case "STATE_SEARCHING":
+      return State.SEARCHING;
     case 3:
-    case "STATUS_PLAYING":
-      return Status.PLAYING;
+    case "STATE_PLAYING":
+      return State.PLAYING;
     default:
-      throw new tsProtoGlobalThis.Error("Unrecognized enum value " + object + " for enum Status");
+      throw new tsProtoGlobalThis.Error("Unrecognized enum value " + object + " for enum State");
   }
 }
 
-export function statusToJSON(object: Status): string {
+export function stateToJSON(object: State): string {
   switch (object) {
-    case Status.OFFLINE:
-      return "STATUS_OFFLINE";
-    case Status.IDLE:
-      return "STATUS_IDLE";
-    case Status.SEARCHING:
-      return "STATUS_SEARCHING";
-    case Status.PLAYING:
-      return "STATUS_PLAYING";
+    case State.OFFLINE:
+      return "STATE_OFFLINE";
+    case State.IDLE:
+      return "STATE_IDLE";
+    case State.SEARCHING:
+      return "STATE_SEARCHING";
+    case State.PLAYING:
+      return "STATE_PLAYING";
     default:
-      throw new tsProtoGlobalThis.Error("Unrecognized enum value " + object + " for enum Status");
+      throw new tsProtoGlobalThis.Error("Unrecognized enum value " + object + " for enum State");
   }
 }
 
@@ -49,28 +49,12 @@ export interface GameConfiguration {
   gamemode: string;
 }
 
-/** Indicates change in queue status. */
-export interface QueueUpdate {
-  /** Identifies the entities whose queue has received an update. */
-  targets: string[];
-  /** Currently searching for a match. */
-  started?:
-    | QueueSearching
-    | undefined;
-  /** Stopped searching for a match or a match has completed. */
-  finished?:
-    | QueueFinished
-    | undefined;
-  /** Found a match. */
-  found?: MatchFound | undefined;
-}
-
 export interface QueueSearching {
   gamemode: string;
   startTime: Date | undefined;
 }
 
-export interface QueueFinished {
+export interface QueueStopped {
   reason?: string | undefined;
 }
 
@@ -79,10 +63,17 @@ export interface MatchFound {
   connection: string;
 }
 
+export interface Status {
+  state: State;
+  searching?: QueueSearching | undefined;
+  stopped?: QueueStopped | undefined;
+  matched?: MatchFound | undefined;
+}
+
 /** Indicates change in status. */
 export interface StatusUpdate {
   targets: string[];
-  status: Status;
+  status: Status | undefined;
 }
 
 function createBaseGameConfiguration(): GameConfiguration {
@@ -132,98 +123,6 @@ export const GameConfiguration = {
   fromPartial<I extends Exact<DeepPartial<GameConfiguration>, I>>(object: I): GameConfiguration {
     const message = createBaseGameConfiguration();
     message.gamemode = object.gamemode ?? "";
-    return message;
-  },
-};
-
-function createBaseQueueUpdate(): QueueUpdate {
-  return { targets: [], started: undefined, finished: undefined, found: undefined };
-}
-
-export const QueueUpdate = {
-  encode(message: QueueUpdate, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    for (const v of message.targets) {
-      writer.uint32(10).string(v!);
-    }
-    if (message.started !== undefined) {
-      QueueSearching.encode(message.started, writer.uint32(18).fork()).ldelim();
-    }
-    if (message.finished !== undefined) {
-      QueueFinished.encode(message.finished, writer.uint32(26).fork()).ldelim();
-    }
-    if (message.found !== undefined) {
-      MatchFound.encode(message.found, writer.uint32(34).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): QueueUpdate {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseQueueUpdate();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.targets.push(reader.string());
-          break;
-        case 2:
-          message.started = QueueSearching.decode(reader, reader.uint32());
-          break;
-        case 3:
-          message.finished = QueueFinished.decode(reader, reader.uint32());
-          break;
-        case 4:
-          message.found = MatchFound.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): QueueUpdate {
-    return {
-      targets: Array.isArray(object?.targets) ? object.targets.map((e: any) => String(e)) : [],
-      started: isSet(object.started) ? QueueSearching.fromJSON(object.started) : undefined,
-      finished: isSet(object.finished) ? QueueFinished.fromJSON(object.finished) : undefined,
-      found: isSet(object.found) ? MatchFound.fromJSON(object.found) : undefined,
-    };
-  },
-
-  toJSON(message: QueueUpdate): unknown {
-    const obj: any = {};
-    if (message.targets) {
-      obj.targets = message.targets.map((e) => e);
-    } else {
-      obj.targets = [];
-    }
-    message.started !== undefined &&
-      (obj.started = message.started ? QueueSearching.toJSON(message.started) : undefined);
-    message.finished !== undefined &&
-      (obj.finished = message.finished ? QueueFinished.toJSON(message.finished) : undefined);
-    message.found !== undefined && (obj.found = message.found ? MatchFound.toJSON(message.found) : undefined);
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<QueueUpdate>, I>>(base?: I): QueueUpdate {
-    return QueueUpdate.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<QueueUpdate>, I>>(object: I): QueueUpdate {
-    const message = createBaseQueueUpdate();
-    message.targets = object.targets?.map((e) => e) || [];
-    message.started = (object.started !== undefined && object.started !== null)
-      ? QueueSearching.fromPartial(object.started)
-      : undefined;
-    message.finished = (object.finished !== undefined && object.finished !== null)
-      ? QueueFinished.fromPartial(object.finished)
-      : undefined;
-    message.found = (object.found !== undefined && object.found !== null)
-      ? MatchFound.fromPartial(object.found)
-      : undefined;
     return message;
   },
 };
@@ -290,22 +189,22 @@ export const QueueSearching = {
   },
 };
 
-function createBaseQueueFinished(): QueueFinished {
+function createBaseQueueStopped(): QueueStopped {
   return { reason: undefined };
 }
 
-export const QueueFinished = {
-  encode(message: QueueFinished, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const QueueStopped = {
+  encode(message: QueueStopped, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.reason !== undefined) {
       writer.uint32(10).string(message.reason);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): QueueFinished {
+  decode(input: _m0.Reader | Uint8Array, length?: number): QueueStopped {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseQueueFinished();
+    const message = createBaseQueueStopped();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -320,22 +219,22 @@ export const QueueFinished = {
     return message;
   },
 
-  fromJSON(object: any): QueueFinished {
+  fromJSON(object: any): QueueStopped {
     return { reason: isSet(object.reason) ? String(object.reason) : undefined };
   },
 
-  toJSON(message: QueueFinished): unknown {
+  toJSON(message: QueueStopped): unknown {
     const obj: any = {};
     message.reason !== undefined && (obj.reason = message.reason);
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<QueueFinished>, I>>(base?: I): QueueFinished {
-    return QueueFinished.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<QueueStopped>, I>>(base?: I): QueueStopped {
+    return QueueStopped.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<QueueFinished>, I>>(object: I): QueueFinished {
-    const message = createBaseQueueFinished();
+  fromPartial<I extends Exact<DeepPartial<QueueStopped>, I>>(object: I): QueueStopped {
+    const message = createBaseQueueStopped();
     message.reason = object.reason ?? undefined;
     return message;
   },
@@ -403,8 +302,95 @@ export const MatchFound = {
   },
 };
 
+function createBaseStatus(): Status {
+  return { state: 0, searching: undefined, stopped: undefined, matched: undefined };
+}
+
+export const Status = {
+  encode(message: Status, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.state !== 0) {
+      writer.uint32(8).int32(message.state);
+    }
+    if (message.searching !== undefined) {
+      QueueSearching.encode(message.searching, writer.uint32(18).fork()).ldelim();
+    }
+    if (message.stopped !== undefined) {
+      QueueStopped.encode(message.stopped, writer.uint32(26).fork()).ldelim();
+    }
+    if (message.matched !== undefined) {
+      MatchFound.encode(message.matched, writer.uint32(34).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): Status {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStatus();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.state = reader.int32() as any;
+          break;
+        case 2:
+          message.searching = QueueSearching.decode(reader, reader.uint32());
+          break;
+        case 3:
+          message.stopped = QueueStopped.decode(reader, reader.uint32());
+          break;
+        case 4:
+          message.matched = MatchFound.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Status {
+    return {
+      state: isSet(object.state) ? stateFromJSON(object.state) : 0,
+      searching: isSet(object.searching) ? QueueSearching.fromJSON(object.searching) : undefined,
+      stopped: isSet(object.stopped) ? QueueStopped.fromJSON(object.stopped) : undefined,
+      matched: isSet(object.matched) ? MatchFound.fromJSON(object.matched) : undefined,
+    };
+  },
+
+  toJSON(message: Status): unknown {
+    const obj: any = {};
+    message.state !== undefined && (obj.state = stateToJSON(message.state));
+    message.searching !== undefined &&
+      (obj.searching = message.searching ? QueueSearching.toJSON(message.searching) : undefined);
+    message.stopped !== undefined && (obj.stopped = message.stopped ? QueueStopped.toJSON(message.stopped) : undefined);
+    message.matched !== undefined && (obj.matched = message.matched ? MatchFound.toJSON(message.matched) : undefined);
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Status>, I>>(base?: I): Status {
+    return Status.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<Status>, I>>(object: I): Status {
+    const message = createBaseStatus();
+    message.state = object.state ?? 0;
+    message.searching = (object.searching !== undefined && object.searching !== null)
+      ? QueueSearching.fromPartial(object.searching)
+      : undefined;
+    message.stopped = (object.stopped !== undefined && object.stopped !== null)
+      ? QueueStopped.fromPartial(object.stopped)
+      : undefined;
+    message.matched = (object.matched !== undefined && object.matched !== null)
+      ? MatchFound.fromPartial(object.matched)
+      : undefined;
+    return message;
+  },
+};
+
 function createBaseStatusUpdate(): StatusUpdate {
-  return { targets: [], status: 0 };
+  return { targets: [], status: undefined };
 }
 
 export const StatusUpdate = {
@@ -412,8 +398,8 @@ export const StatusUpdate = {
     for (const v of message.targets) {
       writer.uint32(10).string(v!);
     }
-    if (message.status !== 0) {
-      writer.uint32(16).int32(message.status);
+    if (message.status !== undefined) {
+      Status.encode(message.status, writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -429,7 +415,7 @@ export const StatusUpdate = {
           message.targets.push(reader.string());
           break;
         case 2:
-          message.status = reader.int32() as any;
+          message.status = Status.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -442,7 +428,7 @@ export const StatusUpdate = {
   fromJSON(object: any): StatusUpdate {
     return {
       targets: Array.isArray(object?.targets) ? object.targets.map((e: any) => String(e)) : [],
-      status: isSet(object.status) ? statusFromJSON(object.status) : 0,
+      status: isSet(object.status) ? Status.fromJSON(object.status) : undefined,
     };
   },
 
@@ -453,7 +439,7 @@ export const StatusUpdate = {
     } else {
       obj.targets = [];
     }
-    message.status !== undefined && (obj.status = statusToJSON(message.status));
+    message.status !== undefined && (obj.status = message.status ? Status.toJSON(message.status) : undefined);
     return obj;
   },
 
@@ -464,7 +450,9 @@ export const StatusUpdate = {
   fromPartial<I extends Exact<DeepPartial<StatusUpdate>, I>>(object: I): StatusUpdate {
     const message = createBaseStatusUpdate();
     message.targets = object.targets?.map((e) => e) || [];
-    message.status = object.status ?? 0;
+    message.status = (object.status !== undefined && object.status !== null)
+      ? Status.fromPartial(object.status)
+      : undefined;
     return message;
   },
 };

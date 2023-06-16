@@ -13,22 +13,12 @@ import {
 } from "@grpc/grpc-js";
 import _m0 from "protobufjs/minimal";
 import { Empty } from "../google/protobuf/empty";
-import { GameConfiguration, MatchFound, QueueSearching, Status, statusFromJSON, statusToJSON } from "./messages";
+import { GameConfiguration, Status } from "./messages";
 
 export const protobufPackage = "quip.matchmaker";
 
 export interface StartQueueRequest {
   config: GameConfiguration | undefined;
-}
-
-export interface StatusResponse {
-  status: Status;
-  /** Details about current queue status. */
-  queue?:
-    | QueueSearching
-    | undefined;
-  /** Details about the match the user is currently playing in. */
-  match?: MatchFound | undefined;
 }
 
 function createBaseStartQueueRequest(): StartQueueRequest {
@@ -85,81 +75,6 @@ export const StartQueueRequest = {
   },
 };
 
-function createBaseStatusResponse(): StatusResponse {
-  return { status: 0, queue: undefined, match: undefined };
-}
-
-export const StatusResponse = {
-  encode(message: StatusResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.status !== 0) {
-      writer.uint32(8).int32(message.status);
-    }
-    if (message.queue !== undefined) {
-      QueueSearching.encode(message.queue, writer.uint32(18).fork()).ldelim();
-    }
-    if (message.match !== undefined) {
-      MatchFound.encode(message.match, writer.uint32(26).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): StatusResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseStatusResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.status = reader.int32() as any;
-          break;
-        case 2:
-          message.queue = QueueSearching.decode(reader, reader.uint32());
-          break;
-        case 3:
-          message.match = MatchFound.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): StatusResponse {
-    return {
-      status: isSet(object.status) ? statusFromJSON(object.status) : 0,
-      queue: isSet(object.queue) ? QueueSearching.fromJSON(object.queue) : undefined,
-      match: isSet(object.match) ? MatchFound.fromJSON(object.match) : undefined,
-    };
-  },
-
-  toJSON(message: StatusResponse): unknown {
-    const obj: any = {};
-    message.status !== undefined && (obj.status = statusToJSON(message.status));
-    message.queue !== undefined && (obj.queue = message.queue ? QueueSearching.toJSON(message.queue) : undefined);
-    message.match !== undefined && (obj.match = message.match ? MatchFound.toJSON(message.match) : undefined);
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<StatusResponse>, I>>(base?: I): StatusResponse {
-    return StatusResponse.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<StatusResponse>, I>>(object: I): StatusResponse {
-    const message = createBaseStatusResponse();
-    message.status = object.status ?? 0;
-    message.queue = (object.queue !== undefined && object.queue !== null)
-      ? QueueSearching.fromPartial(object.queue)
-      : undefined;
-    message.match = (object.match !== undefined && object.match !== null)
-      ? MatchFound.fromPartial(object.match)
-      : undefined;
-    return message;
-  },
-};
-
 export type FrontendService = typeof FrontendService;
 export const FrontendService = {
   /** GetStatus returns the current matchmaking status. */
@@ -169,8 +84,8 @@ export const FrontendService = {
     responseStream: false,
     requestSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
     requestDeserialize: (value: Buffer) => Empty.decode(value),
-    responseSerialize: (value: StatusResponse) => Buffer.from(StatusResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer) => StatusResponse.decode(value),
+    responseSerialize: (value: Status) => Buffer.from(Status.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => Status.decode(value),
   },
   /** StartQueue starts searching for a match with the given parameters. */
   startQueue: {
@@ -196,7 +111,7 @@ export const FrontendService = {
 
 export interface FrontendServer extends UntypedServiceImplementation {
   /** GetStatus returns the current matchmaking status. */
-  getStatus: handleUnaryCall<Empty, StatusResponse>;
+  getStatus: handleUnaryCall<Empty, Status>;
   /** StartQueue starts searching for a match with the given parameters. */
   startQueue: handleUnaryCall<StartQueueRequest, Empty>;
   /** StopQueue stops searching for a match. Idempotent. */
@@ -205,17 +120,17 @@ export interface FrontendServer extends UntypedServiceImplementation {
 
 export interface FrontendClient extends Client {
   /** GetStatus returns the current matchmaking status. */
-  getStatus(request: Empty, callback: (error: ServiceError | null, response: StatusResponse) => void): ClientUnaryCall;
+  getStatus(request: Empty, callback: (error: ServiceError | null, response: Status) => void): ClientUnaryCall;
   getStatus(
     request: Empty,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: StatusResponse) => void,
+    callback: (error: ServiceError | null, response: Status) => void,
   ): ClientUnaryCall;
   getStatus(
     request: Empty,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: StatusResponse) => void,
+    callback: (error: ServiceError | null, response: Status) => void,
   ): ClientUnaryCall;
   /** StartQueue starts searching for a match with the given parameters. */
   startQueue(

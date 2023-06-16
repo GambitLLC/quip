@@ -30,7 +30,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FrontendClient interface {
 	// GetStatus returns the current matchmaking status.
-	GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*StatusResponse, error)
+	GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Status, error)
 	// StartQueue starts searching for a match with the given parameters.
 	StartQueue(ctx context.Context, in *StartQueueRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// StopQueue stops searching for a match. Idempotent.
@@ -45,8 +45,8 @@ func NewFrontendClient(cc grpc.ClientConnInterface) FrontendClient {
 	return &frontendClient{cc}
 }
 
-func (c *frontendClient) GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*StatusResponse, error) {
-	out := new(StatusResponse)
+func (c *frontendClient) GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Status, error) {
+	out := new(Status)
 	err := c.cc.Invoke(ctx, Frontend_GetStatus_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (c *frontendClient) StopQueue(ctx context.Context, in *emptypb.Empty, opts 
 // for forward compatibility
 type FrontendServer interface {
 	// GetStatus returns the current matchmaking status.
-	GetStatus(context.Context, *emptypb.Empty) (*StatusResponse, error)
+	GetStatus(context.Context, *emptypb.Empty) (*Status, error)
 	// StartQueue starts searching for a match with the given parameters.
 	StartQueue(context.Context, *StartQueueRequest) (*emptypb.Empty, error)
 	// StopQueue stops searching for a match. Idempotent.
@@ -88,7 +88,7 @@ type FrontendServer interface {
 type UnimplementedFrontendServer struct {
 }
 
-func (UnimplementedFrontendServer) GetStatus(context.Context, *emptypb.Empty) (*StatusResponse, error) {
+func (UnimplementedFrontendServer) GetStatus(context.Context, *emptypb.Empty) (*Status, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStatus not implemented")
 }
 func (UnimplementedFrontendServer) StartQueue(context.Context, *StartQueueRequest) (*emptypb.Empty, error) {

@@ -131,19 +131,17 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 		players = append(players, team.Players...)
 	}
 
-	go s.broker.PublishQueueUpdate(context.Background(), &pb.QueueUpdate{
-		Targets: players,
-		Update: &pb.QueueUpdate_Found{
-			Found: &pb.MatchFound{
-				MatchId:    match.MatchId,
-				Connection: resp.Connection,
-			},
-		},
-	})
-
 	go s.broker.PublishStatusUpdate(context.Background(), &pb.StatusUpdate{
 		Targets: players,
-		Status:  pb.Status_STATUS_PLAYING,
+		Status: &pb.Status{
+			State: pb.State_STATE_PLAYING,
+			Details: &pb.Status_Matched{
+				Matched: &pb.MatchFound{
+					MatchId:    match.MatchId,
+					Connection: resp.Connection,
+				},
+			},
+		},
 	})
 
 	res, err := s.omBackend.AssignTickets(ctx, &ompb.AssignTicketsRequest{

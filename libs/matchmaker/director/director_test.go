@@ -27,8 +27,8 @@ func TestMatchFound(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	updates, close, err := srv.broker.ConsumeQueueUpdates(ctx)
-	require.NoError(t, err, "ConsumeQueueUpdates failed")
+	updates, close, err := srv.broker.ConsumeStatusUpdate(ctx)
+	require.NoError(t, err, "ConsumeStatusUpdate failed")
 	t.Cleanup(func() { _ = close() })
 
 	errs := make(chan error, 1)
@@ -51,7 +51,7 @@ func TestMatchFound(t *testing.T) {
 			}
 
 			// got some match found, test finished
-			if update.GetFound() != nil {
+			if update.GetStatus().GetMatched() != nil {
 				return
 			}
 		}

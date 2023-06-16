@@ -78,12 +78,12 @@ func getPlayer(ctx context.Context, store statestore.Service, create bool) (play
 }
 
 // GetStatus returns the current matchmaking status.
-func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusResponse, error) {
+func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.Status, error) {
 	player, unlock, err := getPlayer(ctx, s.store, false)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
-			return &pb.StatusResponse{
-				Status: pb.Status_STATUS_IDLE,
+			return &pb.Status{
+				State: pb.State_STATE_IDLE,
 			}, nil
 		}
 
@@ -101,8 +101,8 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 					_ = s.store.UntrackMatch(context.Background(), []string{player.PlayerId})
 				}()
 
-				return &pb.StatusResponse{
-					Status: pb.Status_STATUS_IDLE,
+				return &pb.Status{
+					State: pb.State_STATE_IDLE,
 				}, nil
 			}
 
@@ -110,11 +110,13 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 			return nil, err
 		}
 
-		return &pb.StatusResponse{
-			Status: pb.Status_STATUS_PLAYING,
-			Match: &pb.MatchFound{
-				MatchId:    match.MatchId,
-				Connection: match.Connection,
+		return &pb.Status{
+			State: pb.State_STATE_PLAYING,
+			Details: &pb.Status_Matched{
+				Matched: &pb.MatchFound{
+					MatchId:    match.MatchId,
+					Connection: match.Connection,
+				},
 			},
 		}, nil
 	}
@@ -128,8 +130,8 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 					_ = s.store.UntrackTicket(context.Background(), []string{player.PlayerId})
 				}()
 
-				return &pb.StatusResponse{
-					Status: pb.Status_STATUS_IDLE,
+				return &pb.Status{
+					State: pb.State_STATE_IDLE,
 				}, nil
 			}
 
@@ -145,8 +147,8 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 				_ = s.store.UntrackTicket(context.Background(), []string{player.PlayerId})
 			}()
 
-			return &pb.StatusResponse{
-				Status: pb.Status_STATUS_IDLE,
+			return &pb.Status{
+				State: pb.State_STATE_IDLE,
 			}, nil
 		}
 
@@ -157,17 +159,19 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.StatusRe
 			return nil, err
 		}
 
-		return &pb.StatusResponse{
-			Status: pb.Status_STATUS_SEARCHING,
-			Queue: &pb.QueueSearching{
-				Gamemode:  details.Gamemode,
-				StartTime: ticket.CreateTime,
+		return &pb.Status{
+			State: pb.State_STATE_SEARCHING,
+			Details: &pb.Status_Searching{
+				Searching: &pb.QueueSearching{
+					Gamemode:  details.Gamemode,
+					StartTime: ticket.CreateTime,
+				},
 			},
 		}, nil
 	}
 
-	return &pb.StatusResponse{
-		Status: pb.Status_STATUS_IDLE,
+	return &pb.Status{
+		State: pb.State_STATE_IDLE,
 	}, nil
 }
 
@@ -215,19 +219,11 @@ func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*e
 		return nil, err
 	}
 
-	go s.publish(&pb.QueueUpdate{
-		Targets: players,
-		Update: &pb.QueueUpdate_Started{
-			Started: &pb.QueueSearching{
-				Gamemode:  gameCfg.Gamemode,
-				StartTime: ticket.CreateTime,
-			},
-		},
-	})
-
 	go s.publish(&pb.StatusUpdate{
 		Targets: players,
-		Status:  pb.Status_STATUS_SEARCHING,
+		Status: &pb.Status{
+			State: pb.State_STATE_SEARCHING,
+		},
 	})
 
 	return &emptypb.Empty{}, nil
@@ -263,18 +259,16 @@ func (s *Service) StopQueue(ctx context.Context, _ *emptypb.Empty) (*emptypb.Emp
 	}
 
 	reason := fmt.Sprintf("%s stopped matchmaking", player.PlayerId)
-	go s.publish(&pb.QueueUpdate{
-		Targets: players,
-		Update: &pb.QueueUpdate_Finished{
-			Finished: &pb.QueueFinished{
-				Reason: &reason,
-			},
-		},
-	})
-
 	go s.publish(&pb.StatusUpdate{
 		Targets: players,
-		Status:  pb.Status_STATUS_IDLE,
+		Status: &pb.Status{
+			State: pb.State_STATE_IDLE,
+			Details: &pb.Status_Stopped{
+				Stopped: &pb.QueueStopped{
+					Reason: &reason,
+				},
+			},
+		},
 	})
 
 	return &emptypb.Empty{}, nil
@@ -288,8 +282,8 @@ func (s *Service) publish(msg proto.Message) {
 	switch msg := msg.(type) {
 	default:
 		err = fmt.Errorf("unhandled message type %T", msg)
-	case *pb.QueueUpdate:
-		err = s.broker.PublishQueueUpdate(ctx, msg)
+	// case *pb.QueueUpdate:
+	// 	err = s.broker.PublishQueueUpdate(ctx, msg)
 	case *pb.StatusUpdate:
 		err = s.broker.PublishStatusUpdate(ctx, msg)
 	}

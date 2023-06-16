@@ -7,7 +7,6 @@ import (
 )
 
 const (
-	QueueUpdateRoute  string = "queue_update"
 	StatusUpdateRoute string = "status_update"
 )
 
@@ -15,12 +14,6 @@ const (
 type Client interface {
 	// Closes the connection.
 	Close() error
-
-	// Publish a queue update to all consumers.
-	PublishQueueUpdate(context.Context, *pb.QueueUpdate) error
-
-	// Consume queue updates. Returns channel and a close function.
-	ConsumeQueueUpdates(context.Context) (<-chan *pb.QueueUpdate, func() error, error)
 
 	// Publish status update to all consumers.
 	PublishStatusUpdate(context.Context, *pb.StatusUpdate) error

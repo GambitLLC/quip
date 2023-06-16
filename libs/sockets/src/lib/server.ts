@@ -11,7 +11,7 @@ import { createClient } from 'redis';
 import { FrontendClient } from '@quip/pb/matchmaker/frontend';
 import { Empty } from '@quip/pb/google/protobuf/empty';
 import { ClientToServerEvents, ServerToClientEvents } from './events';
-import { QueueUpdate, StatusUpdate } from '@quip/pb/matchmaker/messages';
+import { StatusUpdate } from '@quip/pb/matchmaker/messages';
 
 export type Server = SocketIoServer<ClientToServerEvents, ServerToClientEvents>;
 
@@ -79,8 +79,7 @@ export const Server = (
       'status_update',
       (message) => {
         const update = StatusUpdate.decode(message);
-        console.log(update);
-        io.to(update.targets).emit('statusUpdate', update);
+        io.to(update.targets).emit('statusUpdate', update.status);
       },
       true
     )
@@ -91,21 +90,21 @@ export const Server = (
       (err) => console.error(err)
     );
 
-  broker
-    .subscribe(
-      'queue_update',
-      (message) => {
-        const update = QueueUpdate.decode(message);
-        io.to(update.targets).emit('queueUpdate', update);
-      },
-      true
-    )
-    .then(
-      () => {
-        console.log('subscribed to queue updates');
-      },
-      (err) => console.error(err)
-    );
+  // broker
+  //   .subscribe(
+  //     'queue_update',
+  //     (message) => {
+  //       const update = QueueUpdate.decode(message);
+  //       io.to(update.targets).emit('queueUpdate', update);
+  //     },
+  //     true
+  //   )
+  //   .then(
+  //     () => {
+  //       console.log('subscribed to queue updates');
+  //     },
+  //     (err) => console.error(err)
+  //   );
 
   // create rpc client to send commands to matchmaker
   const host = config.get('matchmaker.frontend.hostname');

@@ -108,18 +108,16 @@ func (s *Service) DeleteMatch(ctx context.Context, req *pb.DeleteMatchRequest) (
 	}
 
 	reason := "match has finished"
-	go s.broker.PublishQueueUpdate(context.Background(), &pb.QueueUpdate{
-		Targets: match.Players,
-		Update: &pb.QueueUpdate_Finished{
-			Finished: &pb.QueueFinished{
-				Reason: &reason,
-			},
-		},
-	})
-
 	go s.broker.PublishStatusUpdate(context.Background(), &pb.StatusUpdate{
 		Targets: match.Players,
-		Status:  pb.Status_STATUS_IDLE,
+		Status: &pb.Status{
+			State: pb.State_STATE_IDLE,
+			Details: &pb.Status_Stopped{
+				Stopped: &pb.QueueStopped{
+					Reason: &reason,
+				},
+			},
+		},
 	})
 
 	err = s.store.DeleteMatch(ctx, req.MatchId)

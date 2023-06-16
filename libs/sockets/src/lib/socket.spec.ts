@@ -13,11 +13,8 @@ import config from 'config';
 import { Magic } from '@magic-sdk/admin';
 const magic = new Magic();
 
-import {
-  FrontendService,
-  FrontendServer,
-  StatusResponse,
-} from '@quip/pb/matchmaker/frontend';
+import { FrontendService, FrontendServer } from '@quip/pb/matchmaker/frontend';
+import { Status } from '@quip/pb/matchmaker/messages';
 import { Empty } from '@quip/pb/google/protobuf/empty';
 import Server from './server';
 import Client from './client';
@@ -68,7 +65,7 @@ const mockFrontend: FrontendServer = {
       return;
     }
 
-    cb(null, StatusResponse.create());
+    cb(null, Status.create());
     return;
   },
   startQueue: function (call, cb) {

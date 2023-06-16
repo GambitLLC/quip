@@ -48,14 +48,14 @@ func TestGetStatus(t *testing.T) {
 	tests := []struct {
 		name  string
 		setup func(context.Context, *testing.T, *Service)
-		check func(*testing.T, *pb.StatusResponse, error)
+		check func(*testing.T, *pb.Status, error)
 	}{
 		{
 			name:  "expect IDLE status",
 			setup: nil,
-			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
+			check: func(t *testing.T, sr *pb.Status, err error) {
 				require.NoError(t, err)
-				require.Equal(t, pb.Status_STATUS_IDLE, sr.Status, "expected status to be IDLE")
+				require.Equal(t, pb.State_STATE_IDLE, sr.GetState(), "expected status to be IDLE")
 			},
 		},
 		{
@@ -76,11 +76,11 @@ func TestGetStatus(t *testing.T) {
 				require.NoError(t, err, "store.CreatePlayer failed")
 
 			},
-			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
+			check: func(t *testing.T, sr *pb.Status, err error) {
 				require.NoError(t, err)
-				require.Equal(t, pb.Status_STATUS_SEARCHING, sr.GetStatus(), "expected status to be SEARCHING")
-				require.NotNil(t, sr.GetQueue(), "expected queue details")
-				require.Equal(t, "test", sr.Queue.Gamemode, "expected gamemode to be set")
+				require.Equal(t, pb.State_STATE_SEARCHING, sr.GetState(), "expected status to be SEARCHING")
+				require.NotNil(t, sr.GetSearching(), "expected queue details")
+				require.Equal(t, "test", sr.GetSearching().Gamemode, "expected gamemode to be set")
 			},
 		},
 		{
@@ -99,9 +99,9 @@ func TestGetStatus(t *testing.T) {
 				})
 				require.NoError(t, err, "store.CreatePlayer failed")
 			},
-			check: func(t *testing.T, sr *pb.StatusResponse, err error) {
+			check: func(t *testing.T, sr *pb.Status, err error) {
 				require.NoError(t, err)
-				require.Equal(t, pb.Status_STATUS_PLAYING, sr.Status, "expected status to be PLAYING")
+				require.Equal(t, pb.State_STATE_PLAYING, sr.GetState(), "expected status to be PLAYING")
 			},
 		},
 	}
@@ -305,92 +305,6 @@ func TestStopQueue(t *testing.T) {
 
 			_, err := s.StopQueue(tt.ctx, &emptypb.Empty{})
 			tt.check(t, err)
-		})
-	}
-}
-
-func TestQueueUpdate(t *testing.T) {
-	player := xid.New().String()
-	ctx := newContextWithPlayer(t, player)
-
-	tests := []struct {
-		name     string
-		ctx      context.Context
-		expected func(*pb.QueueUpdate) bool
-		action   func(*testing.T, context.Context, *Service)
-	}{
-		{
-			name: "expect queue started after start queue",
-			ctx:  ctx,
-			expected: func(qu *pb.QueueUpdate) bool {
-				return len(qu.Targets) == 1 &&
-					qu.Targets[0] == player &&
-					qu.GetStarted() != nil &&
-					qu.GetStarted().Gamemode == "test"
-			},
-			action: func(t *testing.T, ctx context.Context, s *Service) {
-				_, err := s.StartQueue(ctx, &pb.StartQueueRequest{
-					Config: &pb.GameConfiguration{
-						Gamemode: "test",
-					},
-				})
-				require.NoError(t, err, "StartQueue failed")
-			},
-		},
-		{
-			name: "expect queue stopped after stop queue",
-			ctx:  ctx,
-			expected: func(qu *pb.QueueUpdate) bool {
-				return len(qu.Targets) == 1 &&
-					qu.Targets[0] == player &&
-					qu.GetFinished() != nil
-			},
-			action: func(t *testing.T, ctx context.Context, s *Service) {
-				// Queue needs to be started before stop update will be sent
-				_, err := s.StartQueue(ctx, &pb.StartQueueRequest{
-					Config: &pb.GameConfiguration{
-						Gamemode: "test",
-					},
-				})
-				require.NoError(t, err, "StartQueue failed")
-
-				_, err = s.StopQueue(ctx, &emptypb.Empty{})
-				require.NoError(t, err, "StopQueue failed")
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := newService(t)
-			ctx, cancel := context.WithTimeout(tt.ctx, 10*time.Second)
-			t.Cleanup(cancel)
-
-			updates, close, err := s.broker.ConsumeQueueUpdates(ctx)
-			require.NoError(t, err, "ConsumeQueueUpdates failed")
-			t.Cleanup(func() {
-				_ = close()
-			})
-
-			tt.action(t, ctx, s)
-
-			for {
-				select {
-				case <-ctx.Done():
-					t.Fatal("test timed out without receiving expected update")
-				case update, ok := <-updates:
-					require.True(t, ok, "update channel closed")
-
-					/*
-						return len(qu.Targets) == 1 &&
-						qu.Targets[0] == player &&
-						qu.GetStopped() == "player"
-					*/
-					if tt.expected(update) {
-						return
-					}
-				}
-			}
 		})
 	}
 }

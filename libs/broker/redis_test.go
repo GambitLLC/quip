@@ -15,41 +15,6 @@ import (
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
-func TestQueueUpdate(t *testing.T) {
-	cfg := newConfig(t)
-	client := NewRedis(cfg)
-
-	ctx, cancel := context.WithTimeout(newContext(t), 10*time.Second)
-	defer cancel()
-
-	updates, close, err := client.ConsumeQueueUpdates(ctx)
-	require.NoError(t, err, "ConsumeQueueUpdates failed")
-	t.Cleanup(func() {
-		err := close()
-		require.NoError(t, err, "close failed")
-	})
-
-	msg := &pb.QueueUpdate{
-		Targets: []string{xid.New().String()},
-		Update:  &pb.QueueUpdate_Started{},
-	}
-	err = client.PublishQueueUpdate(ctx, msg)
-	require.NoError(t, err, "PublishQueueUpdate failed")
-
-	for {
-		select {
-		case <-ctx.Done():
-			t.Fatal("test timed out without receiving published update")
-		case update, ok := <-updates:
-			require.True(t, ok, "update channel closed")
-			if proto.Equal(update, msg) {
-				// received published message, done
-				return
-			}
-		}
-	}
-}
-
 func TestStatusUpdate(t *testing.T) {
 	cfg := newConfig(t)
 	client := NewRedis(cfg)
@@ -66,7 +31,9 @@ func TestStatusUpdate(t *testing.T) {
 
 	msg := &pb.StatusUpdate{
 		Targets: []string{xid.New().String()},
-		Status:  pb.Status_STATUS_PLAYING,
+		Status: &pb.Status{
+			State: pb.State_STATE_PLAYING,
+		},
 	}
 	err = client.PublishStatusUpdate(ctx, msg)
 	require.NoError(t, err, "PublishStatusUpdate failed")

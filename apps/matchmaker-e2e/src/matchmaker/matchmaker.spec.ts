@@ -2,15 +2,8 @@ import { Client } from '@quip/sockets';
 import config from 'config';
 import { generateDIDToken } from '../auth';
 import { BackendClient, DeleteMatchRequest } from '@quip/pb/matchmaker/backend';
-import {
-  StartQueueRequest,
-  StatusResponse,
-} from '@quip/pb/matchmaker/frontend';
-import {
-  QueueUpdate,
-  Status,
-  StatusUpdate,
-} from '@quip/pb/matchmaker/messages';
+import { StartQueueRequest } from '@quip/pb/matchmaker/frontend';
+import { State, Status } from '@quip/pb/matchmaker/messages';
 import * as grpc from '@grpc/grpc-js';
 
 const sockets: Map<string, Client> = new Map();
@@ -55,16 +48,16 @@ describe('socket connection', () => {
 
   it('should get status idle response', async () => {
     const { client } = await newClient();
-    const status = await new Promise<StatusResponse>((resolve, reject) => {
+    const status = await new Promise<Status>((resolve, reject) => {
       client.emit('getStatus', (err, status) => {
         if (err) reject(err);
         resolve(status);
       });
     });
 
-    expect(status?.status).toBe(Status.IDLE);
-    expect(status.queue).toBeUndefined();
-    expect(status.match).toBeUndefined();
+    expect(status?.state).toBe(State.IDLE);
+    expect(status.searching).toBeUndefined();
+    expect(status.matched).toBeUndefined();
   });
 });
 
@@ -85,27 +78,15 @@ describe('queueing', () => {
 
   describe('valid start queue', () => {
     const gamemode = 'test_100x1';
-    let err: Error, client: Client, player: string;
-    let queueStartedUpdate: Promise<QueueUpdate>;
-    let statusUpdate: Promise<StatusUpdate>;
+    let err: Error, client: Client;
+    let statusUpdate: Promise<Status>;
 
     beforeAll(async () => {
-      ({ client, player } = await newClient());
+      ({ client } = await newClient());
 
-      // register listener for queue updates
-      queueStartedUpdate = new Promise<QueueUpdate>((resolve) => {
-        client.on('queueUpdate', (update) => {
-          if (update.targets.includes(player) && update.started) {
-            resolve(update);
-          }
-        });
-      });
-
-      statusUpdate = new Promise<StatusUpdate>((resolve) => {
+      statusUpdate = new Promise<Status>((resolve) => {
         client.on('statusUpdate', (update) => {
-          if (update.targets.includes(player)) {
-            resolve(update);
-          }
+          if (update.state == State.SEARCHING) resolve(update);
         });
       });
 
@@ -124,26 +105,22 @@ describe('queueing', () => {
       expect(err).toBeNull();
     });
 
-    it('should have received queue started update', async () => {
-      await queueStartedUpdate;
-    });
-
     it('should receive status searching update', async () => {
       const update = await statusUpdate;
-      expect(update?.status).toBe(Status.SEARCHING);
+      expect(update?.state).toBe(State.SEARCHING);
     });
 
     it('should get status searching response', async () => {
-      const status = await new Promise<StatusResponse>((resolve, reject) => {
+      const status = await new Promise<Status>((resolve, reject) => {
         client.emit('getStatus', (err, status) => {
           if (err) reject(err);
           resolve(status);
         });
       });
 
-      expect(status?.status).toBe(Status.SEARCHING);
-      expect(status?.queue?.gamemode).toBe(gamemode);
-      expect(status.match).toBeUndefined();
+      expect(status?.state).toBe(State.SEARCHING);
+      expect(status?.searching?.gamemode).toBe(gamemode);
+      expect(status?.matched).toBeUndefined();
     });
 
     it('should not be able to start queue again', async () => {
@@ -161,22 +138,11 @@ describe('queueing', () => {
 
     describe('stopping queue', () => {
       let err: Error;
-      let queueStoppedUpdate: Promise<QueueUpdate>;
 
       beforeAll(async () => {
-        queueStoppedUpdate = new Promise<QueueUpdate>((resolve) => {
-          client.on('queueUpdate', (update) => {
-            if (update.targets.includes(player) && update.finished) {
-              resolve(update);
-            }
-          });
-        });
-
-        statusUpdate = new Promise<StatusUpdate>((resolve) => {
+        statusUpdate = new Promise<Status>((resolve) => {
           client.on('statusUpdate', (update) => {
-            if (update.targets.includes(player)) {
-              resolve(update);
-            }
+            resolve(update);
           });
         });
 
@@ -187,56 +153,40 @@ describe('queueing', () => {
         expect(err).toBeNull();
       });
 
-      it('should receive queue stopped update', async () => {
-        await queueStoppedUpdate;
-      });
-
       it('should receive status idle update', async () => {
         const update = await statusUpdate;
-        expect(update?.status).toBe(Status.IDLE);
+        expect(update?.state).toBe(State.IDLE);
       });
 
       it('should get status idle response', async () => {
-        const status = await new Promise<StatusResponse>((resolve, reject) => {
+        const status = await new Promise<Status>((resolve, reject) => {
           client.emit('getStatus', (err, status) => {
             if (err) reject(err);
             resolve(status);
           });
         });
 
-        expect(status?.status).toBe(Status.IDLE);
-        expect(status.queue).toBeUndefined();
-        expect(status.match).toBeUndefined();
+        expect(status?.state).toBe(State.IDLE);
+        expect(status?.searching).toBeUndefined();
+        expect(status?.matched).toBeUndefined();
       });
     });
   });
 });
 
 describe('match tests', () => {
-  let client: Client, player: string;
-  let matchUpdate: Promise<QueueUpdate>;
-  let statusUpdate: Promise<StatusUpdate>;
+  let client: Client;
+  let statusUpdate: Promise<Status>;
   let matchId: string;
 
   beforeAll(async () => {
-    ({ client, player } = await newClient());
+    ({ client } = await newClient());
 
-    matchUpdate = new Promise<QueueUpdate>((resolve) => {
-      client.on('queueUpdate', (update) => {
-        if (update.targets.includes(player) && update.found) {
-          matchId = update.found.matchId;
-          resolve(update);
-        }
-      });
-    });
-
-    statusUpdate = new Promise<StatusUpdate>((resolve) => {
+    statusUpdate = new Promise<Status>((resolve) => {
       client.on('statusUpdate', (update) => {
         // check status here because Status.SEARCHING is also sent out once
-        if (
-          update.targets.includes(player) &&
-          update.status == Status.PLAYING
-        ) {
+        if (update.state == State.PLAYING && update.matched) {
+          matchId = update.matched.matchId;
           resolve(update);
         }
       });
@@ -253,25 +203,21 @@ describe('match tests', () => {
     expect(err).toBeNull();
   });
 
-  it('should get match found', async () => {
-    await matchUpdate;
-  }, 20000);
-
   it('should receive status playing update', async () => {
     await statusUpdate;
-  });
+  }, 20000);
 
   it('should get status playing response', async () => {
-    const status = await new Promise<StatusResponse>((resolve, reject) => {
+    const status = await new Promise<Status>((resolve, reject) => {
       client.emit('getStatus', (err, status) => {
         if (err) reject(err);
         resolve(status);
       });
     });
 
-    expect(status?.status).toBe(Status.PLAYING);
-    expect(status.match).not.toBeUndefined();
-    expect(status.match.connection).toBeTruthy();
+    expect(status?.state).toBe(State.PLAYING);
+    expect(status?.matched).not.toBeUndefined();
+    expect(status.matched.connection).toBeTruthy();
   });
 
   it('should be unable to queue', async () => {
@@ -289,17 +235,10 @@ describe('match tests', () => {
 
   describe('match ending', () => {
     beforeAll(async () => {
-      matchUpdate = new Promise<QueueUpdate>((resolve) => {
-        client.on('queueUpdate', (update) => {
-          if (update.targets.includes(player) && update.finished)
-            resolve(update);
-        });
-      });
-
-      statusUpdate = new Promise<StatusUpdate>((resolve) => {
+      statusUpdate = new Promise<Status>((resolve) => {
         client.on('statusUpdate', (update) => {
           // check status here because Status.SEARCHING is also sent out once
-          if (update.targets.includes(player) && update.status == Status.IDLE) {
+          if (update.state == State.IDLE) {
             resolve(update);
           }
         });
@@ -328,23 +267,20 @@ describe('match tests', () => {
       expect(err).toBeNull();
     });
 
-    it('should receive match finished update', async () => {
-      await matchUpdate;
-    });
     it('should receive status idle update', async () => {
       await statusUpdate;
     });
     it('should get status idle response', async () => {
-      const status = await new Promise<StatusResponse>((resolve, reject) => {
+      const status = await new Promise<Status>((resolve, reject) => {
         client.emit('getStatus', (err, status) => {
           if (err) reject(err);
           resolve(status);
         });
       });
 
-      expect(status?.status).toBe(Status.IDLE);
-      expect(status.match).toBeUndefined();
-      expect(status.queue).toBeUndefined();
+      expect(status?.state).toBe(State.IDLE);
+      expect(status?.matched).toBeUndefined();
+      expect(status?.searching).toBeUndefined();
     });
   });
 

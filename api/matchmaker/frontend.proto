@@ -9,19 +9,9 @@ message StartQueueRequest {
   GameConfiguration config = 1;
 }
 
-message StatusResponse {
-  Status status = 1;
-
-  // Details about current queue status.
-  optional QueueSearching queue = 2;
-
-  // Details about the match the user is currently playing in.
-  optional MatchFound match = 3;
-}
-
 service Frontend {
   // GetStatus returns the current matchmaking status.
-  rpc GetStatus(google.protobuf.Empty) returns (StatusResponse);
+  rpc GetStatus(google.protobuf.Empty) returns (Status);
 
   // StartQueue starts searching for a match with the given parameters.
   rpc StartQueue(StartQueueRequest) returns (google.protobuf.Empty);

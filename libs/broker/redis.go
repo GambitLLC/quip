@@ -41,37 +41,6 @@ func (rb *redisBroker) Close() error {
 	return rb.redisClient.Close()
 }
 
-// Publish a queue update to all consumers.
-func (rb *redisBroker) PublishQueueUpdate(ctx context.Context, update *pb.QueueUpdate) error {
-	bs, err := proto.Marshal(update)
-	if err != nil {
-		return errors.Wrap(err, "marshal QueueUpdate failed")
-	}
-
-	return rb.redisClient.Publish(ctx, QueueUpdateRoute, bs).Err()
-}
-
-// Consume queue updates. Returns channel and a close function.
-func (rb *redisBroker) ConsumeQueueUpdates(ctx context.Context) (<-chan *pb.QueueUpdate, func() error, error) {
-	sub := rb.redisClient.Subscribe(ctx, QueueUpdateRoute)
-	updates := make(chan *pb.QueueUpdate, 3) // TODO: consume options
-
-	go func() {
-		for msg := range sub.Channel() {
-			update := &pb.QueueUpdate{}
-			if err := proto.Unmarshal([]byte(msg.Payload), update); err != nil {
-				logger.Error().Err(err).Msg("Unmarshal QueueUpdate failed")
-				continue
-			}
-
-			updates <- update
-		}
-		close(updates)
-	}()
-
-	return updates, sub.Close, nil
-}
-
 // Publish status update to all consumers.
 func (rb *redisBroker) PublishStatusUpdate(ctx context.Context, update *pb.StatusUpdate) error {
 	bs, err := proto.Marshal(update)

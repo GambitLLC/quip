@@ -67,21 +67,23 @@
         }
       }
     },
-    "matchmakerStatusResponse": {
+    "matchmakerQueueStopped": {
       "type": "object",
       "properties": {
-        "status": {
-          "$ref": "#/definitions/quipmatchmakerStatus"
-        },
-        "queue": {
-          "$ref": "#/definitions/matchmakerQueueSearching",
-          "description": "Details about current queue status."
-        },
-        "match": {
-          "$ref": "#/definitions/matchmakerMatchFound",
-          "description": "Details about the match the user is currently playing in."
+        "reason": {
+          "type": "string"
         }
       }
+    },
+    "matchmakerState": {
+      "type": "string",
+      "enum": [
+        "STATE_OFFLINE",
+        "STATE_IDLE",
+        "STATE_SEARCHING",
+        "STATE_PLAYING"
+      ],
+      "default": "STATE_OFFLINE"
     },
     "protobufAny": {
       "type": "object",
@@ -93,14 +95,21 @@
       "additionalProperties": {}
     },
     "quipmatchmakerStatus": {
-      "type": "string",
-      "enum": [
-        "STATUS_OFFLINE",
-        "STATUS_IDLE",
-        "STATUS_SEARCHING",
-        "STATUS_PLAYING"
-      ],
-      "default": "STATUS_OFFLINE"
+      "type": "object",
+      "properties": {
+        "state": {
+          "$ref": "#/definitions/matchmakerState"
+        },
+        "searching": {
+          "$ref": "#/definitions/matchmakerQueueSearching"
+        },
+        "stopped": {
+          "$ref": "#/definitions/matchmakerQueueStopped"
+        },
+        "matched": {
+          "$ref": "#/definitions/matchmakerMatchFound"
+        }
+      }
     }
   }
 }
