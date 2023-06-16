@@ -28,7 +28,9 @@ func (e State) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(matchmaker.State_name[int32(e)]))
 }
 
-type Status = matchmaker.Status
+type Status struct {
+	*matchmaker.Status
+}
 
 type QueueSearching struct {
 	*matchmaker.QueueSearching

@@ -39,12 +39,12 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*model.User, erro
 }
 
 // State is the resolver for the state field.
-func (r *statusResolver) State(ctx context.Context, obj *matchmaker.Status) (model.State, error) {
+func (r *statusResolver) State(ctx context.Context, obj *model.Status) (model.State, error) {
 	return model.State(obj.State), nil
 }
 
 // Details is the resolver for the details field.
-func (r *statusResolver) Details(ctx context.Context, obj *matchmaker.Status) (model.StatusDetails, error) {
+func (r *statusResolver) Details(ctx context.Context, obj *model.Status) (model.StatusDetails, error) {
 	// NOTE: gqlgen generate erroneously removes pkg/errors and replaces with stdlib errors
 	// name import github.com/pkg/errors as a workaround
 	// https://github.com/99designs/gqlgen/issues/1171
@@ -62,7 +62,7 @@ func (r *statusResolver) Details(ctx context.Context, obj *matchmaker.Status) (m
 }
 
 // Status is the resolver for the status field.
-func (r *userResolver) Status(ctx context.Context, obj *model.User) (*matchmaker.Status, error) {
+func (r *userResolver) Status(ctx context.Context, obj *model.User) (*model.Status, error) {
 	// TODO: frontend.GetStatus needs to take user id(s) as parameter ...
 	token := auth.TokenFromContext(ctx)
 	status, err := r.frontend.GetStatus(ctx, &emptypb.Empty{}, grpc.PerRPCCredentials(oauth.TokenSource{
@@ -70,8 +70,15 @@ func (r *userResolver) Status(ctx context.Context, obj *model.User) (*matchmaker
 			AccessToken: token,
 		}),
 	}))
-	// TODO: wrap/fmt err instead of directly returning
-	return status, err
+
+	if err != nil {
+		// TODO: wrap/fmt err instead of directly returning
+		return nil, err
+	}
+
+	return &model.Status{
+		Status: status,
+	}, nil
 }
 
 // Profile is the resolver for the profile field.

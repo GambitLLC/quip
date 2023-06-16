@@ -16,7 +16,6 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/GambitLLC/quip/graph/model"
-	"github.com/GambitLLC/quip/libs/pb/matchmaker"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -93,11 +92,11 @@ type QueryResolver interface {
 	User(ctx context.Context, id *string) (*model.User, error)
 }
 type StatusResolver interface {
-	State(ctx context.Context, obj *matchmaker.Status) (model.State, error)
-	Details(ctx context.Context, obj *matchmaker.Status) (model.StatusDetails, error)
+	State(ctx context.Context, obj *model.Status) (model.State, error)
+	Details(ctx context.Context, obj *model.Status) (model.StatusDetails, error)
 }
 type UserResolver interface {
-	Status(ctx context.Context, obj *model.User) (*matchmaker.Status, error)
+	Status(ctx context.Context, obj *model.User) (*model.Status, error)
 	Profile(ctx context.Context, obj *model.User) (*model.Profile, error)
 }
 
@@ -837,7 +836,7 @@ func (ec *executionContext) fieldContext_QueueStopped_reason(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Status_state(ctx context.Context, field graphql.CollectedField, obj *matchmaker.Status) (ret graphql.Marshaler) {
+func (ec *executionContext) _Status_state(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Status_state(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -881,7 +880,7 @@ func (ec *executionContext) fieldContext_Status_state(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Status_details(ctx context.Context, field graphql.CollectedField, obj *matchmaker.Status) (ret graphql.Marshaler) {
+func (ec *executionContext) _Status_details(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Status_details(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -992,9 +991,9 @@ func (ec *executionContext) _User_status(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*matchmaker.Status)
+	res := resTmp.(*model.Status)
 	fc.Result = res
-	return ec.marshalNStatus2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋlibsᚋpbᚋmatchmakerᚐStatus(ctx, field.Selections, res)
+	return ec.marshalNStatus2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3093,7 +3092,7 @@ func (ec *executionContext) _QueueStopped(ctx context.Context, sel ast.Selection
 
 var statusImplementors = []string{"Status"}
 
-func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, obj *matchmaker.Status) graphql.Marshaler {
+func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, obj *model.Status) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, statusImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -3593,11 +3592,11 @@ func (ec *executionContext) marshalNState2githubᚗcomᚋGambitLLCᚋquipᚋgrap
 	return v
 }
 
-func (ec *executionContext) marshalNStatus2githubᚗcomᚋGambitLLCᚋquipᚋlibsᚋpbᚋmatchmakerᚐStatus(ctx context.Context, sel ast.SelectionSet, v matchmaker.Status) graphql.Marshaler {
+func (ec *executionContext) marshalNStatus2githubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐStatus(ctx context.Context, sel ast.SelectionSet, v model.Status) graphql.Marshaler {
 	return ec._Status(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStatus2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋlibsᚋpbᚋmatchmakerᚐStatus(ctx context.Context, sel ast.SelectionSet, v *matchmaker.Status) graphql.Marshaler {
+func (ec *executionContext) marshalNStatus2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐStatus(ctx context.Context, sel ast.SelectionSet, v *model.Status) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
