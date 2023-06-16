@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/GambitLLC/quip/graph/model"
 	"github.com/GambitLLC/quip/libs/auth"
@@ -33,13 +34,10 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*model.User, erro
 
 // Profile is the resolver for the profile field.
 func (r *userResolver) Profile(ctx context.Context, obj *model.User) (*model.Profile, error) {
+	date := time.Now()
 	return &model.Profile{
 		Username: fmt.Sprintf("user: %s", obj.ID),
-		Dob: &model.Date{
-			Year:  2003,
-			Month: 1,
-			Day:   2,
-		},
+		Dob:      &date,
 	}, nil
 }
 

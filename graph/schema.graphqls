@@ -9,6 +9,8 @@ directive @goField(
   omittable: Boolean
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
+scalar Time
+
 type User {
   id: ID!
   profile: Profile! @goField(forceResolver: true)
@@ -16,10 +18,8 @@ type User {
 
 type Profile {
   username: String!
-  dob: Date
+  dob: Time
 }
-
-scalar Date @goModel(model: "github.com/GambitLLC/quip/graph/model.Date")
 
 type Query {
   # Query for the specified User or currently logged in user if not specified.
@@ -28,9 +28,11 @@ type Query {
 
 input ProfileChanges @goModel(model: "map[string]interface{}") {
   username: String
-  dob: Date
+  dob: Time
 }
 
 type Mutation {
+  # TODO: figure out how users are created -- should have username required
+
   updateProfile(changes: ProfileChanges!): Boolean!
 }

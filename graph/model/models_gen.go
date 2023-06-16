@@ -2,9 +2,13 @@
 
 package model
 
+import (
+	"time"
+)
+
 type Profile struct {
-	Username string `json:"username"`
-	Dob      *Date  `json:"dob,omitempty"`
+	Username string     `json:"username"`
+	Dob      *time.Time `json:"dob,omitempty"`
 }
 
 type User struct {
