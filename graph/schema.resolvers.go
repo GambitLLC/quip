@@ -17,7 +17,6 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/oauth"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // UpdateProfile is the resolver for the updateProfile field.
@@ -63,9 +62,10 @@ func (r *statusResolver) Details(ctx context.Context, obj *model.Status) (model.
 
 // Status is the resolver for the status field.
 func (r *userResolver) Status(ctx context.Context, obj *model.User) (*model.Status, error) {
-	// TODO: frontend.GetStatus needs to take user id(s) as parameter ...
 	token := auth.TokenFromContext(ctx)
-	status, err := r.frontend.GetStatus(ctx, &emptypb.Empty{}, grpc.PerRPCCredentials(oauth.TokenSource{
+	status, err := r.frontend.GetStatus(ctx, &matchmaker.GetStatusRequest{
+		Target: obj.ID,
+	}, grpc.PerRPCCredentials(oauth.TokenSource{
 		TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
 			AccessToken: token,
 		}),

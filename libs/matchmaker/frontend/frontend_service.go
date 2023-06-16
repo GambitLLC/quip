@@ -41,16 +41,15 @@ func New(cfg config.View) *Service {
 	}
 }
 
-// getPlayer retrieves the player from the metadata attached to the context.
-// Also locks the player mutex and returns an unlock function.
-func getPlayer(ctx context.Context, store statestore.Service, create bool) (player *ipb.PlayerInternal, unlock func(), err error) {
-	playerId := metautils.ExtractIncoming(ctx).Get("Player-Id")
-	if playerId == "" {
-		err = status.Error(codes.InvalidArgument, "missing Player-Id metadata")
+// getPlayer retrieves the specified player from the statestore.
+// Locks the player mutex and returns an unlock function.
+func getPlayer(ctx context.Context, store statestore.Service, id string, create bool) (player *ipb.PlayerInternal, unlock func(), err error) {
+	if id == "" {
+		err = status.Error(codes.InvalidArgument, "id is required")
 		return
 	}
 
-	lock := store.NewMutex(fmt.Sprintf("player:%s", playerId))
+	lock := store.NewMutex(fmt.Sprintf("player:%s", id))
 	if err = lock.Lock(ctx); err != nil {
 		err = status.Error(codes.Unavailable, err.Error())
 		return
@@ -61,7 +60,7 @@ func getPlayer(ctx context.Context, store statestore.Service, create bool) (play
 		_, _ = lock.Unlock(context.Background())
 	}
 
-	player, err = store.GetPlayer(ctx, playerId)
+	player, err = store.GetPlayer(ctx, id)
 	if err != nil {
 		if status.Code(err) != codes.NotFound || !create {
 			unlock()
@@ -69,7 +68,7 @@ func getPlayer(ctx context.Context, store statestore.Service, create bool) (play
 		}
 
 		player = &ipb.PlayerInternal{
-			PlayerId: playerId,
+			PlayerId: id,
 		}
 		err = store.CreatePlayer(ctx, player)
 	}
@@ -77,9 +76,9 @@ func getPlayer(ctx context.Context, store statestore.Service, create bool) (play
 	return
 }
 
-// GetStatus returns the current matchmaking status.
-func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.Status, error) {
-	player, unlock, err := getPlayer(ctx, s.store, false)
+// GetStatus returns the current status of the specified player.
+func (s *Service) GetStatus(ctx context.Context, req *pb.GetStatusRequest) (*pb.Status, error) {
+	player, unlock, err := getPlayer(ctx, s.store, req.Target, false)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return &pb.Status{
@@ -177,7 +176,7 @@ func (s *Service) GetStatus(ctx context.Context, _ *emptypb.Empty) (*pb.Status, 
 
 // StartQueue starts searching for a match with the given parameters.
 func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*emptypb.Empty, error) {
-	player, unlock, err := getPlayer(ctx, s.store, true)
+	player, unlock, err := getPlayer(ctx, s.store, metautils.ExtractIncoming(ctx).Get("Player-Id"), true)
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +230,7 @@ func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*e
 
 // StopQueue stops searching for a match. Idempotent.
 func (s *Service) StopQueue(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	player, unlock, err := getPlayer(ctx, s.store, false)
+	player, unlock, err := getPlayer(ctx, s.store, metautils.ExtractIncoming(ctx).Get("Player-Id"), true)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return &emptypb.Empty{}, nil

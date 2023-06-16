@@ -17,9 +17,64 @@ import { GameConfiguration, Status } from "./messages";
 
 export const protobufPackage = "quip.matchmaker";
 
+export interface GetStatusRequest {
+  target: string;
+}
+
 export interface StartQueueRequest {
   config: GameConfiguration | undefined;
 }
+
+function createBaseGetStatusRequest(): GetStatusRequest {
+  return { target: "" };
+}
+
+export const GetStatusRequest = {
+  encode(message: GetStatusRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.target !== "") {
+      writer.uint32(10).string(message.target);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetStatusRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetStatusRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.target = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetStatusRequest {
+    return { target: isSet(object.target) ? String(object.target) : "" };
+  },
+
+  toJSON(message: GetStatusRequest): unknown {
+    const obj: any = {};
+    message.target !== undefined && (obj.target = message.target);
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetStatusRequest>, I>>(base?: I): GetStatusRequest {
+    return GetStatusRequest.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetStatusRequest>, I>>(object: I): GetStatusRequest {
+    const message = createBaseGetStatusRequest();
+    message.target = object.target ?? "";
+    return message;
+  },
+};
 
 function createBaseStartQueueRequest(): StartQueueRequest {
   return { config: undefined };
@@ -77,13 +132,13 @@ export const StartQueueRequest = {
 
 export type FrontendService = typeof FrontendService;
 export const FrontendService = {
-  /** GetStatus returns the current matchmaking status. */
+  /** GetStatus returns the current status of the specified player. */
   getStatus: {
     path: "/quip.matchmaker.Frontend/GetStatus",
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
-    requestDeserialize: (value: Buffer) => Empty.decode(value),
+    requestSerialize: (value: GetStatusRequest) => Buffer.from(GetStatusRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => GetStatusRequest.decode(value),
     responseSerialize: (value: Status) => Buffer.from(Status.encode(value).finish()),
     responseDeserialize: (value: Buffer) => Status.decode(value),
   },
@@ -110,8 +165,8 @@ export const FrontendService = {
 } as const;
 
 export interface FrontendServer extends UntypedServiceImplementation {
-  /** GetStatus returns the current matchmaking status. */
-  getStatus: handleUnaryCall<Empty, Status>;
+  /** GetStatus returns the current status of the specified player. */
+  getStatus: handleUnaryCall<GetStatusRequest, Status>;
   /** StartQueue starts searching for a match with the given parameters. */
   startQueue: handleUnaryCall<StartQueueRequest, Empty>;
   /** StopQueue stops searching for a match. Idempotent. */
@@ -119,15 +174,18 @@ export interface FrontendServer extends UntypedServiceImplementation {
 }
 
 export interface FrontendClient extends Client {
-  /** GetStatus returns the current matchmaking status. */
-  getStatus(request: Empty, callback: (error: ServiceError | null, response: Status) => void): ClientUnaryCall;
+  /** GetStatus returns the current status of the specified player. */
   getStatus(
-    request: Empty,
+    request: GetStatusRequest,
+    callback: (error: ServiceError | null, response: Status) => void,
+  ): ClientUnaryCall;
+  getStatus(
+    request: GetStatusRequest,
     metadata: Metadata,
     callback: (error: ServiceError | null, response: Status) => void,
   ): ClientUnaryCall;
   getStatus(
-    request: Empty,
+    request: GetStatusRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: Status) => void,

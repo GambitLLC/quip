@@ -29,8 +29,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FrontendClient interface {
-	// GetStatus returns the current matchmaking status.
-	GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Status, error)
+	// GetStatus returns the current status of the specified player.
+	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*Status, error)
 	// StartQueue starts searching for a match with the given parameters.
 	StartQueue(ctx context.Context, in *StartQueueRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// StopQueue stops searching for a match. Idempotent.
@@ -45,7 +45,7 @@ func NewFrontendClient(cc grpc.ClientConnInterface) FrontendClient {
 	return &frontendClient{cc}
 }
 
-func (c *frontendClient) GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Status, error) {
+func (c *frontendClient) GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*Status, error) {
 	out := new(Status)
 	err := c.cc.Invoke(ctx, Frontend_GetStatus_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -76,8 +76,8 @@ func (c *frontendClient) StopQueue(ctx context.Context, in *emptypb.Empty, opts 
 // All implementations should embed UnimplementedFrontendServer
 // for forward compatibility
 type FrontendServer interface {
-	// GetStatus returns the current matchmaking status.
-	GetStatus(context.Context, *emptypb.Empty) (*Status, error)
+	// GetStatus returns the current status of the specified player.
+	GetStatus(context.Context, *GetStatusRequest) (*Status, error)
 	// StartQueue starts searching for a match with the given parameters.
 	StartQueue(context.Context, *StartQueueRequest) (*emptypb.Empty, error)
 	// StopQueue stops searching for a match. Idempotent.
@@ -88,7 +88,7 @@ type FrontendServer interface {
 type UnimplementedFrontendServer struct {
 }
 
-func (UnimplementedFrontendServer) GetStatus(context.Context, *emptypb.Empty) (*Status, error) {
+func (UnimplementedFrontendServer) GetStatus(context.Context, *GetStatusRequest) (*Status, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStatus not implemented")
 }
 func (UnimplementedFrontendServer) StartQueue(context.Context, *StartQueueRequest) (*emptypb.Empty, error) {
@@ -110,7 +110,7 @@ func RegisterFrontendServer(s grpc.ServiceRegistrar, srv FrontendServer) {
 }
 
 func _Frontend_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(GetStatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func _Frontend_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(
 		FullMethod: Frontend_GetStatus_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FrontendServer).GetStatus(ctx, req.(*emptypb.Empty))
+		return srv.(FrontendServer).GetStatus(ctx, req.(*GetStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

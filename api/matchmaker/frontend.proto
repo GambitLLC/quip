@@ -5,13 +5,17 @@ option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
 import "matchmaker/messages.proto";
 import "google/protobuf/empty.proto";
 
+message GetStatusRequest {
+  string target = 1;
+}
+
 message StartQueueRequest {
   GameConfiguration config = 1;
 }
 
 service Frontend {
-  // GetStatus returns the current matchmaking status.
-  rpc GetStatus(google.protobuf.Empty) returns (Status);
+  // GetStatus returns the current status of the specified player.
+  rpc GetStatus(GetStatusRequest) returns (Status);
 
   // StartQueue starts searching for a match with the given parameters.
   rpc StartQueue(StartQueueRequest) returns (google.protobuf.Empty);

@@ -27,14 +27,11 @@ import (
 )
 
 func TestService(t *testing.T) {
-	t.Run("all methods should expect Player-Id metadata", func(t *testing.T) {
+	t.Run("expect Player-Id metadata to be required on certain methods", func(t *testing.T) {
 		s := &Service{}
 		ctx := context.Background()
 
-		_, err := s.GetStatus(ctx, nil)
-		require.Error(t, err, "GetStatus should return error")
-
-		_, err = s.StartQueue(ctx, nil)
+		_, err := s.StartQueue(ctx, nil)
 		require.Error(t, err, "StartQueue should return error")
 
 		_, err = s.StopQueue(ctx, nil)
@@ -105,6 +102,7 @@ func TestGetStatus(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := newService(t)
@@ -116,10 +114,22 @@ func TestGetStatus(t *testing.T) {
 				tt.setup(ctx, t, s)
 			}
 
-			got, err := s.GetStatus(ctx, &emptypb.Empty{})
+			got, err := s.GetStatus(ctx, &pb.GetStatusRequest{
+				Target: playerId,
+			})
 			tt.check(t, got, err)
 		})
 	}
+
+	t.Run("expect error if no target is provided", func(t *testing.T) {
+		s := newService(t)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		_, err := s.GetStatus(ctx, &pb.GetStatusRequest{})
+		require.Error(t, err, "expected error")
+	})
 }
 
 func TestStartQueueStatestore(t *testing.T) {

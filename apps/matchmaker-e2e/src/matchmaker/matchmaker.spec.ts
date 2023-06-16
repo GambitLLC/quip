@@ -2,7 +2,10 @@ import { Client } from '@quip/sockets';
 import config from 'config';
 import { generateDIDToken } from '../auth';
 import { BackendClient, DeleteMatchRequest } from '@quip/pb/matchmaker/backend';
-import { StartQueueRequest } from '@quip/pb/matchmaker/frontend';
+import {
+  GetStatusRequest,
+  StartQueueRequest,
+} from '@quip/pb/matchmaker/frontend';
 import { State, Status } from '@quip/pb/matchmaker/messages';
 import * as grpc from '@grpc/grpc-js';
 
@@ -47,12 +50,16 @@ describe('socket connection', () => {
   });
 
   it('should get status idle response', async () => {
-    const { client } = await newClient();
+    const { client, player } = await newClient();
     const status = await new Promise<Status>((resolve, reject) => {
-      client.emit('getStatus', (err, status) => {
-        if (err) reject(err);
-        resolve(status);
-      });
+      client.emit(
+        'getStatus',
+        GetStatusRequest.create({ target: player }),
+        (err, status) => {
+          if (err) reject(err);
+          resolve(status);
+        }
+      );
     });
 
     expect(status?.state).toBe(State.IDLE);
@@ -78,11 +85,11 @@ describe('queueing', () => {
 
   describe('valid start queue', () => {
     const gamemode = 'test_100x1';
-    let err: Error, client: Client;
+    let err: Error, client: Client, player: string;
     let statusUpdate: Promise<Status>;
 
     beforeAll(async () => {
-      ({ client } = await newClient());
+      ({ client, player } = await newClient());
 
       statusUpdate = new Promise<Status>((resolve) => {
         client.on('statusUpdate', (update) => {
@@ -112,10 +119,14 @@ describe('queueing', () => {
 
     it('should get status searching response', async () => {
       const status = await new Promise<Status>((resolve, reject) => {
-        client.emit('getStatus', (err, status) => {
-          if (err) reject(err);
-          resolve(status);
-        });
+        client.emit(
+          'getStatus',
+          GetStatusRequest.create({ target: player }),
+          (err, status) => {
+            if (err) reject(err);
+            resolve(status);
+          }
+        );
       });
 
       expect(status?.state).toBe(State.SEARCHING);
@@ -160,10 +171,14 @@ describe('queueing', () => {
 
       it('should get status idle response', async () => {
         const status = await new Promise<Status>((resolve, reject) => {
-          client.emit('getStatus', (err, status) => {
-            if (err) reject(err);
-            resolve(status);
-          });
+          client.emit(
+            'getStatus',
+            GetStatusRequest.create({ target: player }),
+            (err, status) => {
+              if (err) reject(err);
+              resolve(status);
+            }
+          );
         });
 
         expect(status?.state).toBe(State.IDLE);
@@ -175,12 +190,12 @@ describe('queueing', () => {
 });
 
 describe('match tests', () => {
-  let client: Client;
+  let client: Client, player: string;
   let statusUpdate: Promise<Status>;
   let matchId: string;
 
   beforeAll(async () => {
-    ({ client } = await newClient());
+    ({ client, player } = await newClient());
 
     statusUpdate = new Promise<Status>((resolve) => {
       client.on('statusUpdate', (update) => {
@@ -209,10 +224,14 @@ describe('match tests', () => {
 
   it('should get status playing response', async () => {
     const status = await new Promise<Status>((resolve, reject) => {
-      client.emit('getStatus', (err, status) => {
-        if (err) reject(err);
-        resolve(status);
-      });
+      client.emit(
+        'getStatus',
+        GetStatusRequest.create({ target: player }),
+        (err, status) => {
+          if (err) reject(err);
+          resolve(status);
+        }
+      );
     });
 
     expect(status?.state).toBe(State.PLAYING);
@@ -272,10 +291,14 @@ describe('match tests', () => {
     });
     it('should get status idle response', async () => {
       const status = await new Promise<Status>((resolve, reject) => {
-        client.emit('getStatus', (err, status) => {
-          if (err) reject(err);
-          resolve(status);
-        });
+        client.emit(
+          'getStatus',
+          GetStatusRequest.create({ target: player }),
+          (err, status) => {
+            if (err) reject(err);
+            resolve(status);
+          }
+        );
       });
 
       expect(status?.state).toBe(State.IDLE);

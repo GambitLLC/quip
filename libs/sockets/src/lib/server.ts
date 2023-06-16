@@ -90,22 +90,6 @@ export const Server = (
       (err) => console.error(err)
     );
 
-  // broker
-  //   .subscribe(
-  //     'queue_update',
-  //     (message) => {
-  //       const update = QueueUpdate.decode(message);
-  //       io.to(update.targets).emit('queueUpdate', update);
-  //     },
-  //     true
-  //   )
-  //   .then(
-  //     () => {
-  //       console.log('subscribed to queue updates');
-  //     },
-  //     (err) => console.error(err)
-  //   );
-
   // create rpc client to send commands to matchmaker
   const host = config.get('matchmaker.frontend.hostname');
   const port = config.get('matchmaker.frontend.port');
@@ -129,8 +113,8 @@ export const Server = (
     const md = new Metadata();
     md.set('Authorization', socket.handshake.auth.token);
 
-    socket.on('getStatus', (cb) => {
-      rpc.getStatus(Empty.create(), md, (err, resp) => {
+    socket.on('getStatus', (req, cb) => {
+      rpc.getStatus(req, md, (err, resp) => {
         cb(err, resp);
       });
     });

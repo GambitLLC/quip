@@ -13,7 +13,11 @@ import config from 'config';
 import { Magic } from '@magic-sdk/admin';
 const magic = new Magic();
 
-import { FrontendService, FrontendServer } from '@quip/pb/matchmaker/frontend';
+import {
+  FrontendService,
+  FrontendServer,
+  GetStatusRequest,
+} from '@quip/pb/matchmaker/frontend';
 import { Status } from '@quip/pb/matchmaker/messages';
 import { Empty } from '@quip/pb/google/protobuf/empty';
 import Server from './server';
@@ -232,20 +236,24 @@ describe('socket listener', () => {
     const { player, client } = await getClient();
 
     await new Promise<void>((resolve, reject) => {
-      client.emit('getStatus', (err) => {
-        if (
-          !gotCall({
-            player: player,
-            request: 'getStatus',
-          })
-        ) {
-          reject('mock matchmaker did not receive getStatus request');
-          return;
-        }
+      client.emit(
+        'getStatus',
+        GetStatusRequest.create({ target: player }),
+        (err) => {
+          if (
+            !gotCall({
+              player: player,
+              request: 'getStatus',
+            })
+          ) {
+            reject('mock matchmaker did not receive getStatus request');
+            return;
+          }
 
-        if (err) reject(err);
-        else resolve();
-      });
+          if (err) reject(err);
+          else resolve();
+        }
+      );
     });
   });
 });
