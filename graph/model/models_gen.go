@@ -6,12 +6,11 @@ import (
 	"time"
 )
 
+type StatusDetails interface {
+	IsStatusDetails()
+}
+
 type Profile struct {
 	Username string     `json:"username"`
 	Dob      *time.Time `json:"dob,omitempty"`
-}
-
-type User struct {
-	ID      string   `json:"id"`
-	Profile *Profile `json:"profile"`
 }

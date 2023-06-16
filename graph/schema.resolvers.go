@@ -12,6 +12,12 @@ import (
 
 	"github.com/GambitLLC/quip/graph/model"
 	"github.com/GambitLLC/quip/libs/auth"
+	"github.com/GambitLLC/quip/libs/pb/matchmaker"
+	pkgerr "github.com/pkg/errors"
+	"golang.org/x/oauth2"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/oauth"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // UpdateProfile is the resolver for the updateProfile field.
@@ -32,6 +38,42 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*model.User, erro
 	}, nil
 }
 
+// State is the resolver for the state field.
+func (r *statusResolver) State(ctx context.Context, obj *matchmaker.Status) (model.State, error) {
+	return model.State(obj.State), nil
+}
+
+// Details is the resolver for the details field.
+func (r *statusResolver) Details(ctx context.Context, obj *matchmaker.Status) (model.StatusDetails, error) {
+	// NOTE: gqlgen generate erroneously removes pkg/errors and replaces with stdlib errors
+	// name import github.com/pkg/errors as a workaround
+	// https://github.com/99designs/gqlgen/issues/1171
+	switch details := obj.Details.(type) {
+	default:
+		return nil, pkgerr.Errorf("invalid status detail type: %T", details)
+	case *matchmaker.Status_Matched:
+		return &model.MatchFound{MatchFound: details.Matched}, nil
+	case *matchmaker.Status_Searching:
+		return &model.QueueSearching{QueueSearching: details.Searching}, nil
+	case *matchmaker.Status_Stopped:
+		return &model.QueueStopped{QueueStopped: details.Stopped}, nil
+
+	}
+}
+
+// Status is the resolver for the status field.
+func (r *userResolver) Status(ctx context.Context, obj *model.User) (*matchmaker.Status, error) {
+	// TODO: frontend.GetStatus needs to take user id(s) as parameter ...
+	token := auth.TokenFromContext(ctx)
+	status, err := r.frontend.GetStatus(ctx, &emptypb.Empty{}, grpc.PerRPCCredentials(oauth.TokenSource{
+		TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: token,
+		}),
+	}))
+	// TODO: wrap/fmt err instead of directly returning
+	return status, err
+}
+
 // Profile is the resolver for the profile field.
 func (r *userResolver) Profile(ctx context.Context, obj *model.User) (*model.Profile, error) {
 	date := time.Now()
@@ -47,9 +89,13 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// Status returns StatusResolver implementation.
+func (r *Resolver) Status() StatusResolver { return &statusResolver{r} }
+
 // User returns UserResolver implementation.
 func (r *Resolver) User() UserResolver { return &userResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type statusResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }

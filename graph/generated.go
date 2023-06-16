@@ -16,6 +16,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/GambitLLC/quip/graph/model"
+	"github.com/GambitLLC/quip/libs/pb/matchmaker"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -40,6 +41,7 @@ type Config struct {
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Status() StatusResolver
 	User() UserResolver
 }
 
@@ -47,6 +49,10 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	MatchFound struct {
+		MatchId func(childComplexity int) int
+	}
+
 	Mutation struct {
 		UpdateProfile func(childComplexity int, changes map[string]interface{}) int
 	}
@@ -60,9 +66,23 @@ type ComplexityRoot struct {
 		User func(childComplexity int, id *string) int
 	}
 
+	QueueSearching struct {
+		Gamemode func(childComplexity int) int
+	}
+
+	QueueStopped struct {
+		Reason func(childComplexity int) int
+	}
+
+	Status struct {
+		Details func(childComplexity int) int
+		State   func(childComplexity int) int
+	}
+
 	User struct {
 		ID      func(childComplexity int) int
 		Profile func(childComplexity int) int
+		Status  func(childComplexity int) int
 	}
 }
 
@@ -72,7 +92,12 @@ type MutationResolver interface {
 type QueryResolver interface {
 	User(ctx context.Context, id *string) (*model.User, error)
 }
+type StatusResolver interface {
+	State(ctx context.Context, obj *matchmaker.Status) (model.State, error)
+	Details(ctx context.Context, obj *matchmaker.Status) (model.StatusDetails, error)
+}
 type UserResolver interface {
+	Status(ctx context.Context, obj *model.User) (*matchmaker.Status, error)
 	Profile(ctx context.Context, obj *model.User) (*model.Profile, error)
 }
 
@@ -90,6 +115,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "MatchFound.id":
+		if e.complexity.MatchFound.MatchId == nil {
+			break
+		}
+
+		return e.complexity.MatchFound.MatchId(childComplexity), true
 
 	case "Mutation.updateProfile":
 		if e.complexity.Mutation.UpdateProfile == nil {
@@ -129,6 +161,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.User(childComplexity, args["id"].(*string)), true
 
+	case "QueueSearching.gamemode":
+		if e.complexity.QueueSearching.Gamemode == nil {
+			break
+		}
+
+		return e.complexity.QueueSearching.Gamemode(childComplexity), true
+
+	case "QueueStopped.reason":
+		if e.complexity.QueueStopped.Reason == nil {
+			break
+		}
+
+		return e.complexity.QueueStopped.Reason(childComplexity), true
+
+	case "Status.details":
+		if e.complexity.Status.Details == nil {
+			break
+		}
+
+		return e.complexity.Status.Details(childComplexity), true
+
+	case "Status.state":
+		if e.complexity.Status.State == nil {
+			break
+		}
+
+		return e.complexity.Status.State(childComplexity), true
+
 	case "User.id":
 		if e.complexity.User.ID == nil {
 			break
@@ -142,6 +202,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Profile(childComplexity), true
+
+	case "User.status":
+		if e.complexity.User.Status == nil {
+			break
+		}
+
+		return e.complexity.User.Status(childComplexity), true
 
 	}
 	return 0, false
@@ -311,6 +378,50 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _MatchFound_id(ctx context.Context, field graphql.CollectedField, obj *model.MatchFound) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MatchFound_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MatchId, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MatchFound_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MatchFound",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Mutation_updateProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_updateProfile(ctx, field)
@@ -490,6 +601,8 @@ func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field g
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
+			case "status":
+				return ec.fieldContext_User_status(ctx, field)
 			case "profile":
 				return ec.fieldContext_User_profile(ctx, field)
 			}
@@ -639,6 +752,176 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _QueueSearching_gamemode(ctx context.Context, field graphql.CollectedField, obj *model.QueueSearching) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_QueueSearching_gamemode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Gamemode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_QueueSearching_gamemode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QueueSearching",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QueueStopped_reason(ctx context.Context, field graphql.CollectedField, obj *model.QueueStopped) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_QueueStopped_reason(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Reason, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_QueueStopped_reason(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QueueStopped",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Status_state(ctx context.Context, field graphql.CollectedField, obj *matchmaker.Status) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Status_state(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Status().State(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.State)
+	fc.Result = res
+	return ec.marshalNState2githubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐState(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Status_state(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Status",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type State does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Status_details(ctx context.Context, field graphql.CollectedField, obj *matchmaker.Status) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Status_details(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Status().Details(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(model.StatusDetails)
+	fc.Result = res
+	return ec.marshalOStatusDetails2githubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐStatusDetails(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Status_details(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Status",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type StatusDetails does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_id(ctx, field)
 	if err != nil {
@@ -678,6 +961,56 @@ func (ec *executionContext) fieldContext_User_id(ctx context.Context, field grap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_status(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().Status(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*matchmaker.Status)
+	fc.Result = res
+	return ec.marshalNStatus2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋlibsᚋpbᚋmatchmakerᚐStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "state":
+				return ec.fieldContext_Status_state(ctx, field)
+			case "details":
+				return ec.fieldContext_Status_details(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Status", field.Name)
 		},
 	}
 	return fc, nil
@@ -2510,9 +2843,67 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    ************************** interface.gotpl ***************************
 
+func (ec *executionContext) _StatusDetails(ctx context.Context, sel ast.SelectionSet, obj model.StatusDetails) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.QueueSearching:
+		return ec._QueueSearching(ctx, sel, &obj)
+	case *model.QueueSearching:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._QueueSearching(ctx, sel, obj)
+	case model.QueueStopped:
+		return ec._QueueStopped(ctx, sel, &obj)
+	case *model.QueueStopped:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._QueueStopped(ctx, sel, obj)
+	case model.MatchFound:
+		return ec._MatchFound(ctx, sel, &obj)
+	case *model.MatchFound:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._MatchFound(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var matchFoundImplementors = []string{"MatchFound", "StatusDetails"}
+
+func (ec *executionContext) _MatchFound(ctx context.Context, sel ast.SelectionSet, obj *model.MatchFound) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, matchFoundImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MatchFound")
+		case "id":
+
+			out.Values[i] = ec._MatchFound_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
 
 var mutationImplementors = []string{"Mutation"}
 
@@ -2647,6 +3038,117 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
+var queueSearchingImplementors = []string{"QueueSearching", "StatusDetails"}
+
+func (ec *executionContext) _QueueSearching(ctx context.Context, sel ast.SelectionSet, obj *model.QueueSearching) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, queueSearchingImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("QueueSearching")
+		case "gamemode":
+
+			out.Values[i] = ec._QueueSearching_gamemode(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var queueStoppedImplementors = []string{"QueueStopped", "StatusDetails"}
+
+func (ec *executionContext) _QueueStopped(ctx context.Context, sel ast.SelectionSet, obj *model.QueueStopped) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, queueStoppedImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("QueueStopped")
+		case "reason":
+
+			out.Values[i] = ec._QueueStopped_reason(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var statusImplementors = []string{"Status"}
+
+func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, obj *matchmaker.Status) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, statusImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Status")
+		case "state":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Status_state(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "details":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Status_details(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var userImplementors = []string{"User"}
 
 func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *model.User) graphql.Marshaler {
@@ -2664,6 +3166,26 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "status":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_status(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "profile":
 			field := field
 
@@ -3061,6 +3583,30 @@ func (ec *executionContext) unmarshalNProfileChanges2map(ctx context.Context, v 
 	return v.(map[string]interface{}), nil
 }
 
+func (ec *executionContext) unmarshalNState2githubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐState(ctx context.Context, v interface{}) (model.State, error) {
+	var res model.State
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNState2githubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐState(ctx context.Context, sel ast.SelectionSet, v model.State) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNStatus2githubᚗcomᚋGambitLLCᚋquipᚋlibsᚋpbᚋmatchmakerᚐStatus(ctx context.Context, sel ast.SelectionSet, v matchmaker.Status) graphql.Marshaler {
+	return ec._Status(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNStatus2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋlibsᚋpbᚋmatchmakerᚐStatus(ctx context.Context, sel ast.SelectionSet, v *matchmaker.Status) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Status(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3353,6 +3899,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOStatusDetails2githubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐStatusDetails(ctx context.Context, sel ast.SelectionSet, v model.StatusDetails) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._StatusDetails(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {

@@ -13,9 +13,38 @@ scalar Time
 
 type User {
   id: ID!
-  profile: Profile! @goField(forceResolver: true)
+  status: Status!
+  profile: Profile!
 }
 
+# Status
+type Status {
+  state: State!
+  details: StatusDetails
+}
+
+enum State {
+  OFFLINE
+  IDLE
+  SEARCHING
+  PLAYING
+}
+
+union StatusDetails = QueueSearching | QueueStopped | MatchFound
+
+type QueueSearching {
+  gamemode: String!
+}
+
+type QueueStopped {
+  reason: String
+}
+
+type MatchFound {
+  id: String! @goField(name: "matchId")
+}
+
+# User customizable profile
 type Profile {
   username: String!
   dob: Time
