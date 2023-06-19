@@ -193,9 +193,11 @@ libs/matchmaker/internal/ipb/%.pb.go: libs/matchmaker/internal/api/%.proto $(GO_
 
 TS_PROTOC_DEPS := build/toolchain/bin/protoc$(EXE_EXTENSION) node_modules
 
+# ts proto regenerates dependency files as well
+# pass all protos at once into protoc so that make can properly cache
 libs/pb/matchmaker/%.ts: api/matchmaker/%.proto api/third-party/ $(TS_PROTOC_DEPS)
 	mkdir -p $(REPOSITORY_ROOT)/libs/pb/matchmaker
-	$(PROTOC) matchmaker/$(*F).proto \
+	$(PROTOC) $(foreach proto,$(MATCHMAKER_PROTO_NAMES),matchmaker/$(proto).proto)  \
 		-I $(REPOSITORY_ROOT)/api -I $(PROTOC_INCLUDES) \
 		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
 		--ts_proto_out=$(REPOSITORY_ROOT)/libs/pb \
