@@ -15,7 +15,7 @@
         "commands": [
           "go build -o build/e2e/bin/e2e-setup -tags setup apps/matchmaker-e2e/setup.go",
           "go build -o build/e2e/bin/e2e-validate -tags validate apps/matchmaker-e2e/validate.go",
-          "make build/e2e/bin/"
+          "make build/e2e/bin/minimatch build/e2e/bin/default-evaluator build/e2e/bin/synchronizer"
         ]
       }
     },
