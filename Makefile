@@ -191,7 +191,7 @@ libs/matchmaker/internal/ipb/%.pb.go: libs/matchmaker/internal/api/%.proto $(GO_
 		--go_out=$(REPOSITORY_ROOT)/libs/matchmaker/internal/ipb \
 		--go_opt=module=$(GO_MODULE)/libs/matchmaker/internal/ipb
 
-TS_PROTOC_DEPS := build/toolchain/bin/protoc$(EXE_EXTENSION) install-npm
+TS_PROTOC_DEPS := build/toolchain/bin/protoc$(EXE_EXTENSION) node_modules
 
 libs/pb/matchmaker/%.ts: api/matchmaker/%.proto api/third-party/ $(TS_PROTOC_DEPS)
 	mkdir -p $(REPOSITORY_ROOT)/libs/pb/matchmaker
