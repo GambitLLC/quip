@@ -1,6 +1,7 @@
 package appmain
 
 import (
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -22,13 +23,13 @@ func RunGRPCService(serviceName string, bind BindGRPC) {
 		log.Panic().Str("component", serviceName).Err(err).Msg("Failed to read config")
 	}
 
-	s, err := newGRPCService(serviceName, cfg, bind)
+	s, err := NewGRPCService(serviceName, cfg, bind, net.Listen)
 	if err != nil {
 		log.Panic().Str("component", serviceName).Err(err).Msg("Failed to create grpc service")
 	}
 
 	<-c
-	err = s.stop()
+	err = s.Stop()
 	if err != nil {
 		panic(err)
 	}
@@ -39,7 +40,7 @@ func RunGRPCService(serviceName string, bind BindGRPC) {
 type BindGRPC func(config.View, *GRPCBindings) error
 
 type GRPCBindings struct {
-	s  *service
+	s  *Service
 	sp *rpc.ServerParams
 }
 
@@ -55,13 +56,15 @@ func (b *GRPCBindings) SetAuth(h grpc.UnaryServerInterceptor) {
 	b.sp.SetAuth(h)
 }
 
-func newGRPCService(serviceName string, cfg config.View, bind BindGRPC) (*service, error) {
-	sp, err := rpc.NewServerParams(cfg, serviceName)
+// NewGRPCService is used internally and only exposed for testing and development purposes.
+// Use RunGRPCService instead.
+func NewGRPCService(serviceName string, cfg config.View, bind BindGRPC, listen func(network, addr string) (net.Listener, error)) (*Service, error) {
+	sp, err := rpc.NewServerParams(cfg, serviceName, listen)
 	if err != nil {
 		return nil, err
 	}
 
-	s := &service{}
+	s := &Service{}
 
 	bindings := &GRPCBindings{
 		s:  s,
@@ -70,14 +73,14 @@ func newGRPCService(serviceName string, cfg config.View, bind BindGRPC) (*servic
 
 	err = bind(cfg, bindings)
 	if err != nil {
-		_ = s.stop() // ignore additional stop errors
+		_ = s.Stop() // ignore additional stop errors
 		return nil, err
 	}
 
 	srv := rpc.Server{}
 	err = srv.Start(sp)
 	if err != nil {
-		_ = s.stop() // ignore additional stop errors
+		_ = s.Stop() // ignore additional stop errors
 		return nil, err
 	}
 	bindings.AddCloser(srv.Stop)

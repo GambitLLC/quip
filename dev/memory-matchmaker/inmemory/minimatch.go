@@ -1,0 +1,130 @@
+package inmemory
+
+import (
+	"context"
+	"os"
+	"os/exec"
+	"strings"
+
+	"github.com/spf13/viper"
+)
+
+func runMinimatch(ctx context.Context, redisPort string) error {
+	if err := createMinimatchConfig(redisPort); err != nil {
+		return err
+	}
+
+	minimatch := exec.CommandContext(ctx, "./minimatch")
+	minimatch.Dir = "./build/e2e/bin"
+	minimatch.Stdout = os.Stdout
+	minimatch.Stderr = os.Stderr
+	if err := minimatch.Start(); err != nil {
+		return err
+	}
+
+	synchronizer := exec.CommandContext(ctx, "./synchronizer")
+	synchronizer.Dir = "./build/e2e/bin"
+	synchronizer.Stdout = os.Stdout
+	synchronizer.Stderr = os.Stderr
+	if err := synchronizer.Start(); err != nil {
+		_ = minimatch.Process.Kill()
+		return err
+	}
+
+	evaluator := exec.CommandContext(ctx, "./default-evaluator")
+	evaluator.Dir = "./build/e2e/bin"
+	evaluator.Stdout = os.Stdout
+	evaluator.Stderr = os.Stderr
+	if err := evaluator.Start(); err != nil {
+		_ = minimatch.Process.Kill()
+		_ = synchronizer.Process.Kill()
+		return err
+	}
+
+	return nil
+}
+
+func createMinimatchConfig(redisPort string) error {
+	cfg := viper.New()
+	cfg.SetConfigType("yaml")
+	if err := cfg.ReadConfig(strings.NewReader(minimatchDefaultConfig)); err != nil {
+		return err
+	}
+
+	cfg.Set("redis.port", redisPort)
+	if err := cfg.WriteConfigAs("build/e2e/bin/matchmaker_config_default.yaml"); err != nil {
+		return err
+	}
+
+	return os.WriteFile("build/e2e/bin/matchmaker_config_override.yaml", []byte(minimatchOverrideConfig), 0666)
+}
+
+const minimatchDefaultConfig string = `
+logging:
+  level: debug
+  format: text
+  rpc: false
+# Open Match applies the exponential backoff strategy for its retryable gRPC calls.
+# The settings below are the default backoff configuration used in Open Match.
+# See https://github.com/cenkalti/backoff/blob/v3/exponential.go for detailed explanations
+backoff:
+  # The initial retry interval (in milliseconds)
+  initialInterval: 100ms
+  # maxInterval caps the maximum time elapsed for a retry interval
+  maxInterval: 500ms
+  # The next retry interval is multiplied by this multiplier
+  multiplier: 1.5
+  # Randomize the retry interval
+  randFactor: 0.5
+  # maxElapsedTime caps the retry time (in milliseconds)
+  maxElapsedTime: 3000ms
+
+api:
+  synchronizer:
+    hostname: "localhost"
+    grpcport: "50498"
+    httpport: "51498"
+  minimatch:
+    grpcport: "50499"
+    httpport: "51499"
+
+redis:
+  hostname: localhost
+  port: 6379
+
+telemetry:
+  reportingPeriod: "1m"
+  traceSamplingFraction: "0.01"
+  zpages:
+    enable: "false"
+  jaeger:
+    enable: "false"
+  prometheus:
+    enable: "false"
+  stackdriverMetrics:
+    enable: "false"
+`
+
+const minimatchOverrideConfig string = `
+# Length of time between first fetch matches call, and when no further fetch
+# matches calls will join the current evaluation/synchronization cycle,
+# instead waiting for the next cycle.
+registrationInterval: 250ms
+# Length of time after match function as started before it will be canceled,
+# and evaluator call input is EOF.
+proposalCollectionInterval: 20s
+# Time after a ticket has been returned from fetch matches (marked as pending)
+# before it automatically becomes active again and will be returned by query
+# calls.
+pendingReleaseTimeout: 1m
+# Time after a ticket has been assigned before it is automatically delted.
+assignedDeleteTimeout: 10m
+# Maximum number of tickets to return on a single QueryTicketsResponse.
+queryPageSize: 10000
+backfillLockTimeout: 1m
+api:
+  evaluator:
+    hostname: "localhost"
+    grpcport: "50497"
+    httpport: "51497"
+`

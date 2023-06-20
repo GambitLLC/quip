@@ -38,12 +38,12 @@ type ServerParams struct {
 	authenticator grpc.UnaryServerInterceptor
 }
 
-func NewServerParams(cfg config.View, serviceName string) (*ServerParams, error) {
+func NewServerParams(cfg config.View, serviceName string, listen func(string, string) (net.Listener, error)) (*ServerParams, error) {
 	logger := zerolog.New(os.Stderr).With().
 		Str("component", serviceName).
 		Logger()
 
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GetInt(serviceName+".port")))
+	ln, err := listen("tcp", fmt.Sprintf(":%d", cfg.GetInt(serviceName+".port")))
 	if err != nil {
 		return nil, errors.Errorf("listen failed: %s", err.Error())
 	}

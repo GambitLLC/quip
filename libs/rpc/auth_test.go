@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"net"
 	"strings"
 	"testing"
 	"time"
@@ -27,7 +28,7 @@ func TestAuth(t *testing.T) {
 	cfg.Set(serverPrivateKeyFileConfigKey, data.Path("x509/server_key.pem"))
 	cfg.Set(serverRootCertificatePathConfigKey, data.Path("x509/ca_cert.pem"))
 
-	params, err := NewServerParams(cfg, "test")
+	params, err := NewServerParams(cfg, "test", net.Listen)
 	require.NoError(t, err, "NewServerParams failed")
 
 	params.AddHandler(func(s *grpc.Server) {
