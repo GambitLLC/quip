@@ -1,13 +1,20 @@
-import {Magic, PromiEvent} from "magic-sdk";
-import {SolanaExtension} from "@magic-ext/solana";
-import {InstanceWithExtensions, SDKBase} from "@magic-sdk/provider";
-import {LoginWithEmailOTPEvents, MagicUserMetadata} from "@magic-sdk/types";
-import {useWebSocket} from "@vueuse/core";
-import { Connection, PublicKey, LAMPORTS_PER_SOL, Transaction, SystemProgram } from "@solana/web3.js";
+import { Magic, PromiEvent } from 'magic-sdk';
+import { SolanaExtension } from '@magic-ext/solana';
+import { InstanceWithExtensions, SDKBase } from '@magic-sdk/provider';
+import { LoginWithEmailOTPEvents, MagicUserMetadata } from '@magic-sdk/types';
+import { useWebSocket } from '@vueuse/core';
+import {
+  Connection,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from '@solana/web3.js';
 
-import { Buffer } from 'buffer'
-import { ComputedRef, Ref } from "vue";
-globalThis.Buffer = Buffer
+import { Buffer } from 'buffer';
+import { ComputedRef, Ref } from 'vue';
+
+globalThis.Buffer = Buffer;
 
 type LoginEvent = PromiEvent<string | null, LoginWithEmailOTPEvents & {
   done: (result: string | null) => void;
@@ -41,6 +48,7 @@ declare module 'vue' {
 
 interface Ticker {
   usdPrice: Ref<number>,
+  klines: Ref<Kline[] | null>,
   init: () => Promise<void>
 }
 
@@ -57,8 +65,23 @@ interface Crypto {
   init: () => Promise<void>,
 }
 
+interface Kline {
+  openTime: number,
+  openPrice: number,
+  highPrice: number,
+  lowPrice: number,
+  closePrice: number,
+  volume: number,
+  klineCloseTime: number,
+  quoteAssetVolume: number,
+  numberOfTrades: number,
+  takerBuyBaseAssetVolume: number,
+  takerBuyQuoteAssetVolume: number,
+}
+
 const _useTicker = (): Ticker => {
   const usdPrice = ref<number>(0)
+  const klines = ref<Kline[] | null>(null)
   const interval = ref<NodeJS.Timer | null>(null)
   let isInitialized = false
 
@@ -69,15 +92,25 @@ const _useTicker = (): Ticker => {
     const runtimeConfig = useRuntimeConfig()
     const { WSS_BINANCE} = runtimeConfig.public
 
-    //track solana price
+    //track solana price && klines
     const { status, data, send, open, close } = useWebSocket(WSS_BINANCE, {
       autoReconnect: true,
       onConnected: () => {
         send(JSON.stringify({
-          "id": `${Date.now()}`,
+          "id": `price`,
           "method": "avgPrice",
           "params": {
             "symbol": "SOLUSD"
+          }
+        }))
+
+        send(JSON.stringify({
+          "id": `klines`,
+          "method": "uiKlines",
+          "params": {
+            "symbol": "SOLUSD",
+            "interval": "15m",
+            "limit": 96,
           }
         }))
       },
@@ -85,25 +118,71 @@ const _useTicker = (): Ticker => {
 
     interval.value = setInterval(() => {
       send(JSON.stringify({
-        "id": `${Date.now()}`,
+        "id": `price`,
         "method": "avgPrice",
         "params": {
           "symbol": "SOLUSD"
+        }
+      }))
+
+      send(JSON.stringify({
+        "id": `klines`,
+        "method": "uiKlines",
+        "params": {
+          "symbol": "SOLUSD",
+          "interval": "15m",
+          "limit": 96,
         }
       }))
     }, 1000 * 60)
 
     watch(data, (newData) => {
       const response = JSON.parse(newData)
+
       if (response.status === 200) {
-        usdPrice.value = response.result.price
+        switch (response.id) {
+          case "price":
+            usdPrice.value = Number(response.result.price)
+            break
+          case "klines":
+            klines.value = response.result.map((kline: number[]) => {
+              const [
+                openTime,
+                openPrice,
+                highPrice,
+                lowPrice,
+                closePrice,
+                volume,
+                klineCloseTime,
+                quoteAssetVolume,
+                numberOfTrades,
+                takerBuyBaseAssetVolume,
+                takerBuyQuoteAssetVolume,
+                _
+              ] = kline.map((value) => Number(value))
+
+              return {
+                openTime,
+                openPrice,
+                highPrice,
+                lowPrice,
+                closePrice,
+                volume,
+                klineCloseTime,
+                quoteAssetVolume,
+                numberOfTrades,
+                takerBuyBaseAssetVolume,
+                takerBuyQuoteAssetVolume,
+              } as Kline
+            })
+        }
       }
     })
 
     console.log("Initialized Ticker!")
   }
 
-  return { usdPrice, init }
+  return { usdPrice, klines, init }
 }
 
 const _useMagic = (magic: InstanceWithExtensions<SDKBase, SolanaExtension[]>): Crypto => {

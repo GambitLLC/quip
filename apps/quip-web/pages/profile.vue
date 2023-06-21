@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import View from "~/components/util/View.vue";
 import {useUser} from "~/store/UserStore";
 import Avatar from "~/components/util/Avatar/Avatar.vue";
 import QuipButton from "~/components/util/QuipButton.vue";
-import Tabs from "~/components/util/Tabs.vue";
+import Tabs from "~/components/util/Tabs/Tabs.vue";
 import {useTheme} from "vuetify";
 import GeneralTab from "~/components/profile/GeneralTab.vue";
 import {useModal} from "~/store/ModalStore";
-import Match from "~/components/util/Match.vue";
 import PersonalTab from "~/components/profile/PersonalTab.vue";
 import PreferencesTab from "~/components/profile/PreferencesTab.vue";
 import ReferFriendTab from "~/components/profile/ReferFriendTab.vue";
