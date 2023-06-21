@@ -1,0 +1,25 @@
+{
+  "name": "quip-app",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-native": "*",
+    "@testing-library/react-native": "*",
+    "react-native": "*",
+    "expo": "*",
+    "expo-asset": "*",
+    "expo-file-system": "*",
+    "expo-gl": "*",
+    "expo-modules-core": "*",
+    "expo-three": "*",
+    "react-native-svg": "*",
+    "react-native-web": "*",
+    "@react-three/fiber": "*",
+    "three": "*",
+    "@react-three/drei": "*"
+  },
+  "scripts": {
+    "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/quip-app && cp package-lock.json apps/quip-app",
+    "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/quip-app"
+  }
+}

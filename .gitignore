@@ -46,3 +46,22 @@ Thumbs.db
 config/*
 !config/default.yaml
 !config/games-example.yaml
+
+# Expo
+node_modules/
+.expo/
+.yarn/
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+cache/
+
+
+apps/quip-app-e2e/artifacts
+apps/quip-app-e2e/artifacts
