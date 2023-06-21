@@ -12,6 +12,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/websocket"
+	"github.com/rs/cors"
 
 	"github.com/GambitLLC/quip/graph"
 	"github.com/GambitLLC/quip/libs/auth"
@@ -35,6 +36,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create resolver: %s", err.Error())
 	}
+	defer resolver.Close()
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowCredentials: true,
+	})
 
 	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 	srv.AddTransport(transport.GET{})
@@ -55,7 +62,7 @@ func main() {
 
 	// TODO: don't serve playground in production
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", auth.TokenContextMiddleware(srv))
+	http.Handle("/query", c.Handler(auth.TokenContextMiddleware(srv)))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))

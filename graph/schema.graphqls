@@ -64,4 +64,10 @@ type Mutation {
   # TODO: figure out how users are created -- should have username required
 
   updateProfile(changes: ProfileChanges!): Boolean!
+  startQueue(gamemode: String!): Boolean!
+  stopQueue: Boolean!
+}
+
+type Subscription {
+  status: Status!
 }

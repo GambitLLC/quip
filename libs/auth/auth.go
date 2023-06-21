@@ -37,6 +37,12 @@ func TokenContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 
+		// ignore if token is not passed in -- websockets doesnt pass in token
+		if token == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		ctx, err := NewTokenContext(r.Context(), token)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("{\"error\": {\"message\": \"%s\"}}", err.Error()), http.StatusUnauthorized)

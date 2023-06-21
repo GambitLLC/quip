@@ -17,11 +17,48 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/oauth"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // UpdateProfile is the resolver for the updateProfile field.
 func (r *mutationResolver) UpdateProfile(ctx context.Context, changes map[string]interface{}) (bool, error) {
 	log.Printf("%+v", changes)
+	return true, nil
+}
+
+// StartQueue is the resolver for the startQueue field.
+func (r *mutationResolver) StartQueue(ctx context.Context, gamemode string) (bool, error) {
+	token := auth.TokenFromContext(ctx)
+	_, err := r.frontend.StartQueue(ctx, &matchmaker.StartQueueRequest{
+		Config: &matchmaker.GameConfiguration{
+			Gamemode: gamemode,
+		},
+	}, grpc.PerRPCCredentials(oauth.TokenSource{
+		TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: token,
+		}),
+	}))
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// StopQueue is the resolver for the stopQueue field.
+func (r *mutationResolver) StopQueue(ctx context.Context) (bool, error) {
+	token := auth.TokenFromContext(ctx)
+	_, err := r.frontend.StopQueue(ctx, &emptypb.Empty{}, grpc.PerRPCCredentials(oauth.TokenSource{
+		TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: token,
+		}),
+	}))
+
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
 
@@ -58,6 +95,15 @@ func (r *statusResolver) Details(ctx context.Context, obj *model.Status) (model.
 		return &model.QueueStopped{QueueStopped: details.Stopped}, nil
 
 	}
+}
+
+// Status is the resolver for the status field.
+func (r *subscriptionResolver) Status(ctx context.Context) (<-chan *model.Status, error) {
+	id := auth.UserFromContext(ctx)
+	if id == "" {
+		return nil, fmt.Errorf("not authenticated")
+	}
+	return r.trackStatus(id)
 }
 
 // Status is the resolver for the status field.
@@ -99,10 +145,14 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 // Status returns StatusResolver implementation.
 func (r *Resolver) Status() StatusResolver { return &statusResolver{r} }
 
+// Subscription returns SubscriptionResolver implementation.
+func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
+
 // User returns UserResolver implementation.
 func (r *Resolver) User() UserResolver { return &userResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type statusResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
