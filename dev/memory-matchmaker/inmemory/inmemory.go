@@ -3,6 +3,7 @@ package inmemory
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"strings"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/director"
 	"github.com/GambitLLC/quip/libs/matchmaker/frontend"
 	"github.com/GambitLLC/quip/libs/matchmaker/matchfunction"
+	"github.com/GambitLLC/quip/libs/test/data"
 )
 
 const (
@@ -33,6 +35,8 @@ func Run(ctx context.Context) (err error) {
 			mredis.Close()
 		}
 	}()
+
+	log.Printf("miniredis serving on: %s", mredis.Addr())
 
 	// run minimatch processes
 	if err := runMinimatch(ctx, mredis.Port()); err != nil {
@@ -121,6 +125,11 @@ func createMemoryConfig(serverPort, mredisPort string) (*viper.Viper, error) {
 			continue
 		}
 	}
+
+	// set tls
+	cfg.Set("api.tls.certificateFile", data.Path("x509/server_cert.pem"))
+	cfg.Set("api.tls.privateKeyFile", data.Path("x509/server_key.pem"))
+	cfg.Set("api.tls.rootCertificateFile", data.Path("x509/ca_cert.pem"))
 
 	cfg.Set(fmt.Sprintf("%s.hostname", serviceName), "")
 	cfg.Set(fmt.Sprintf("%s.port", serviceName), serverPort)

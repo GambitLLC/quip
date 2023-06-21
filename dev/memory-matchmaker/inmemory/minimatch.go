@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/GambitLLC/quip/libs/test/data"
 	"github.com/spf13/viper"
 )
 
@@ -52,6 +53,12 @@ func createMinimatchConfig(redisPort string) error {
 	}
 
 	cfg.Set("redis.port", redisPort)
+
+	// tls
+	cfg.Set("api.tls.certificateFile", data.Path("x509/server_cert.pem"))
+	cfg.Set("api.tls.privateKey", data.Path("x509/server_key.pem"))
+	cfg.Set("api.tls.rootCertificateFile", data.Path("x509/ca_cert.pem"))
+
 	if err := cfg.WriteConfigAs("build/e2e/bin/matchmaker_config_default.yaml"); err != nil {
 		return err
 	}
