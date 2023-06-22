@@ -162,6 +162,7 @@ function maxValue() {
         type="text"
         :value="computedUsdValue"
         @input="onInput($event.target.value, 'USD')"
+        inputmode="numeric"
       >
       <input
         v-else
@@ -171,6 +172,7 @@ function maxValue() {
         type="text"
         :value="computedSolValue"
         @input="onInput($event.target.value, 'SOL')"
+        inputmode="numeric"
       >
     </transition>
     <div class="position-absolute no-pointer w-100 h-100 d-flex align-center justify-end z-20 btnHolder">
