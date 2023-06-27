@@ -4,8 +4,8 @@ import { IconSource } from "react-native-paper/lib/typescript/src/components/Ico
 import { StyleProp, ViewStyle } from "react-native";
 
 export function Button(props: {
-  onPress: () => void,
   title: string,
+  onPress?: () => void,
   icon?: IconSource,
   mode?: 'text' | 'outlined' | 'contained' | 'elevated' | 'contained-tonal',
   compact?: boolean,
@@ -15,7 +15,7 @@ export function Button(props: {
 }) {
   return (
     <PaperButton
-      onPress={props.onPress}
+      onPress={props.onPress ?? (() => {})}
       icon={props.icon}
       mode={props.mode ?? "text"}
       compact={props.compact ?? false}

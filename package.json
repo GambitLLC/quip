@@ -36,6 +36,7 @@
     "config": "^3.3.9",
     "expo": "48.0.16",
     "expo-file-system": "^15.2.2",
+    "expo-font": "~11.1.1",
     "expo-gl": "^12.4.0",
     "expo-modules-core": "^1.2.7",
     "expo-splash-screen": "~0.18.2",
@@ -64,8 +65,7 @@
     "three": "^0.145.0",
     "tslib": "^2.3.0",
     "uuid": "^9.0.0",
-    "vuetify": "^3.2.2",
-    "expo-font": "~11.1.1"
+    "vuetify": "^3.2.2"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.14.5",
@@ -123,7 +123,7 @@
     "metro-react-native-babel-transformer": "0.74.1",
     "metro-resolver": "0.74.1",
     "nuxt": "^3.5.2",
-    "nx": "16.2.2",
+    "nx": "^16.2.2",
     "prettier": "^2.6.2",
     "react-test-renderer": "18.2.0",
     "redis-memory-server": "^0.6.0",

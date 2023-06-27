@@ -1,8 +1,8 @@
-import Svg, {Path} from "react-native-svg";
+import Svg, { Path, SvgProps } from "react-native-svg";
 
-export function LogoIcon() {
+export function LogoIcon(props: SvgProps) {
   return (
-    <Svg width="82" height="80" viewBox="0 0 82 80" fill="none">
+    <Svg {...props} width="82" height="80" viewBox="0 0 82 80" fill="none">
       <Path fillRule="evenodd" clipRule="evenodd" d="M69.434 79.5H49.1861V63.8558H21.2848C16.5378 63.8558 12.5657 59.8218 12.5657 55.0007V29.9109L4.0403 23.5156C1.81219 21.8429 0.552734 19.2847 0.552734 16.4313V0H18.088V11.3149H32.2325V0H49.7677V11.3149H63.9122V0H81.4475V16.4313C81.4475 19.2847 80.188 21.8429 77.863 23.5156L69.4345 29.9109V31.682V63.856V79.5H69.434ZM49.1861 45.9487V31.682V29.2222H32.8133V45.9489L49.1861 45.9487Z" fill="#AE50FD"/>
     </Svg>
   )
