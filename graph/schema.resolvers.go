@@ -106,13 +106,18 @@ func (r *statusUpdateResolver) Status(ctx context.Context, obj *model.StatusUpda
 
 // Status is the resolver for the status field.
 func (r *subscriptionResolver) Status(ctx context.Context, targets []string) (<-chan *model.StatusUpdate, error) {
+	userId := auth.UserFromContext(ctx)
+	if userId == "" {
+		return nil, pkgerr.New("unauthenticated")
+	}
+
 	id := uuid.New().String()
 	go func() {
 		<-ctx.Done()
 		r.Unsubscribe(id)
 	}()
 
-	return r.Subscribe(id, targets)
+	return r.Subscribe(id, append(targets, userId))
 }
 
 // Status is the resolver for the status field.

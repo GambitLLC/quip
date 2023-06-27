@@ -74,5 +74,5 @@ type StatusUpdate {
 }
 
 type Subscription {
-  status(targets: [String!]!): StatusUpdate!
+  status(targets: [String!]): StatusUpdate!
 }
