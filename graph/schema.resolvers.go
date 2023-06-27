@@ -10,14 +10,16 @@ import (
 	"log"
 	"time"
 
-	"github.com/GambitLLC/quip/graph/model"
-	"github.com/GambitLLC/quip/libs/auth"
-	"github.com/GambitLLC/quip/libs/pb/matchmaker"
+	"github.com/google/uuid"
 	pkgerr "github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/oauth"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	"github.com/GambitLLC/quip/graph/model"
+	"github.com/GambitLLC/quip/libs/auth"
+	"github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
 // UpdateProfile is the resolver for the updateProfile field.
@@ -98,12 +100,19 @@ func (r *statusResolver) Details(ctx context.Context, obj *model.Status) (model.
 }
 
 // Status is the resolver for the status field.
-func (r *subscriptionResolver) Status(ctx context.Context) (<-chan *model.Status, error) {
-	id := auth.UserFromContext(ctx)
-	if id == "" {
-		return nil, fmt.Errorf("not authenticated")
-	}
-	return r.trackStatus(id)
+func (r *statusUpdateResolver) Status(ctx context.Context, obj *model.StatusUpdate) (*model.Status, error) {
+	return &model.Status{Status: obj.Status}, nil
+}
+
+// Status is the resolver for the status field.
+func (r *subscriptionResolver) Status(ctx context.Context, targets []string) (<-chan *model.StatusUpdate, error) {
+	id := uuid.New().String()
+	go func() {
+		<-ctx.Done()
+		r.Unsubscribe(id)
+	}()
+
+	return r.Subscribe(id, targets)
 }
 
 // Status is the resolver for the status field.
@@ -145,6 +154,9 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 // Status returns StatusResolver implementation.
 func (r *Resolver) Status() StatusResolver { return &statusResolver{r} }
 
+// StatusUpdate returns StatusUpdateResolver implementation.
+func (r *Resolver) StatusUpdate() StatusUpdateResolver { return &statusUpdateResolver{r} }
+
 // Subscription returns SubscriptionResolver implementation.
 func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
 
@@ -154,5 +166,6 @@ func (r *Resolver) User() UserResolver { return &userResolver{r} }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type statusResolver struct{ *Resolver }
+type statusUpdateResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }

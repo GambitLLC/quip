@@ -32,6 +32,10 @@ type Status struct {
 	*matchmaker.Status
 }
 
+type StatusUpdate struct {
+	*matchmaker.StatusUpdate
+}
+
 type QueueSearching struct {
 	*matchmaker.QueueSearching
 }

@@ -68,6 +68,11 @@ type Mutation {
   stopQueue: Boolean!
 }
 
-type Subscription {
+type StatusUpdate {
+  targets: [String!]!
   status: Status!
+}
+
+type Subscription {
+  status(targets: [String!]!): StatusUpdate!
 }

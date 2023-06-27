@@ -42,6 +42,7 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Status() StatusResolver
+	StatusUpdate() StatusUpdateResolver
 	Subscription() SubscriptionResolver
 	User() UserResolver
 }
@@ -82,8 +83,13 @@ type ComplexityRoot struct {
 		State   func(childComplexity int) int
 	}
 
+	StatusUpdate struct {
+		Status  func(childComplexity int) int
+		Targets func(childComplexity int) int
+	}
+
 	Subscription struct {
-		Status func(childComplexity int) int
+		Status func(childComplexity int, targets []string) int
 	}
 
 	User struct {
@@ -105,8 +111,11 @@ type StatusResolver interface {
 	State(ctx context.Context, obj *model.Status) (model.State, error)
 	Details(ctx context.Context, obj *model.Status) (model.StatusDetails, error)
 }
+type StatusUpdateResolver interface {
+	Status(ctx context.Context, obj *model.StatusUpdate) (*model.Status, error)
+}
 type SubscriptionResolver interface {
-	Status(ctx context.Context) (<-chan *model.Status, error)
+	Status(ctx context.Context, targets []string) (<-chan *model.StatusUpdate, error)
 }
 type UserResolver interface {
 	Status(ctx context.Context, obj *model.User) (*model.Status, error)
@@ -220,12 +229,31 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Status.State(childComplexity), true
 
+	case "StatusUpdate.status":
+		if e.complexity.StatusUpdate.Status == nil {
+			break
+		}
+
+		return e.complexity.StatusUpdate.Status(childComplexity), true
+
+	case "StatusUpdate.targets":
+		if e.complexity.StatusUpdate.Targets == nil {
+			break
+		}
+
+		return e.complexity.StatusUpdate.Targets(childComplexity), true
+
 	case "Subscription.status":
 		if e.complexity.Subscription.Status == nil {
 			break
 		}
 
-		return e.complexity.Subscription.Status(childComplexity), true
+		args, err := ec.field_Subscription_status_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.Status(childComplexity, args["targets"].([]string)), true
 
 	case "User.id":
 		if e.complexity.User.ID == nil {
@@ -408,6 +436,21 @@ func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs m
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_status_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []string
+	if tmp, ok := rawArgs["targets"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targets"))
+		arg0, err = ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["targets"] = arg0
 	return args, nil
 }
 
@@ -1091,6 +1134,100 @@ func (ec *executionContext) fieldContext_Status_details(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _StatusUpdate_targets(ctx context.Context, field graphql.CollectedField, obj *model.StatusUpdate) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StatusUpdate_targets(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Targets, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_StatusUpdate_targets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StatusUpdate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StatusUpdate_status(ctx context.Context, field graphql.CollectedField, obj *model.StatusUpdate) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StatusUpdate_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.StatusUpdate().Status(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Status)
+	fc.Result = res
+	return ec.marshalNStatus2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_StatusUpdate_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StatusUpdate",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "state":
+				return ec.fieldContext_Status_state(ctx, field)
+			case "details":
+				return ec.fieldContext_Status_details(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Status", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Subscription_status(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
 	fc, err := ec.fieldContext_Subscription_status(ctx, field)
 	if err != nil {
@@ -1105,7 +1242,7 @@ func (ec *executionContext) _Subscription_status(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().Status(rctx)
+		return ec.resolvers.Subscription().Status(rctx, fc.Args["targets"].([]string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1119,7 +1256,7 @@ func (ec *executionContext) _Subscription_status(ctx context.Context, field grap
 	}
 	return func(ctx context.Context) graphql.Marshaler {
 		select {
-		case res, ok := <-resTmp.(<-chan *model.Status):
+		case res, ok := <-resTmp.(<-chan *model.StatusUpdate):
 			if !ok {
 				return nil
 			}
@@ -1127,7 +1264,7 @@ func (ec *executionContext) _Subscription_status(ctx context.Context, field grap
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalNStatus2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐStatus(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalNStatusUpdate2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐStatusUpdate(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -1144,13 +1281,24 @@ func (ec *executionContext) fieldContext_Subscription_status(ctx context.Context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "state":
-				return ec.fieldContext_Status_state(ctx, field)
-			case "details":
-				return ec.fieldContext_Status_details(ctx, field)
+			case "targets":
+				return ec.fieldContext_StatusUpdate_targets(ctx, field)
+			case "status":
+				return ec.fieldContext_StatusUpdate_status(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Status", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type StatusUpdate", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_status_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -3400,6 +3548,54 @@ func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
+var statusUpdateImplementors = []string{"StatusUpdate"}
+
+func (ec *executionContext) _StatusUpdate(ctx context.Context, sel ast.SelectionSet, obj *model.StatusUpdate) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, statusUpdateImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StatusUpdate")
+		case "targets":
+
+			out.Values[i] = ec._StatusUpdate_targets(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "status":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._StatusUpdate_status(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var subscriptionImplementors = []string{"Subscription"}
 
 func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func(ctx context.Context) graphql.Marshaler {
@@ -3878,6 +4074,20 @@ func (ec *executionContext) marshalNStatus2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋ
 	return ec._Status(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNStatusUpdate2githubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐStatusUpdate(ctx context.Context, sel ast.SelectionSet, v model.StatusUpdate) graphql.Marshaler {
+	return ec._StatusUpdate(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNStatusUpdate2ᚖgithubᚗcomᚋGambitLLCᚋquipᚋgraphᚋmodelᚐStatusUpdate(ctx context.Context, sel ast.SelectionSet, v *model.StatusUpdate) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._StatusUpdate(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3891,6 +4101,38 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
