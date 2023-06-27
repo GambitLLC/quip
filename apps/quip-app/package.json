@@ -10,6 +10,8 @@
     "expo-asset": "*",
     "expo-file-system": "*",
     "expo-gl": "*",
+    "expo-font": "*",
+    "expo-splash-screen": "*",
     "expo-modules-core": "*",
     "expo-three": "*",
     "react-native-svg": "*",
@@ -25,7 +27,10 @@
     "@react-navigation/drawer": "*",
     "@react-navigation/material-bottom-tabs": "*",
     "@react-native-masked-view/masked-view": "*",
-    "react-native-reanimated": "*"
+    "react-native-reanimated": "*",
+    "@react-three/postprocessing": "*",
+    "@ethersproject/shims": "*",
+    "base-64": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/quip-app && cp package-lock.json apps/quip-app",
