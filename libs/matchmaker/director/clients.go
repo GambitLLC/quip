@@ -35,13 +35,13 @@ func newBackendClient(cfg config.View) *backendClient {
 	}
 }
 
-func (bc *backendClient) CreateMatch(ctx context.Context, req *pb.CreateMatchRequest) (*pb.CreateMatchResponse, error) {
+func (bc *backendClient) AllocateMatch(ctx context.Context, req *pb.AllocateMatchRequest) (*pb.MatchDetails, error) {
 	client, err := bc.cacher.Get()
 	if err != nil {
 		return nil, err
 	}
 
-	return client.(pb.BackendClient).CreateMatch(ctx, req)
+	return client.(pb.BackendClient).AllocateMatch(ctx, req)
 }
 
 // omBackendClient caches an open match BackendServiceClient.

@@ -17,17 +17,6 @@
   ],
   "paths": {},
   "definitions": {
-    "MatchDetailsTeam": {
-      "type": "object",
-      "properties": {
-        "players": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "googlerpcStatus": {
       "type": "object",
       "properties": {
@@ -47,33 +36,38 @@
         }
       }
     },
-    "matchmakerCreateMatchResponse": {
-      "type": "object",
-      "properties": {
-        "connection": {
-          "type": "string"
-        }
-      }
-    },
     "matchmakerGameConfiguration": {
       "type": "object",
       "properties": {
         "gamemode": {
           "type": "string"
         }
-      }
+      },
+      "description": "GameConfiguration contains information for specifying a desired match."
     },
     "matchmakerMatchDetails": {
       "type": "object",
       "properties": {
-        "teams": {
+        "match_id": {
+          "type": "string"
+        },
+        "connection": {
+          "type": "string"
+        }
+      },
+      "description": "MatchDetails contains necessary match information to identify and connect to a match."
+    },
+    "matchmakerMatchRoster": {
+      "type": "object",
+      "properties": {
+        "players": {
           "type": "array",
           "items": {
-            "type": "object",
-            "$ref": "#/definitions/MatchDetailsTeam"
+            "type": "string"
           }
         }
-      }
+      },
+      "title": "MatchRoster specifies the players in a match.\nTODO: specify teams when team games are supported"
     },
     "protobufAny": {
       "type": "object",

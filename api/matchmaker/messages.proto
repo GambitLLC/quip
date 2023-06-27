@@ -4,20 +4,24 @@ option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
 
 import "google/protobuf/timestamp.proto";
 
+// GameConfiguration contains information for specifying a desired match.
 message GameConfiguration {
   string gamemode = 1;
 }
 
-message QueueSearching {
-  string gamemode = 1;
+// QueueDetails contains information about a currently running queue.
+message QueueDetails {
+  GameConfiguration config = 1;
   google.protobuf.Timestamp start_time = 2;
 }
 
+// QueueStopped contains information about why a queue has stopped.
 message QueueStopped {
-  optional string reason = 1;
+  string message = 1;
 }
 
-message MatchFound {
+// MatchDetails contains necessary match information to identify and connect to a match.
+message MatchDetails {
   string match_id = 1;
   string connection = 2;
 }
@@ -29,19 +33,20 @@ enum State {
   STATE_PLAYING = 3;
 }
 
+// Status represents the current matchmaking status for any target.
 message Status {
   State state = 1;
 
   oneof details {
-    QueueSearching searching = 2;
+    QueueDetails searching = 2;
 
     QueueStopped stopped = 3;
 
-    MatchFound matched = 4;
+    MatchDetails matched = 4;
   }
 }
 
-// Indicates change in status.
+// StatusUpdate indicates a change in status for a set of targets.
 message StatusUpdate {
   repeated string targets = 1;
 

@@ -104,16 +104,16 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 		return errors.WithMessage(err, "failed to parse game config")
 	}
 
-	matchDetails := &pb.MatchDetails{}
-	err = match.Extensions["match_details"].UnmarshalTo(matchDetails)
+	roster := &pb.MatchRoster{}
+	err = match.Extensions["roster"].UnmarshalTo(roster)
 	if err != nil {
 		return errors.WithMessage(err, "failed to parse match details")
 	}
 
-	resp, err := s.backend.CreateMatch(ctx, &pb.CreateMatchRequest{
-		MatchId:      match.MatchId,
-		GameConfig:   gameCfg,
-		MatchDetails: matchDetails,
+	resp, err := s.backend.AllocateMatch(ctx, &pb.AllocateMatchRequest{
+		MatchId:    match.MatchId,
+		GameConfig: gameCfg,
+		Roster:     roster,
 	})
 
 	if err != nil {
@@ -126,17 +126,12 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 		ticketIds[i] = ticket.Id
 	}
 
-	players := make([]string, 0, len(matchDetails.Teams))
-	for _, team := range matchDetails.Teams {
-		players = append(players, team.Players...)
-	}
-
 	go s.broker.PublishStatusUpdate(context.Background(), &pb.StatusUpdate{
-		Targets: players,
+		Targets: roster.Players,
 		Status: &pb.Status{
 			State: pb.State_STATE_PLAYING,
 			Details: &pb.Status_Matched{
-				Matched: &pb.MatchFound{
+				Matched: &pb.MatchDetails{
 					MatchId:    match.MatchId,
 					Connection: resp.Connection,
 				},

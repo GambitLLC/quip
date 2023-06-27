@@ -37,7 +37,7 @@ type StatusUpdate struct {
 }
 
 type QueueSearching struct {
-	*matchmaker.QueueSearching
+	*matchmaker.QueueDetails
 }
 
 func (QueueSearching) IsStatusDetails() {}
@@ -49,7 +49,7 @@ type QueueStopped struct {
 func (QueueStopped) IsStatusDetails() {}
 
 type MatchFound struct {
-	*matchmaker.MatchFound
+	*matchmaker.MatchDetails
 }
 
 func (MatchFound) IsStatusDetails() {}

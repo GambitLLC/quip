@@ -41,6 +41,8 @@ type Config struct {
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
+	QueueSearching() QueueSearchingResolver
+	QueueStopped() QueueStoppedResolver
 	Status() StatusResolver
 	StatusUpdate() StatusUpdateResolver
 	Subscription() SubscriptionResolver
@@ -106,6 +108,12 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	User(ctx context.Context, id *string) (*model.User, error)
+}
+type QueueSearchingResolver interface {
+	Gamemode(ctx context.Context, obj *model.QueueSearching) (string, error)
+}
+type QueueStoppedResolver interface {
+	Reason(ctx context.Context, obj *model.QueueStopped) (*string, error)
 }
 type StatusResolver interface {
 	State(ctx context.Context, obj *model.Status) (model.State, error)
@@ -445,7 +453,7 @@ func (ec *executionContext) field_Subscription_status_args(ctx context.Context, 
 	var arg0 []string
 	if tmp, ok := rawArgs["targets"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targets"))
-		arg0, err = ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
+		arg0, err = ec.unmarshalOString2ᚕstringᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -978,7 +986,7 @@ func (ec *executionContext) _QueueSearching_gamemode(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Gamemode, nil
+		return ec.resolvers.QueueSearching().Gamemode(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -999,8 +1007,8 @@ func (ec *executionContext) fieldContext_QueueSearching_gamemode(ctx context.Con
 	fc = &graphql.FieldContext{
 		Object:     "QueueSearching",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -1022,7 +1030,7 @@ func (ec *executionContext) _QueueStopped_reason(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Reason, nil
+		return ec.resolvers.QueueStopped().Reason(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1040,8 +1048,8 @@ func (ec *executionContext) fieldContext_QueueStopped_reason(ctx context.Context
 	fc = &graphql.FieldContext{
 		Object:     "QueueStopped",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -3448,12 +3456,25 @@ func (ec *executionContext) _QueueSearching(ctx context.Context, sel ast.Selecti
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("QueueSearching")
 		case "gamemode":
+			field := field
 
-			out.Values[i] = ec._QueueSearching_gamemode(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._QueueSearching_gamemode(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3476,9 +3497,22 @@ func (ec *executionContext) _QueueStopped(ctx context.Context, sel ast.Selection
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("QueueStopped")
 		case "reason":
+			field := field
 
-			out.Values[i] = ec._QueueStopped_reason(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._QueueStopped_reason(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

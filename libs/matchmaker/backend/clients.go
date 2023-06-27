@@ -36,7 +36,7 @@ func newAgonesAllocationClient(cfg config.View) *agonesAllocationClient {
 	}
 }
 
-func (ac *agonesAllocationClient) Allocate(ctx context.Context, req *pb.CreateMatchRequest) (string, error) {
+func (ac *agonesAllocationClient) Allocate(ctx context.Context, req *pb.AllocateMatchRequest) (string, error) {
 	client, err := ac.cacher.Get()
 	if err != nil {
 		return "", err

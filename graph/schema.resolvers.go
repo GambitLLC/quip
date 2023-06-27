@@ -10,16 +10,15 @@ import (
 	"log"
 	"time"
 
+	"github.com/GambitLLC/quip/graph/model"
+	"github.com/GambitLLC/quip/libs/auth"
+	"github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/google/uuid"
 	pkgerr "github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/oauth"
 	"google.golang.org/protobuf/types/known/emptypb"
-
-	"github.com/GambitLLC/quip/graph/model"
-	"github.com/GambitLLC/quip/libs/auth"
-	"github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
 // UpdateProfile is the resolver for the updateProfile field.
@@ -76,6 +75,16 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*model.User, erro
 	}, nil
 }
 
+// Gamemode is the resolver for the gamemode field.
+func (r *queueSearchingResolver) Gamemode(ctx context.Context, obj *model.QueueSearching) (string, error) {
+	panic(fmt.Errorf("not implemented: Gamemode - gamemode"))
+}
+
+// Reason is the resolver for the reason field.
+func (r *queueStoppedResolver) Reason(ctx context.Context, obj *model.QueueStopped) (*string, error) {
+	panic(fmt.Errorf("not implemented: Reason - reason"))
+}
+
 // State is the resolver for the state field.
 func (r *statusResolver) State(ctx context.Context, obj *model.Status) (model.State, error) {
 	return model.State(obj.State), nil
@@ -90,9 +99,9 @@ func (r *statusResolver) Details(ctx context.Context, obj *model.Status) (model.
 	default:
 		return nil, pkgerr.Errorf("invalid status detail type: %T", details)
 	case *matchmaker.Status_Matched:
-		return &model.MatchFound{MatchFound: details.Matched}, nil
+		return &model.MatchFound{MatchDetails: details.Matched}, nil
 	case *matchmaker.Status_Searching:
-		return &model.QueueSearching{QueueSearching: details.Searching}, nil
+		return &model.QueueSearching{QueueDetails: details.Searching}, nil
 	case *matchmaker.Status_Stopped:
 		return &model.QueueStopped{QueueStopped: details.Stopped}, nil
 
@@ -156,6 +165,12 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// QueueSearching returns QueueSearchingResolver implementation.
+func (r *Resolver) QueueSearching() QueueSearchingResolver { return &queueSearchingResolver{r} }
+
+// QueueStopped returns QueueStoppedResolver implementation.
+func (r *Resolver) QueueStopped() QueueStoppedResolver { return &queueStoppedResolver{r} }
+
 // Status returns StatusResolver implementation.
 func (r *Resolver) Status() StatusResolver { return &statusResolver{r} }
 
@@ -170,6 +185,8 @@ func (r *Resolver) User() UserResolver { return &userResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type queueSearchingResolver struct{ *Resolver }
+type queueStoppedResolver struct{ *Resolver }
 type statusResolver struct{ *Resolver }
 type statusUpdateResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
