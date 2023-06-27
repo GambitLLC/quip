@@ -4,6 +4,22 @@
   "projectType": "library",
   "sourceRoot": "libs/matchmaker",
   "targets": {
+    "setup-serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "make build/e2e/bin/minimatch build/e2e/bin/default-evaluator build/e2e/bin/synchronizer"
+        ]
+      }
+    },
+    "serve": {
+      "executor": "@nx-go/nx-go:serve",
+      "options": {
+        "cwd": ".",
+        "main": "libs/matchmaker/inmemory.go"
+      },
+      "dependsOn": ["setup-serve"]
+    },
     "test": {
       "executor": "@nx-go/nx-go:test"
     },

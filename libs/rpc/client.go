@@ -21,14 +21,12 @@ var clientLogger = zerolog.New(os.Stderr).With().
 	Str("component", "rpc.client").
 	Logger()
 
-func GRPCClientFromConfig(cfg config.View, prefix string) (*grpc.ClientConn, error) {
+func GRPCClientFromConfig(cfg config.View, prefix string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 	addr := fmt.Sprintf(
 		"%s:%d",
 		cfg.GetString(prefix+".hostname"),
 		cfg.GetInt(prefix+".port"),
 	)
-
-	opts := []grpc.DialOption{}
 
 	trustedCertFile := cfg.GetString(clientTrustedCertificatePathConfigKey)
 	if len(trustedCertFile) > 0 {
