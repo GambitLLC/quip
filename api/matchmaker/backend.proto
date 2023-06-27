@@ -12,31 +12,27 @@ enum MatchState {
   MATCH_STATE_FINISHED = 3;     // Match has completed.
 }
 
-message MatchDetails {
-  message Team {
-    repeated string players = 1;
-  }
-
-  repeated Team teams = 2;
+// MatchRoster specifies the players in a match.
+// TODO: specify teams when team games are supported
+message MatchRoster {
+  repeated string players = 2;
 }
 
-message CreateMatchRequest {
+message AllocateMatchRequest {
   string match_id = 1;
 
   GameConfiguration game_config = 2;
-  MatchDetails match_details = 3;
+  MatchRoster roster = 3;
 }
 
-message CreateMatchResponse {
-  string connection = 1;
-}
-
-message DeleteMatchRequest {
+message FinishMatchRequest {
   string match_id = 1;
 }
 
 service Backend {
-  rpc CreateMatch(CreateMatchRequest) returns (CreateMatchResponse);
+  // AllocateMatch allocates a gameserver for the specified match.
+  rpc AllocateMatch(AllocateMatchRequest) returns (MatchDetails);
 
-  rpc DeleteMatch(DeleteMatchRequest) returns (google.protobuf.Empty);
+  // FinishMatch marks a specified match as completed.
+  rpc FinishMatch(FinishMatchRequest) returns (google.protobuf.Empty);
 }

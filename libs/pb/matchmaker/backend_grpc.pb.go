@@ -20,16 +20,18 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Backend_CreateMatch_FullMethodName = "/quip.matchmaker.Backend/CreateMatch"
-	Backend_DeleteMatch_FullMethodName = "/quip.matchmaker.Backend/DeleteMatch"
+	Backend_AllocateMatch_FullMethodName = "/quip.matchmaker.Backend/AllocateMatch"
+	Backend_FinishMatch_FullMethodName   = "/quip.matchmaker.Backend/FinishMatch"
 )
 
 // BackendClient is the client API for Backend service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BackendClient interface {
-	CreateMatch(ctx context.Context, in *CreateMatchRequest, opts ...grpc.CallOption) (*CreateMatchResponse, error)
-	DeleteMatch(ctx context.Context, in *DeleteMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// AllocateMatch allocates a gameserver for the specified match.
+	AllocateMatch(ctx context.Context, in *AllocateMatchRequest, opts ...grpc.CallOption) (*MatchDetails, error)
+	// FinishMatch marks a specified match as completed.
+	FinishMatch(ctx context.Context, in *FinishMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type backendClient struct {
@@ -40,18 +42,18 @@ func NewBackendClient(cc grpc.ClientConnInterface) BackendClient {
 	return &backendClient{cc}
 }
 
-func (c *backendClient) CreateMatch(ctx context.Context, in *CreateMatchRequest, opts ...grpc.CallOption) (*CreateMatchResponse, error) {
-	out := new(CreateMatchResponse)
-	err := c.cc.Invoke(ctx, Backend_CreateMatch_FullMethodName, in, out, opts...)
+func (c *backendClient) AllocateMatch(ctx context.Context, in *AllocateMatchRequest, opts ...grpc.CallOption) (*MatchDetails, error) {
+	out := new(MatchDetails)
+	err := c.cc.Invoke(ctx, Backend_AllocateMatch_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *backendClient) DeleteMatch(ctx context.Context, in *DeleteMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *backendClient) FinishMatch(ctx context.Context, in *FinishMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Backend_DeleteMatch_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Backend_FinishMatch_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -62,19 +64,21 @@ func (c *backendClient) DeleteMatch(ctx context.Context, in *DeleteMatchRequest,
 // All implementations should embed UnimplementedBackendServer
 // for forward compatibility
 type BackendServer interface {
-	CreateMatch(context.Context, *CreateMatchRequest) (*CreateMatchResponse, error)
-	DeleteMatch(context.Context, *DeleteMatchRequest) (*emptypb.Empty, error)
+	// AllocateMatch allocates a gameserver for the specified match.
+	AllocateMatch(context.Context, *AllocateMatchRequest) (*MatchDetails, error)
+	// FinishMatch marks a specified match as completed.
+	FinishMatch(context.Context, *FinishMatchRequest) (*emptypb.Empty, error)
 }
 
 // UnimplementedBackendServer should be embedded to have forward compatible implementations.
 type UnimplementedBackendServer struct {
 }
 
-func (UnimplementedBackendServer) CreateMatch(context.Context, *CreateMatchRequest) (*CreateMatchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateMatch not implemented")
+func (UnimplementedBackendServer) AllocateMatch(context.Context, *AllocateMatchRequest) (*MatchDetails, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllocateMatch not implemented")
 }
-func (UnimplementedBackendServer) DeleteMatch(context.Context, *DeleteMatchRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteMatch not implemented")
+func (UnimplementedBackendServer) FinishMatch(context.Context, *FinishMatchRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinishMatch not implemented")
 }
 
 // UnsafeBackendServer may be embedded to opt out of forward compatibility for this service.
@@ -88,38 +92,38 @@ func RegisterBackendServer(s grpc.ServiceRegistrar, srv BackendServer) {
 	s.RegisterService(&Backend_ServiceDesc, srv)
 }
 
-func _Backend_CreateMatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateMatchRequest)
+func _Backend_AllocateMatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AllocateMatchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BackendServer).CreateMatch(ctx, in)
+		return srv.(BackendServer).AllocateMatch(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Backend_CreateMatch_FullMethodName,
+		FullMethod: Backend_AllocateMatch_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BackendServer).CreateMatch(ctx, req.(*CreateMatchRequest))
+		return srv.(BackendServer).AllocateMatch(ctx, req.(*AllocateMatchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Backend_DeleteMatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteMatchRequest)
+func _Backend_FinishMatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FinishMatchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BackendServer).DeleteMatch(ctx, in)
+		return srv.(BackendServer).FinishMatch(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Backend_DeleteMatch_FullMethodName,
+		FullMethod: Backend_FinishMatch_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BackendServer).DeleteMatch(ctx, req.(*DeleteMatchRequest))
+		return srv.(BackendServer).FinishMatch(ctx, req.(*FinishMatchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -132,12 +136,12 @@ var Backend_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*BackendServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateMatch",
-			Handler:    _Backend_CreateMatch_Handler,
+			MethodName: "AllocateMatch",
+			Handler:    _Backend_AllocateMatch_Handler,
 		},
 		{
-			MethodName: "DeleteMatch",
-			Handler:    _Backend_DeleteMatch_Handler,
+			MethodName: "FinishMatch",
+			Handler:    _Backend_FinishMatch_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

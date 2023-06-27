@@ -77,7 +77,7 @@ func TestGetStatus(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, pb.State_STATE_SEARCHING, sr.GetState(), "expected status to be SEARCHING")
 				require.NotNil(t, sr.GetSearching(), "expected queue details")
-				require.Equal(t, "test", sr.GetSearching().Gamemode, "expected gamemode to be set")
+				require.Equal(t, "test", sr.GetSearching().GetConfig().Gamemode, "expected gamemode to be set")
 			},
 		},
 		{

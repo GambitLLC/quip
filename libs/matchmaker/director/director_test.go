@@ -141,11 +141,11 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 		return errors.WithMessage(err, "failed to create anypb from game config")
 	}
 
-	matchDetails, err := matchfunction.CreateMatchDetails(tickets)
+	roster, err := matchfunction.CreateMatchRoster(tickets)
 	if err != nil {
 		return err
 	}
-	matchDetailsAny, err := anypb.New(matchDetails)
+	rosterAny, err := anypb.New(roster)
 	if err != nil {
 		return err
 	}
@@ -157,8 +157,8 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 			MatchFunction: "static match generator",
 			Tickets:       tickets,
 			Extensions: map[string]*anypb.Any{
-				"game_config":   gameCfgAny,
-				"match_details": matchDetailsAny,
+				"game_config": gameCfgAny,
+				"roster":      rosterAny,
 			},
 		},
 	})
@@ -196,6 +196,6 @@ type stubBackendService struct {
 	pb.UnimplementedBackendServer
 }
 
-func (s *stubBackendService) CreateMatch(ctx context.Context, req *pb.CreateMatchRequest) (*pb.CreateMatchResponse, error) {
-	return &pb.CreateMatchResponse{Connection: "127.0.0.1:27394"}, nil
+func (s *stubBackendService) AllocateMatch(ctx context.Context, req *pb.AllocateMatchRequest) (*pb.MatchDetails, error) {
+	return &pb.MatchDetails{MatchId: req.MatchId, Connection: "127.0.0.1:27394"}, nil
 }

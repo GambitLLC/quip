@@ -2,8 +2,6 @@ package inmemory
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"net"
 	"strings"
 
@@ -24,11 +22,11 @@ const (
 	configName  = "inmemory"
 )
 
-func Run(ctx context.Context) (err error) {
+func Run(ctx context.Context) (cfg *viper.Viper, err error) {
 	// create redis server in memory
 	mredis := miniredis.NewMiniRedis()
 	if err := mredis.StartAddr(":0"); err != nil {
-		return err
+		return nil, err
 	}
 	defer func() {
 		if err != nil {
@@ -36,26 +34,34 @@ func Run(ctx context.Context) (err error) {
 		}
 	}()
 
-	log.Printf("miniredis serving on: %s", mredis.Addr())
-
 	// run minimatch processes
 	if err := runMinimatch(ctx, mredis.Port()); err != nil {
-		return err
+		return nil, err
 	}
 
-	ln, err := net.Listen("tcp", ":0")
+	matchmakerLn, err := net.Listen("tcp", ":0")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, port, err := net.SplitHostPort(ln.Addr().String())
+	_, matchmakerPort, err := net.SplitHostPort(matchmakerLn.Addr().String())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	cfg, err := createMemoryConfig(port, mredis.Port())
+	frontendLn, err := net.Listen("tcp", ":0")
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	_, frontendPort, err := net.SplitHostPort(frontendLn.Addr().String())
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, err = createMemoryConfig(matchmakerPort, frontendPort, mredis.Port())
+	if err != nil {
+		return nil, err
 	}
 
 	// run director
@@ -66,12 +72,23 @@ func Run(ctx context.Context) (err error) {
 		}
 	}(cfg)
 
-	// run matchmaker processes and // TODO: agones with mock gameservers
-	service, err := appmain.NewGRPCService(serviceName, cfg, func(cfg config.View, b *appmain.GRPCBindings) error {
-		if err := frontend.BindService(cfg, b); err != nil {
-			return err
+	// frontendService is created separately because of unary interceptors
+	frontendService, err := appmain.NewGRPCService(serviceName, cfg, frontend.BindService, func(network, addr string) (net.Listener, error) {
+		return frontendLn, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			if err := frontendService.Stop(); err != nil {
+				panic(err)
+			}
 		}
+	}()
 
+	// run other matchmaker processes and // TODO: agones with mock gameservers
+	matchmakerServices, err := appmain.NewGRPCService(serviceName, cfg, func(cfg config.View, b *appmain.GRPCBindings) error {
 		if err := backend.BindService(cfg, b); err != nil {
 			return err
 		}
@@ -82,24 +99,27 @@ func Run(ctx context.Context) (err error) {
 
 		return nil
 	}, func(network, addr string) (net.Listener, error) {
-		return ln, nil
+		return matchmakerLn, nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	go func() {
 		<-ctx.Done()
 		mredis.Close()
-		if err := service.Stop(); err != nil {
+		if err := frontendService.Stop(); err != nil {
+			panic(err)
+		}
+		if err := matchmakerServices.Stop(); err != nil {
 			panic(err)
 		}
 	}()
 
-	return nil
+	return cfg, nil
 }
 
-func createMemoryConfig(serverPort, mredisPort string) (*viper.Viper, error) {
+func createMemoryConfig(matchmakerPort, frontendPort, mredisPort string) (*viper.Viper, error) {
 	dcfg, err := config.ReadFile("default")
 	if err != nil {
 		return nil, err
@@ -115,7 +135,7 @@ func createMemoryConfig(serverPort, mredisPort string) (*viper.Viper, error) {
 
 		// all matchmaker services should be on the provided server port
 		if strings.HasPrefix(key, "matchmaker") && strings.HasSuffix(key, "port") {
-			cfg.Set(key, serverPort)
+			cfg.Set(key, matchmakerPort)
 			continue
 		}
 
@@ -131,8 +151,8 @@ func createMemoryConfig(serverPort, mredisPort string) (*viper.Viper, error) {
 	cfg.Set("api.tls.privateKeyFile", data.Path("x509/server_key.pem"))
 	cfg.Set("api.tls.rootCertificateFile", data.Path("x509/ca_cert.pem"))
 
-	cfg.Set(fmt.Sprintf("%s.hostname", serviceName), "")
-	cfg.Set(fmt.Sprintf("%s.port", serviceName), serverPort)
+	// frontend requires a separate port because of unary server interceptor
+	cfg.Set("matchmaker.frontend.port", frontendPort)
 
 	cfg.Set("matchmaker.redis.port", mredisPort)
 	cfg.Set("broker.hostname", "localhost")

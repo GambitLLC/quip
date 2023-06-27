@@ -1,7 +1,7 @@
 import { Client } from '@quip/sockets';
 import config from 'config';
 import { generateDIDToken } from '../auth';
-import { BackendClient, DeleteMatchRequest } from '@quip/pb/matchmaker/backend';
+import { BackendClient, FinishMatchRequest } from '@quip/pb/matchmaker/backend';
 import {
   GetStatusRequest,
   StartQueueRequest,
@@ -130,7 +130,7 @@ describe('queueing', () => {
       });
 
       expect(status?.state).toBe(State.SEARCHING);
-      expect(status?.searching?.gamemode).toBe(gamemode);
+      expect(status?.searching?.config?.gamemode).toBe(gamemode);
       expect(status?.matched).toBeUndefined();
     });
 
@@ -273,8 +273,8 @@ describe('match tests', () => {
       );
 
       const err = await new Promise<Error>((resolve) => {
-        rpc.deleteMatch(
-          DeleteMatchRequest.create({
+        rpc.finishMatch(
+          FinishMatchRequest.create({
             matchId,
           }),
           (err) => {

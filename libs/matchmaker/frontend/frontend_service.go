@@ -112,7 +112,7 @@ func (s *Service) GetStatus(ctx context.Context, req *pb.GetStatusRequest) (*pb.
 		return &pb.Status{
 			State: pb.State_STATE_PLAYING,
 			Details: &pb.Status_Matched{
-				Matched: &pb.MatchFound{
+				Matched: &pb.MatchDetails{
 					MatchId:    match.MatchId,
 					Connection: match.Connection,
 				},
@@ -161,8 +161,10 @@ func (s *Service) GetStatus(ctx context.Context, req *pb.GetStatusRequest) (*pb.
 		return &pb.Status{
 			State: pb.State_STATE_SEARCHING,
 			Details: &pb.Status_Searching{
-				Searching: &pb.QueueSearching{
-					Gamemode:  details.Gamemode,
+				Searching: &pb.QueueDetails{
+					Config: &pb.GameConfiguration{
+						Gamemode: details.Gamemode,
+					},
 					StartTime: ticket.CreateTime,
 				},
 			},
@@ -257,14 +259,13 @@ func (s *Service) StopQueue(ctx context.Context, _ *emptypb.Empty) (*emptypb.Emp
 		return nil, err
 	}
 
-	reason := fmt.Sprintf("%s stopped matchmaking", player.PlayerId)
 	go s.publish(&pb.StatusUpdate{
 		Targets: players,
 		Status: &pb.Status{
 			State: pb.State_STATE_IDLE,
 			Details: &pb.Status_Stopped{
 				Stopped: &pb.QueueStopped{
-					Reason: &reason,
+					Message: fmt.Sprintf("%s stopped matchmaking", player.PlayerId),
 				},
 			},
 		},

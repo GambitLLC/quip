@@ -13,7 +13,7 @@ import {
 } from "@grpc/grpc-js";
 import _m0 from "protobufjs/minimal";
 import { Empty } from "../google/protobuf/empty";
-import { GameConfiguration } from "./messages";
+import { GameConfiguration, MatchDetails } from "./messages";
 
 export const protobufPackage = "quip.matchmaker";
 
@@ -61,103 +61,44 @@ export function matchStateToJSON(object: MatchState): string {
   }
 }
 
-export interface MatchDetails {
-  teams: MatchDetails_Team[];
-}
-
-export interface MatchDetails_Team {
+/**
+ * MatchRoster specifies the players in a match.
+ * TODO: specify teams when team games are supported
+ */
+export interface MatchRoster {
   players: string[];
 }
 
-export interface CreateMatchRequest {
+export interface AllocateMatchRequest {
   matchId: string;
   gameConfig: GameConfiguration | undefined;
-  matchDetails: MatchDetails | undefined;
+  roster: MatchRoster | undefined;
 }
 
-export interface CreateMatchResponse {
-  connection: string;
-}
-
-export interface DeleteMatchRequest {
+export interface FinishMatchRequest {
   matchId: string;
 }
 
-function createBaseMatchDetails(): MatchDetails {
-  return { teams: [] };
+function createBaseMatchRoster(): MatchRoster {
+  return { players: [] };
 }
 
-export const MatchDetails = {
-  encode(message: MatchDetails, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    for (const v of message.teams) {
-      MatchDetails_Team.encode(v!, writer.uint32(18).fork()).ldelim();
+export const MatchRoster = {
+  encode(message: MatchRoster, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    for (const v of message.players) {
+      writer.uint32(18).string(v!);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): MatchDetails {
+  decode(input: _m0.Reader | Uint8Array, length?: number): MatchRoster {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseMatchDetails();
+    const message = createBaseMatchRoster();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 2:
-          message.teams.push(MatchDetails_Team.decode(reader, reader.uint32()));
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): MatchDetails {
-    return { teams: Array.isArray(object?.teams) ? object.teams.map((e: any) => MatchDetails_Team.fromJSON(e)) : [] };
-  },
-
-  toJSON(message: MatchDetails): unknown {
-    const obj: any = {};
-    if (message.teams) {
-      obj.teams = message.teams.map((e) => e ? MatchDetails_Team.toJSON(e) : undefined);
-    } else {
-      obj.teams = [];
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<MatchDetails>, I>>(base?: I): MatchDetails {
-    return MatchDetails.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<MatchDetails>, I>>(object: I): MatchDetails {
-    const message = createBaseMatchDetails();
-    message.teams = object.teams?.map((e) => MatchDetails_Team.fromPartial(e)) || [];
-    return message;
-  },
-};
-
-function createBaseMatchDetails_Team(): MatchDetails_Team {
-  return { players: [] };
-}
-
-export const MatchDetails_Team = {
-  encode(message: MatchDetails_Team, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    for (const v of message.players) {
-      writer.uint32(10).string(v!);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): MatchDetails_Team {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseMatchDetails_Team();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
           message.players.push(reader.string());
           break;
         default:
@@ -168,11 +109,11 @@ export const MatchDetails_Team = {
     return message;
   },
 
-  fromJSON(object: any): MatchDetails_Team {
+  fromJSON(object: any): MatchRoster {
     return { players: Array.isArray(object?.players) ? object.players.map((e: any) => String(e)) : [] };
   },
 
-  toJSON(message: MatchDetails_Team): unknown {
+  toJSON(message: MatchRoster): unknown {
     const obj: any = {};
     if (message.players) {
       obj.players = message.players.map((e) => e);
@@ -182,39 +123,39 @@ export const MatchDetails_Team = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<MatchDetails_Team>, I>>(base?: I): MatchDetails_Team {
-    return MatchDetails_Team.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<MatchRoster>, I>>(base?: I): MatchRoster {
+    return MatchRoster.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<MatchDetails_Team>, I>>(object: I): MatchDetails_Team {
-    const message = createBaseMatchDetails_Team();
+  fromPartial<I extends Exact<DeepPartial<MatchRoster>, I>>(object: I): MatchRoster {
+    const message = createBaseMatchRoster();
     message.players = object.players?.map((e) => e) || [];
     return message;
   },
 };
 
-function createBaseCreateMatchRequest(): CreateMatchRequest {
-  return { matchId: "", gameConfig: undefined, matchDetails: undefined };
+function createBaseAllocateMatchRequest(): AllocateMatchRequest {
+  return { matchId: "", gameConfig: undefined, roster: undefined };
 }
 
-export const CreateMatchRequest = {
-  encode(message: CreateMatchRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const AllocateMatchRequest = {
+  encode(message: AllocateMatchRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.matchId !== "") {
       writer.uint32(10).string(message.matchId);
     }
     if (message.gameConfig !== undefined) {
       GameConfiguration.encode(message.gameConfig, writer.uint32(18).fork()).ldelim();
     }
-    if (message.matchDetails !== undefined) {
-      MatchDetails.encode(message.matchDetails, writer.uint32(26).fork()).ldelim();
+    if (message.roster !== undefined) {
+      MatchRoster.encode(message.roster, writer.uint32(26).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): CreateMatchRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): AllocateMatchRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCreateMatchRequest();
+    const message = createBaseAllocateMatchRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -225,7 +166,7 @@ export const CreateMatchRequest = {
           message.gameConfig = GameConfiguration.decode(reader, reader.uint32());
           break;
         case 3:
-          message.matchDetails = MatchDetails.decode(reader, reader.uint32());
+          message.roster = MatchRoster.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -235,108 +176,56 @@ export const CreateMatchRequest = {
     return message;
   },
 
-  fromJSON(object: any): CreateMatchRequest {
+  fromJSON(object: any): AllocateMatchRequest {
     return {
       matchId: isSet(object.matchId) ? String(object.matchId) : "",
       gameConfig: isSet(object.gameConfig) ? GameConfiguration.fromJSON(object.gameConfig) : undefined,
-      matchDetails: isSet(object.matchDetails) ? MatchDetails.fromJSON(object.matchDetails) : undefined,
+      roster: isSet(object.roster) ? MatchRoster.fromJSON(object.roster) : undefined,
     };
   },
 
-  toJSON(message: CreateMatchRequest): unknown {
+  toJSON(message: AllocateMatchRequest): unknown {
     const obj: any = {};
     message.matchId !== undefined && (obj.matchId = message.matchId);
     message.gameConfig !== undefined &&
       (obj.gameConfig = message.gameConfig ? GameConfiguration.toJSON(message.gameConfig) : undefined);
-    message.matchDetails !== undefined &&
-      (obj.matchDetails = message.matchDetails ? MatchDetails.toJSON(message.matchDetails) : undefined);
+    message.roster !== undefined && (obj.roster = message.roster ? MatchRoster.toJSON(message.roster) : undefined);
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<CreateMatchRequest>, I>>(base?: I): CreateMatchRequest {
-    return CreateMatchRequest.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<AllocateMatchRequest>, I>>(base?: I): AllocateMatchRequest {
+    return AllocateMatchRequest.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<CreateMatchRequest>, I>>(object: I): CreateMatchRequest {
-    const message = createBaseCreateMatchRequest();
+  fromPartial<I extends Exact<DeepPartial<AllocateMatchRequest>, I>>(object: I): AllocateMatchRequest {
+    const message = createBaseAllocateMatchRequest();
     message.matchId = object.matchId ?? "";
     message.gameConfig = (object.gameConfig !== undefined && object.gameConfig !== null)
       ? GameConfiguration.fromPartial(object.gameConfig)
       : undefined;
-    message.matchDetails = (object.matchDetails !== undefined && object.matchDetails !== null)
-      ? MatchDetails.fromPartial(object.matchDetails)
+    message.roster = (object.roster !== undefined && object.roster !== null)
+      ? MatchRoster.fromPartial(object.roster)
       : undefined;
     return message;
   },
 };
 
-function createBaseCreateMatchResponse(): CreateMatchResponse {
-  return { connection: "" };
-}
-
-export const CreateMatchResponse = {
-  encode(message: CreateMatchResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.connection !== "") {
-      writer.uint32(10).string(message.connection);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): CreateMatchResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCreateMatchResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.connection = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): CreateMatchResponse {
-    return { connection: isSet(object.connection) ? String(object.connection) : "" };
-  },
-
-  toJSON(message: CreateMatchResponse): unknown {
-    const obj: any = {};
-    message.connection !== undefined && (obj.connection = message.connection);
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<CreateMatchResponse>, I>>(base?: I): CreateMatchResponse {
-    return CreateMatchResponse.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<CreateMatchResponse>, I>>(object: I): CreateMatchResponse {
-    const message = createBaseCreateMatchResponse();
-    message.connection = object.connection ?? "";
-    return message;
-  },
-};
-
-function createBaseDeleteMatchRequest(): DeleteMatchRequest {
+function createBaseFinishMatchRequest(): FinishMatchRequest {
   return { matchId: "" };
 }
 
-export const DeleteMatchRequest = {
-  encode(message: DeleteMatchRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const FinishMatchRequest = {
+  encode(message: FinishMatchRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.matchId !== "") {
       writer.uint32(10).string(message.matchId);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): DeleteMatchRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): FinishMatchRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDeleteMatchRequest();
+    const message = createBaseFinishMatchRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -351,22 +240,22 @@ export const DeleteMatchRequest = {
     return message;
   },
 
-  fromJSON(object: any): DeleteMatchRequest {
+  fromJSON(object: any): FinishMatchRequest {
     return { matchId: isSet(object.matchId) ? String(object.matchId) : "" };
   },
 
-  toJSON(message: DeleteMatchRequest): unknown {
+  toJSON(message: FinishMatchRequest): unknown {
     const obj: any = {};
     message.matchId !== undefined && (obj.matchId = message.matchId);
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<DeleteMatchRequest>, I>>(base?: I): DeleteMatchRequest {
-    return DeleteMatchRequest.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<FinishMatchRequest>, I>>(base?: I): FinishMatchRequest {
+    return FinishMatchRequest.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<DeleteMatchRequest>, I>>(object: I): DeleteMatchRequest {
-    const message = createBaseDeleteMatchRequest();
+  fromPartial<I extends Exact<DeepPartial<FinishMatchRequest>, I>>(object: I): FinishMatchRequest {
+    const message = createBaseFinishMatchRequest();
     message.matchId = object.matchId ?? "";
     return message;
   },
@@ -374,58 +263,64 @@ export const DeleteMatchRequest = {
 
 export type BackendService = typeof BackendService;
 export const BackendService = {
-  createMatch: {
-    path: "/quip.matchmaker.Backend/CreateMatch",
+  /** AllocateMatch allocates a gameserver for the specified match. */
+  allocateMatch: {
+    path: "/quip.matchmaker.Backend/AllocateMatch",
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: CreateMatchRequest) => Buffer.from(CreateMatchRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer) => CreateMatchRequest.decode(value),
-    responseSerialize: (value: CreateMatchResponse) => Buffer.from(CreateMatchResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer) => CreateMatchResponse.decode(value),
+    requestSerialize: (value: AllocateMatchRequest) => Buffer.from(AllocateMatchRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => AllocateMatchRequest.decode(value),
+    responseSerialize: (value: MatchDetails) => Buffer.from(MatchDetails.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => MatchDetails.decode(value),
   },
-  deleteMatch: {
-    path: "/quip.matchmaker.Backend/DeleteMatch",
+  /** FinishMatch marks a specified match as completed. */
+  finishMatch: {
+    path: "/quip.matchmaker.Backend/FinishMatch",
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: DeleteMatchRequest) => Buffer.from(DeleteMatchRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer) => DeleteMatchRequest.decode(value),
+    requestSerialize: (value: FinishMatchRequest) => Buffer.from(FinishMatchRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => FinishMatchRequest.decode(value),
     responseSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
     responseDeserialize: (value: Buffer) => Empty.decode(value),
   },
 } as const;
 
 export interface BackendServer extends UntypedServiceImplementation {
-  createMatch: handleUnaryCall<CreateMatchRequest, CreateMatchResponse>;
-  deleteMatch: handleUnaryCall<DeleteMatchRequest, Empty>;
+  /** AllocateMatch allocates a gameserver for the specified match. */
+  allocateMatch: handleUnaryCall<AllocateMatchRequest, MatchDetails>;
+  /** FinishMatch marks a specified match as completed. */
+  finishMatch: handleUnaryCall<FinishMatchRequest, Empty>;
 }
 
 export interface BackendClient extends Client {
-  createMatch(
-    request: CreateMatchRequest,
-    callback: (error: ServiceError | null, response: CreateMatchResponse) => void,
+  /** AllocateMatch allocates a gameserver for the specified match. */
+  allocateMatch(
+    request: AllocateMatchRequest,
+    callback: (error: ServiceError | null, response: MatchDetails) => void,
   ): ClientUnaryCall;
-  createMatch(
-    request: CreateMatchRequest,
+  allocateMatch(
+    request: AllocateMatchRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: CreateMatchResponse) => void,
+    callback: (error: ServiceError | null, response: MatchDetails) => void,
   ): ClientUnaryCall;
-  createMatch(
-    request: CreateMatchRequest,
+  allocateMatch(
+    request: AllocateMatchRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: CreateMatchResponse) => void,
+    callback: (error: ServiceError | null, response: MatchDetails) => void,
   ): ClientUnaryCall;
-  deleteMatch(
-    request: DeleteMatchRequest,
+  /** FinishMatch marks a specified match as completed. */
+  finishMatch(
+    request: FinishMatchRequest,
     callback: (error: ServiceError | null, response: Empty) => void,
   ): ClientUnaryCall;
-  deleteMatch(
-    request: DeleteMatchRequest,
+  finishMatch(
+    request: FinishMatchRequest,
     metadata: Metadata,
     callback: (error: ServiceError | null, response: Empty) => void,
   ): ClientUnaryCall;
-  deleteMatch(
-    request: DeleteMatchRequest,
+  finishMatch(
+    request: FinishMatchRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: Empty) => void,

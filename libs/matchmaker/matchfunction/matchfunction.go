@@ -107,12 +107,12 @@ func makeMatches(p *ompb.MatchProfile, poolTickets map[string][]*ompb.Ticket) ([
 		matchTickets := tickets[:ticketsPerMatch]
 		tickets = tickets[ticketsPerMatch:]
 
-		matchDetails, err := CreateMatchDetails(matchTickets)
+		matchRoster, err := CreateMatchRoster(matchTickets)
 		if err != nil {
 			return nil, err
 		}
 
-		matchDetailsAny, err := anypb.New(matchDetails)
+		matchRosterAny, err := anypb.New(matchRoster)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to create anypb from match details: %s", err.Error())
 		}
@@ -123,8 +123,8 @@ func makeMatches(p *ompb.MatchProfile, poolTickets map[string][]*ompb.Ticket) ([
 			MatchFunction: "basic-matchfunction",
 			Tickets:       matchTickets,
 			Extensions: map[string]*anypb.Any{
-				"game_config":   gameCfgAny,
-				"match_details": matchDetailsAny,
+				"game_config": gameCfgAny,
+				"roster":      matchRosterAny,
 			},
 		})
 	}
@@ -132,23 +132,20 @@ func makeMatches(p *ompb.MatchProfile, poolTickets map[string][]*ompb.Ticket) ([
 	return matches, nil
 }
 
-func CreateMatchDetails(tickets []*ompb.Ticket) (*pb.MatchDetails, error) {
-	teams := make([]*pb.MatchDetails_Team, len(tickets))
-	for i, ticket := range tickets {
+func CreateMatchRoster(tickets []*ompb.Ticket) (*pb.MatchRoster, error) {
+	// teams := make([]*pb.MatchDetails_Team, len(tickets))
+	players := make([]string, len(tickets))
+	for _, ticket := range tickets {
 		details := &ipb.TicketInternal{}
 		err := ticket.Extensions["details"].UnmarshalTo(details)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "failed to read details on ticket '%s", ticket.Id)
 		}
 
-		teams[i] = &pb.MatchDetails_Team{
-			Players: []string{details.PlayerId},
-		}
+		players = append(players, details.PlayerId)
 	}
 
-	matchDetails := &pb.MatchDetails{
-		Teams: teams,
-	}
-
-	return matchDetails, nil
+	return &pb.MatchRoster{
+		Players: players,
+	}, nil
 }

@@ -34,28 +34,24 @@ func New(cfg config.View) *Service {
 	}
 }
 
-func (s *Service) CreateMatch(ctx context.Context, req *pb.CreateMatchRequest) (resp *pb.CreateMatchResponse, err error) {
+func (s *Service) AllocateMatch(ctx context.Context, req *pb.AllocateMatchRequest) (resp *pb.MatchDetails, err error) {
 	gameCfg := req.GetGameConfig()
 	if gameCfg == nil {
 		return nil, status.Error(codes.InvalidArgument, ".GameConfig is required")
 	}
 
-	matchDetails := req.GetMatchDetails()
-	if matchDetails == nil {
-		return nil, status.Error(codes.InvalidArgument, ".MatchDetails is required")
+	roster := req.GetRoster()
+	if roster == nil {
+		return nil, status.Error(codes.InvalidArgument, ".Roster is required")
 	}
 
 	if req.MatchId == "" {
 		return nil, status.Error(codes.InvalidArgument, ".MatchId is required")
 	}
 
-	players := make([]string, 0, len(matchDetails.Teams))
-	for _, team := range matchDetails.Teams {
-		players = append(players, team.Players...)
-	}
-
+	players := roster.Players
 	if len(players) == 0 {
-		return nil, status.Error(codes.InvalidArgument, ".MatchDetails.Teams has no players")
+		return nil, status.Error(codes.InvalidArgument, ".Roster has no players")
 	}
 
 	// TODO: track match should return players who failed in order to better handle
@@ -91,12 +87,12 @@ func (s *Service) CreateMatch(ctx context.Context, req *pb.CreateMatchRequest) (
 
 	// TODO: health check stuff?
 
-	return &pb.CreateMatchResponse{
+	return &pb.MatchDetails{
 		Connection: ip,
 	}, nil
 }
 
-func (s *Service) DeleteMatch(ctx context.Context, req *pb.DeleteMatchRequest) (*emptypb.Empty, error) {
+func (s *Service) FinishMatch(ctx context.Context, req *pb.FinishMatchRequest) (*emptypb.Empty, error) {
 	match, err := s.store.GetMatch(ctx, req.MatchId)
 	if err != nil {
 		return nil, err
@@ -107,14 +103,13 @@ func (s *Service) DeleteMatch(ctx context.Context, req *pb.DeleteMatchRequest) (
 		return nil, err
 	}
 
-	reason := "match has finished"
 	go s.broker.PublishStatusUpdate(context.Background(), &pb.StatusUpdate{
 		Targets: match.Players,
 		Status: &pb.Status{
 			State: pb.State_STATE_IDLE,
 			Details: &pb.Status_Stopped{
 				Stopped: &pb.QueueStopped{
-					Reason: &reason,
+					Message: "match finished",
 				},
 			},
 		},
