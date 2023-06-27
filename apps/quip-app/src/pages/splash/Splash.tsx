@@ -1,6 +1,5 @@
 import {
   Arrow,
-  Button,
   Circle,
   Diamond1,
   Diamond2,
@@ -11,21 +10,17 @@ import {
   Screen,
   spacing,
   Squiggle,
-  Star
+  theme,
+  Star, typography
 } from "@quip/native-ui";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
 import React, {useState} from "react";
+import { Button } from "react-native-paper"
 
 export default function Splash({navigation}: NativeStackScreenProps<any, "splash">) {
-  const [spawned, setSpawned] = useState(1)
-  const handleClick = () => {
-    console.log(spawned)
-    setSpawned(s => s+1)
-  }
-
   return (
-    <Screen hasSafeArea={false} screenStyle={{backgroundColor: "#ECEBFF"}} style={[spacing.fill]}>
+    <Screen hasSafeArea={false} screenStyle={{backgroundColor: theme.colors.s5}} style={[spacing.fill]}>
       <View style={styles.candyContainer}>
         <Squiggle style={[styles.candy, styles.squiggle]}/>
         <Circle style={[styles.candy, styles.circle1]}/>
@@ -43,10 +38,28 @@ export default function Splash({navigation}: NativeStackScreenProps<any, "splash
         </View>
         <View style={styles.buttonContainer}>
           <View style={m('b', 2)}>
-            <Button style={[styles.loginButton]} mode="contained" title="Log In"/>
+            <Button
+              onPress={() => {
+                navigation.navigate("home")
+              }}
+              contentStyle={[styles.loginButton]}
+              labelStyle={[typography.button1]}
+              mode="contained"
+            >
+              Log In
+            </Button>
           </View>
           <View>
-            <Button style={[styles.registerButton]} mode="text" title="Get Started"/>
+            <Button
+              onPress={() => {
+                navigation.navigate("home")
+              }}
+              contentStyle={[styles.registerButton]}
+              labelStyle={[typography.button1]}
+              mode="text"
+            >
+              Get Started
+            </Button>
           </View>
         </View>
       </View>
@@ -113,14 +126,14 @@ const styles = StyleSheet.create({
     left: -125
   },
   circle1: {
-    backgroundColor: "#E1DFFF",
+    backgroundColor: theme.colors.splash,
     left: -172,
     top: -133,
     width: 360,
     height: 360,
   },
   circle2: {
-    backgroundColor: "#E1DFFF",
+    backgroundColor: theme.colors.splash,
     right: -121,
     bottom: -51,
     width: 360,

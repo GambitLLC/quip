@@ -1,6 +1,5 @@
 import {configureFonts, MD3LightTheme as DefaultTheme} from 'react-native-paper';
 import {Platform} from "react-native";
-import {MD3Type} from "react-native-paper/src/types";
 
 const fontConfig = {
   default: {
@@ -15,13 +14,29 @@ const fontConfig = {
     lineHeight: 22,
     fontSize: 20,
   }
-} as Partial<MD3Type>;
+} as const;
 
 export const theme = {
   ...DefaultTheme,
+  roundness: 10,
   fonts: configureFonts({config: fontConfig, isV3: true}),
   colors: {
     ...DefaultTheme.colors,
-    primary: '#AE50FD'
+    primary: '#AE50FD',
+    background: '#FFFFFF',
+    white: '#FFFFFF',
+    p1: '#AE50FD',
+    p2: '#6AB26C',
+    s1: '#14171F',
+    s2: '#FFFFFF',
+    s3: '#B8CEDD',
+    s4: '#98A7B1',
+    s5: '#ECEBFF',
+    s6: '#EEFFEF',
+    t1: '#4097A0',
+    t3: '#DC3C2D',
+    splash: '#E1DFFF',
   }
 }
+
+export default theme

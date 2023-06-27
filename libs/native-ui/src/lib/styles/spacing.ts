@@ -1,4 +1,4 @@
-import { StyleProp, StyleSheet, ViewStyle } from "react-native";
+import {StyleSheet, ViewStyle } from "react-native";
 
 const spacing = StyleSheet.create({
   fill: {
@@ -14,7 +14,7 @@ const spacing = StyleSheet.create({
 })
 
 type Direction = "t" | "r" | "b" | "l" | "x" | "y" | "a";
-type Size = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
+type Size = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
 type DirHepler = "" | "Top" | "Right" | "Bottom" | "Left"
 
 function dirHelper(dir: Direction): DirHepler[] {

@@ -1,8 +1,5 @@
 import { registerRootComponent } from 'expo';
 import App from './src/app/App';
-import { PaperProvider } from "react-native-paper";
-import { theme } from "./src/plugins/theme";
-import { NavigationContainer } from "@react-navigation/native";
 import { useFonts } from 'expo-font';
 import { useCallback } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
@@ -27,19 +24,13 @@ export default function Main() {
     }
   }, [fontsLoaded]);
 
-  console.log(fontsLoaded)
-
   if (!fontsLoaded) {
     return null;
   }
 
   return (
     <View style={{flex: 1, height: "100%", width: "100%" }} onLayout={onLayoutRootView}>
-      <PaperProvider theme={theme}>
-        <NavigationContainer>
-          <App/>
-        </NavigationContainer>
-      </PaperProvider>
+      <App/>
     </View>
   );
 }
