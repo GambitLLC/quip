@@ -8,6 +8,7 @@ import (
 
 	"github.com/GambitLLC/quip/libs/test/data"
 	"github.com/spf13/viper"
+	"golang.org/x/sync/errgroup"
 )
 
 func runMinimatch(ctx context.Context, redisPort string) error {
@@ -15,34 +16,37 @@ func runMinimatch(ctx context.Context, redisPort string) error {
 		return err
 	}
 
-	minimatch := exec.CommandContext(ctx, "./minimatch")
-	minimatch.Dir = "./build/e2e/bin"
-	minimatch.Stdout = os.Stdout
-	minimatch.Stderr = os.Stderr
-	if err := minimatch.Start(); err != nil {
-		return err
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		return runBinProc(ctx, "./minimatch")
+	})
+
+	eg.Go(func() error {
+		return runBinProc(ctx, "./synchronizer")
+	})
+
+	eg.Go(func() error {
+		return runBinProc(ctx, "./default-evaluator")
+	})
+
+	return eg.Wait()
+}
+
+func runBinProc(ctx context.Context, name string) error {
+	cmd := exec.CommandContext(ctx, name)
+	cmd.Dir = "./build/e2e/bin"
+	err := cmd.Run()
+
+	switch err := err.(type) {
+	case *exec.ExitError:
+		// ignore err if process terminated due to ctx closing
+		if err.ProcessState.ExitCode() == -1 && !err.ProcessState.Exited() && ctx.Err() != nil {
+			return nil
+		}
+	default:
 	}
 
-	synchronizer := exec.CommandContext(ctx, "./synchronizer")
-	synchronizer.Dir = "./build/e2e/bin"
-	synchronizer.Stdout = os.Stdout
-	synchronizer.Stderr = os.Stderr
-	if err := synchronizer.Start(); err != nil {
-		_ = minimatch.Process.Kill()
-		return err
-	}
-
-	evaluator := exec.CommandContext(ctx, "./default-evaluator")
-	evaluator.Dir = "./build/e2e/bin"
-	evaluator.Stdout = os.Stdout
-	evaluator.Stderr = os.Stderr
-	if err := evaluator.Start(); err != nil {
-		_ = minimatch.Process.Kill()
-		_ = synchronizer.Process.Kill()
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func createMinimatchConfig(redisPort string) error {

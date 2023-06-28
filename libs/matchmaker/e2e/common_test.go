@@ -6,10 +6,9 @@ import (
 	"runtime"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/inmemory"
+	"github.com/spf13/viper"
 )
 
 // inmemory package expects working directory to be at root of project ('/quip')
@@ -27,25 +26,20 @@ func init() {
 	}
 }
 
-var cfg config.View
+var cfg *viper.Viper
 
 func TestMain(m *testing.M) {
-	var err error
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	cfg, err = inmemory.Run(ctx)
+	cfg = viper.New()
+	proc, err := inmemory.Start(cfg)
 	if err != nil {
-		cancel()
 		panic(err)
 	}
 
 	code := m.Run()
-	cancel()
-
-	// wait for minimatch process to actually be killed
-	// TODO: make inmemory package better
-	<-time.After(1 * time.Second)
+	proc.Kill()
+	if err := proc.Wait(); err != nil {
+		panic(err)
+	}
 
 	os.Exit(code)
 }

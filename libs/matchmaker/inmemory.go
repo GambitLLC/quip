@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,13 +14,11 @@ func main() {
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	cfg, err := inmemory.Run(ctx)
-	if err != nil {
-		cancel()
-		panic(err)
-	}
-
-	log.Print(cfg.AllSettings())
+	go func() {
+		if err := inmemory.Run(ctx); err != nil {
+			panic(err)
+		}
+	}()
 
 	<-c
 	cancel()
