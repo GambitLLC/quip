@@ -9,7 +9,7 @@ export function Balance(props: ViewProps & {
   amount: number
 }) {
   return (
-    <View {...props} style={[styles.balance, p('a', 1), p('r', 3)]}>
+    <View {...props} style={[styles.balance, p('a', 2), p('r', 4)]}>
       <Sol style={styles.icon}/>
       <Text style={[typography.p3, m('l', 2)]}>
         {props.amount} SOL

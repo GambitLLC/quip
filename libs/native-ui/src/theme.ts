@@ -18,7 +18,7 @@ const fontConfig = {
 
 export const theme = {
   ...DefaultTheme,
-  roundness: 10,
+  roundness: 5,
   fonts: configureFonts({config: fontConfig, isV3: true}),
   colors: {
     ...DefaultTheme.colors,
