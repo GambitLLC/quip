@@ -21,6 +21,7 @@
     "@react-navigation/native": "^6.1.6",
     "@react-navigation/native-stack": "^6.9.12",
     "@react-navigation/stack": "^6.3.16",
+    "@react-spring/native": "^9.7.3",
     "@react-spring/three": "^9.7.2",
     "@react-three/drei": "^9.77.0",
     "@react-three/fiber": "^8.13.3",

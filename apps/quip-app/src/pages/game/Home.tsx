@@ -1,9 +1,9 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import {AvatarXp, Balance, m, p, QuipNav, Screen, Slider, spacing, theme, typography} from "@quip/native-ui";
+import {AvatarXp, Balance, m, p, QuipNavigator, Screen, Slider, spacing, theme, typography} from "@quip/native-ui";
 import { StyleSheet, View } from "react-native";
 import { Button, Text } from "react-native-paper";
 
-export default function Home({navigation}: NativeStackScreenProps<any, "home">) {
+export default function Home({navigation}: NativeStackScreenProps<any, "games">) {
   return (
     <>
       <Screen screenStyle={{backgroundColor: theme.colors.background}} style={[spacing.fill, p('x', 6), p('t', 8)]}>
@@ -40,10 +40,6 @@ export default function Home({navigation}: NativeStackScreenProps<any, "home">) 
             <Button labelStyle={typography.button1} contentStyle={styles.playButton} mode="contained">
               Play Now
             </Button>
-          </View>
-          {/*Bottom Quip Nav*/}
-          <View>
-            <QuipNav/>
           </View>
         </View>
       </Screen>

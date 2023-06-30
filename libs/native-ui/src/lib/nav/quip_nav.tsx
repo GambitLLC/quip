@@ -1,22 +1,150 @@
-import { View, ViewProps, StyleSheet } from "react-native";
+import { View, StyleSheet, StyleProp, ViewStyle } from "react-native";
 import theme from "../../theme";
+import NavItem from "./nav_item";
+import { p } from "../styles/spacing";
+import {
+  DefaultNavigatorOptions,
+  ParamListBase, TabNavigationState,
+  TabRouter,
+  useNavigationBuilder,
+  TabRouterOptions, createNavigatorFactory, TabActions
+} from "@react-navigation/native";
 
-export function QuipNav(props: ViewProps) {
+import {useState} from "react";
+
+type QuipTab = "games" | "wallet" | "settings"
+type QuipTabIcon = "gamepad-variant" | "wallet" | "cog"
+const tabs: QuipTab[] = ["games", "wallet", "settings"]
+const icons = {
+  "games": "gamepad-variant",
+  "wallet": "wallet",
+  "settings": "cog"
+}
+
+export type QuipNavigationProps = {
+  icon: QuipTabIcon;
+  label: QuipTab;
+} & ParamListBase
+
+export type RootQuipParamList = {
+  games: QuipNavigationProps;
+  wallet: QuipNavigationProps;
+  settings: QuipNavigationProps;
+};
+
+// Props accepted by the view
+type QuipNavigationConfig = {
+  quipNavBarStyle: StyleProp<ViewStyle>;
+  contentStyle: StyleProp<ViewStyle>;
+}
+
+// Supported screen options
+type QuipNavigationOptions = {
+  title?: string;
+}
+
+// Map of event name and the type of data (in event.data)
+//
+// canPreventDefault: true adds the defaultPrevented property to the
+// emitted events.
+type QuipNavigationEventMap = {
+  tabPress: {
+    data: { isAlreadyFocused: boolean };
+    canPreventDefault: true;
+  };
+};
+
+// The props accepted by the component is a combination of 3 things
+type QuipNavProps = DefaultNavigatorOptions<
+  RootQuipParamList,
+  TabNavigationState<RootQuipParamList>,
+  QuipNavigationOptions,
+  QuipNavigationEventMap
+> &
+  TabRouterOptions &
+  QuipNavigationConfig;
+
+export function QuipNavigator({
+  initialRouteName,
+  children,
+  screenOptions,
+  quipNavBarStyle,
+  contentStyle,
+}: QuipNavProps) {
+  const [activeTab, setActiveTab] = useState<QuipTab>("games")
+
+  const { state, navigation, descriptors, NavigationContent } =
+    useNavigationBuilder(TabRouter, {
+      children,
+      screenOptions,
+      initialRouteName,
+    });
+
   return (
-    <View style={styles.quipNav} {...props}>
+    <NavigationContent>
+      <View style={styles.navContainer}>
+        <View style={[{ flex: 1 }, contentStyle]}>
+          {state.routes.map((route, i) => {
+            return (
+              <View
+                key={route.key}
+                style={[
+                  StyleSheet.absoluteFill,
+                  { display: i === state.index ? 'flex' : 'none' },
+                ]}
+              >
+                {descriptors[route.key].render()}
+              </View>
+            );
+          })}
+        </View>
+        <View style={[styles.quipNav, p('x', 6), quipNavBarStyle]}>
+          {state.routes.map((route, i) => {
+            return (<NavItem onPress={() => {
+              setActiveTab(route.name as QuipTab)
+              const event = navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
 
-    </View>
+              if (!event.defaultPrevented) {
+                navigation.dispatch({
+                  ...TabActions.jumpTo(route.name),
+                  target: state.key,
+                });
+              }
+            }} key={i} active={activeTab === route.name} icon={ icons[route.name as QuipTab] } label={route.name}/>)
+          })}
+        </View>
+      </View>
+    </NavigationContent>
   )
 }
 
 const styles = StyleSheet.create({
   quipNav: {
-    height: 79,
+    height: 100,
     width: "100%",
     backgroundColor: theme.colors.s5,
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  navContainer: {
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
+    width: "100%",
   }
 })
 
-export default QuipNav
+export const createQuipNavigator = createNavigatorFactory<
+  TabNavigationState<RootQuipParamList>,
+  QuipNavigationOptions,
+  QuipNavigationEventMap,
+  typeof QuipNavigator
+>(QuipNavigator);
