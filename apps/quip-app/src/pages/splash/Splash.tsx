@@ -17,8 +17,9 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
 import React, {useState} from "react";
 import { Button } from "react-native-paper"
+import { ParamListBase } from "@react-navigation/native";
 
-export default function Splash({navigation}: NativeStackScreenProps<any, "splash">) {
+export default function Splash({navigation}: NativeStackScreenProps<ParamListBase, "splash">) {
   return (
     <Screen hasSafeArea={false} screenStyle={{backgroundColor: theme.colors.s5}} style={[spacing.fill]}>
       <View style={styles.candyContainer}>

@@ -7,7 +7,7 @@ import {
   ParamListBase, TabNavigationState,
   TabRouter,
   useNavigationBuilder,
-  TabRouterOptions, createNavigatorFactory, TabActions
+  TabRouterOptions, createNavigatorFactory, TabActionHelpers, CommonActions
 } from "@react-navigation/native";
 
 import {useState} from "react";
@@ -20,17 +20,6 @@ const icons = {
   "wallet": "wallet",
   "settings": "cog"
 }
-
-export type QuipNavigationProps = {
-  icon: QuipTabIcon;
-  label: QuipTab;
-} & ParamListBase
-
-export type RootQuipParamList = {
-  games: QuipNavigationProps;
-  wallet: QuipNavigationProps;
-  settings: QuipNavigationProps;
-};
 
 // Props accepted by the view
 type QuipNavigationConfig = {
@@ -56,8 +45,8 @@ type QuipNavigationEventMap = {
 
 // The props accepted by the component is a combination of 3 things
 type QuipNavProps = DefaultNavigatorOptions<
-  RootQuipParamList,
-  TabNavigationState<RootQuipParamList>,
+  ParamListBase,
+  TabNavigationState<ParamListBase>,
   QuipNavigationOptions,
   QuipNavigationEventMap
 > &
@@ -74,7 +63,13 @@ export function QuipNavigator({
   const [activeTab, setActiveTab] = useState<QuipTab>("games")
 
   const { state, navigation, descriptors, NavigationContent } =
-    useNavigationBuilder(TabRouter, {
+    useNavigationBuilder<
+      TabNavigationState<ParamListBase>,
+      TabRouterOptions,
+      TabActionHelpers<ParamListBase>,
+      QuipNavigationOptions,
+      QuipNavigationEventMap
+    >(TabRouter, {
       children,
       screenOptions,
       initialRouteName,
@@ -106,11 +101,14 @@ export function QuipNavigator({
                 type: 'tabPress',
                 target: route.key,
                 canPreventDefault: true,
+                data: {
+                  isAlreadyFocused: route.key === state.routes[state.index].key,
+                },
               });
 
               if (!event.defaultPrevented) {
                 navigation.dispatch({
-                  ...TabActions.jumpTo(route.name),
+                  ...CommonActions.navigate(route),
                   target: state.key,
                 });
               }
@@ -143,7 +141,7 @@ const styles = StyleSheet.create({
 })
 
 export const createQuipNavigator = createNavigatorFactory<
-  TabNavigationState<RootQuipParamList>,
+  TabNavigationState<ParamListBase>,
   QuipNavigationOptions,
   QuipNavigationEventMap,
   typeof QuipNavigator
