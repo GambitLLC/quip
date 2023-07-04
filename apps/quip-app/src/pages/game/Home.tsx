@@ -35,36 +35,7 @@ export default function Home({navigation}: NativeStackScreenProps<ParamListBase,
           </View>
           {/*Slider*/}
           <View style={[m('b', 9)]}>
-            <Slider>
-              <View style={{width: 274, height: 300}}/>
-              <View style={p('x', 3)}>
-                <Card
-                  imgSrc={require('../../../assets/game1.jpg')}
-                  cardColor={theme.colors.t1}
-                  cardTitle={"Think"}
-                  numPlayers={"25.3k Players"}
-                  isComingSoon={true}
-                />
-              </View>
-              <View style={p('x', 3)}>
-                <Card
-                  imgSrc={require('../../../assets/game1.jpg')}
-                  cardColor={theme.colors.p2}
-                  cardTitle={"Race"}
-                  numPlayers={"25.3k Players"}
-                />
-              </View>
-              <View style={p('x', 3)}>
-                <Card
-                  imgSrc={require('../../../assets/game1.jpg')}
-                  cardColor={theme.colors.p1}
-                  cardTitle={"Shoot"}
-                  numPlayers={"25.3k Players"}
-                  isComingSoon={true}
-                />
-              </View>
-              <View style={{width: 274, height: 300}}/>
-            </Slider>
+            <Slider/>
           </View>
           {/*Quip Info*/}
           <View style={[p('x', 6)]}>
