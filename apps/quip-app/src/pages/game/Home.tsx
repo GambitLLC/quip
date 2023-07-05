@@ -10,16 +10,18 @@ import {
   spacing,
   theme,
   typography,
-  Text
+  Text, createQuipNavigator
 } from "@quip/native-ui";
 import { StyleSheet, View } from "react-native";
 import { Button } from "react-native-paper";
 import { ParamListBase } from "@react-navigation/native";
-import Info from "./Info";
+import Wallet from "../wallet/Wallet";
+import Settings from "../settings/Settings";
+import React from "react";
 
-const Stack = createNativeStackNavigator();
+const Quip = createQuipNavigator();
 
-function GameHome({navigation}: NativeStackScreenProps<ParamListBase, "gameHome">) {
+function GameHome({navigation}: NativeStackScreenProps<ParamListBase, "games">) {
   return (<Screen screenStyle={[{backgroundColor: theme.colors.background}]} style={[spacing.fill]}>
     <View style={[styles.homeContainer]}>
       {/*Topbar*/}
@@ -65,12 +67,15 @@ function GameHome({navigation}: NativeStackScreenProps<ParamListBase, "gameHome"
   </Screen>)
 }
 
-export default function Home({navigation}: NativeStackScreenProps<ParamListBase, "games">) {
+export default function Home({navigation}: NativeStackScreenProps<ParamListBase, "gameHome">) {
   return (
-    <Stack.Navigator id="home" screenOptions={{headerShown: false}}>
-      <Stack.Screen name="gameHome" component={GameHome}/>
-      <Stack.Screen name="gameInfo" component={Info}/>
-    </Stack.Navigator>
+    <Quip.Navigator id="quip" initialRouteName={"home"} quipNavBarStyle={{}} contentStyle={{
+      height: "100%",
+    }}>
+      <Quip.Screen name="games" component={GameHome} />
+      <Quip.Screen name="wallet" component={Wallet} />
+      <Quip.Screen name="settings" component={Settings} />
+    </Quip.Navigator>
   )
 }
 

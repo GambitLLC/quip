@@ -17,7 +17,7 @@ import { NativeStackNavigationProp, NativeStackScreenProps } from "@react-naviga
 const scrollOffset = 0
 
 interface SliderProps {
-  navigation:  NativeStackNavigationProp<ParamListBase, "gameHome">
+  navigation:  NativeStackNavigationProp<ParamListBase>
 }
 
 export function Slider(props: ViewProps & SliderProps) {

@@ -8,20 +8,17 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createQuipNavigator } from "@quip/native-ui";
 import Wallet from "../pages/wallet/Wallet";
 import Settings from "../pages/settings/Settings";
-
-const Quip = createQuipNavigator();
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+const Stack = createNativeStackNavigator();
 
 export const App = () => {
   return (
     <PaperProvider theme={theme}>
       <NavigationContainer>
-        <Quip.Navigator id="quip" initialRouteName={"home"} quipNavBarStyle={{}} contentStyle={{
-          height: "100%",
-        }}>
-          <Quip.Screen name="games" component={Home} />
-          <Quip.Screen name="wallet" component={Wallet} />
-          <Quip.Screen name="settings" component={Settings} />
-        </Quip.Navigator>
+        <Stack.Navigator screenOptions={{headerShown: false}}>
+          <Stack.Screen name="gameHome" component={Home}/>
+          <Stack.Screen name="gameInfo" component={Info}/>
+        </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>
   );
