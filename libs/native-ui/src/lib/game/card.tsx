@@ -8,6 +8,7 @@ import { typography } from "../styles/typography";
 import { LogoText } from "../logoText/logoText";
 import { CommonActions, ParamListBase, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import PlayerCountLabel from "./player_count_label";
 
 interface CardProps {
   imgSrc: ImageSourcePropType,
@@ -49,15 +50,7 @@ export function Card(props: SvgProps & CardProps) {
           <View style={styles.infoBtn}>
             <IconButton onPress={navigateToInfo} size={20} iconColor={theme.colors.s1} icon={"information-outline"}/>
           </View>
-          <View style={[styles.numPlayers, p('x', 3), p('l', 2)]}>
-            <IconButton style={{
-              width: 16,
-              height: 16,
-            }} iconColor={theme.colors.p1} size={16} icon="account-group"/>
-            <Text style={[typography.p4, {color: theme.colors.p1}]}>
-              {props.numPlayers}
-            </Text>
-          </View>
+          <PlayerCountLabel numPlayers={props.numPlayers}/>
         </View>
         <View style={[{display: "flex", flexDirection: "row", width: "100%", justifyContent: "space-between", alignItems: "flex-end"}]}>
           <View>
@@ -78,14 +71,6 @@ export function Card(props: SvgProps & CardProps) {
 const styles = StyleSheet.create({
   container: {
     position: "relative",
-  },
-  numPlayers: {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: theme.colors.background,
-    borderRadius: 9999,
-    height: 32,
   },
   card: {
     position: "absolute",

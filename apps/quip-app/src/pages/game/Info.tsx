@@ -1,14 +1,22 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ParamListBase } from "@react-navigation/native";
-import { spacing, Text, Screen, InfoImage, typography, m } from "@quip/native-ui";
-import { Button } from "react-native-paper";
+import { spacing, Text, Screen, InfoImage, typography, p, m, theme, PlayerCountLabel } from "@quip/native-ui";
+import { Button, IconButton } from "react-native-paper";
 import { View, StyleSheet } from "react-native";
 
 export default function Info({navigation}: NativeStackScreenProps<ParamListBase, "gameInfo">) {
   return (
     <Screen hasSafeArea={false} style={[spacing.fill]}>
       <View style={{width: "100%", height: "100%", display:"flex", flexDirection:"column"}}>
-        <InfoImage imgSrc={require('../../../assets/game1.jpg')}/>
+        <View style={{position: "relative"}}>
+          <InfoImage imgSrc={require('../../../assets/game1.jpg')}/>
+          <View style={[{position: "absolute", width: "100%"}, p('t', 10), p('r', 6), p('l', 2)]}>
+            <View style={[styles.imageHeader]}>
+              <IconButton onPress={() => navigation.goBack()} size={32} icon={"arrow-left"} iconColor={theme.colors.background}/>
+              <PlayerCountLabel numPlayers="25.3k Players"/>
+            </View>
+          </View>
+        </View>
         <View style={[m('t', 6), m('x', 6)]}>
           <Text style={[typography.h6, m('b', 2)]}>
             The Game
@@ -40,5 +48,12 @@ const styles = StyleSheet.create({
   playButton: {
     height: 56,
     borderRadius: 24,
+  },
+  imageHeader: {
+    width: "100%",
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   }
 })
