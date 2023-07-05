@@ -1,6 +1,7 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
 import React from 'react';
 import Home from "../pages/game/Home";
+import Info from "../pages/game/Info"
 import { theme } from "@quip/native-ui";
 import { PaperProvider } from "react-native-paper";
 import { NavigationContainer } from "@react-navigation/native";
@@ -14,7 +15,7 @@ export const App = () => {
   return (
     <PaperProvider theme={theme}>
       <NavigationContainer>
-        <Quip.Navigator initialRouteName={"home"} quipNavBarStyle={{}} contentStyle={{
+        <Quip.Navigator id="quip" initialRouteName={"home"} quipNavBarStyle={{}} contentStyle={{
           height: "100%",
         }}>
           <Quip.Screen name="games" component={Home} />

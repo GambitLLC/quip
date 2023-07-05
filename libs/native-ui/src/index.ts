@@ -18,6 +18,7 @@ export * from './lib/slider/slider'
 export * from './lib/nav/quip_nav'
 export * from './lib/text/text'
 export * from './lib/game/card'
+export * from './lib/info/infoImage'
 
 //theme
 export * from './theme'

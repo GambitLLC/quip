@@ -6,6 +6,8 @@ import { IconButton } from "react-native-paper";
 import { Text } from "../text/text"
 import { typography } from "../styles/typography";
 import { LogoText } from "../logoText/logoText";
+import { CommonActions, ParamListBase, useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 interface CardProps {
   imgSrc: ImageSourcePropType,
@@ -13,9 +15,18 @@ interface CardProps {
   cardTitle: string,
   numPlayers: string,
   isComingSoon?: boolean,
+  navigation: NativeStackNavigationProp<ParamListBase>
 }
 
 export function Card(props: SvgProps & CardProps) {
+  const navigation = useNavigation()
+
+  function navigateToInfo() {
+    navigation.dispatch({
+      ...CommonActions.navigate('gameInfo')
+    })
+  }
+
   return (
     <View style={styles.container}>
       <Svg {...props} width={props.width ?? "250"} height={props.height ?? "300"} viewBox="0 0 250 300" fill="none">
@@ -36,7 +47,7 @@ export function Card(props: SvgProps & CardProps) {
       <View style={[styles.card]}>
         <View style={[{display: "flex", flexDirection: "row", width: "100%", justifyContent: "space-between"}]}>
           <View style={styles.infoBtn}>
-            <IconButton size={20} icon={"information-outline"}/>
+            <IconButton onPress={navigateToInfo} size={20} iconColor={theme.colors.s1} icon={"information-outline"}/>
           </View>
           <View style={[styles.numPlayers, p('x', 3), p('l', 2)]}>
             <IconButton style={{

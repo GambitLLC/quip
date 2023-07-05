@@ -11,16 +11,21 @@ import React, { useRef, useState } from "react";
 import { p } from "../styles/spacing";
 import Card from "../game/card";
 import theme from "../../theme";
+import { ParamListBase, useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp, NativeStackScreenProps } from "@react-navigation/native-stack";
 
 const scrollOffset = 0
 
-export function Slider(props: ViewProps) {
+interface SliderProps {
+  navigation:  NativeStackNavigationProp<ParamListBase, "gameHome">
+}
+
+export function Slider(props: ViewProps & SliderProps) {
   const snapOffsets = [...Array(5).keys()].map(index => (index * 274) - 50).slice(1, 4)
 
   const scrollRef = useRef<ScrollView>(null);
   const dragStartOffset = useRef<number>(0);
   const scrollX = useRef(new Animated.Value(snapOffsets[1])).current;
-
 
   // const [card1Props, card1Api] = useSpring({
   //   rotateZ: `${(224 - scrollX)/40}deg`,
@@ -132,6 +137,7 @@ export function Slider(props: ViewProps) {
             cardTitle={"Think"}
             numPlayers={"25.3k Players"}
             isComingSoon={true}
+            navigation={props.navigation}
           />
         </Animated.View>
         <Animated.View style={[{transform: [{rotateZ: rotateCard2}]}, p('x', 3)]}>
@@ -140,6 +146,7 @@ export function Slider(props: ViewProps) {
             cardColor={theme.colors.p2}
             cardTitle={"Race"}
             numPlayers={"25.3k Players"}
+            navigation={props.navigation}
           />
         </Animated.View>
         <Animated.View style={[{transform: [{rotateZ: rotateCard3}]}, p('x', 3)]}>
@@ -149,6 +156,7 @@ export function Slider(props: ViewProps) {
             cardTitle={"Shoot"}
             numPlayers={"25.3k Players"}
             isComingSoon={true}
+            navigation={props.navigation}
           />
         </Animated.View>
         <View style={{width: 274, height: 300}}/>
