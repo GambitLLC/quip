@@ -4,9 +4,9 @@ import {Platform} from "react-native";
 const fontConfig = {
   default: {
     fontFamily: Platform.select({
-      web: 'Rubik-400, sans-serif',
-      ios: 'Rubik-400',
-      android: 'Rubik-400',
+      web: 'Co-Headline-400, sans-serif',
+      ios: 'Co-Headline-400',
+      android: 'Co-Headline-400',
       default: 'sans-serif',
     }),
     fontWeight: '400',

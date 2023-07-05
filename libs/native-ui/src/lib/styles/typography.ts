@@ -26,109 +26,109 @@ const typography: Typography = {
     fontSize: 124,
     lineHeight: 124 * 1.2,
     letterSpacing: 0,
-    fontFamily: 'Rubik-700'
+    fontFamily: 'Co-Headline-700'
   },
   h1: {
     fontSize: 80,
     lineHeight: 80,
     letterSpacing: 0,
-    fontFamily: 'Rubik-700'
+    fontFamily: 'Co-Headline-700'
   },
   h2: {
     fontSize: 56,
     lineHeight: 56,
     letterSpacing: 0,
-    fontFamily: 'Rubik-700'
+    fontFamily: 'Co-Headline-700'
   },
   h3: {
     fontSize: 48,
     lineHeight: 48,
     letterSpacing: 0,
-    fontFamily: 'Rubik-700'
+    fontFamily: 'Co-Headline-700'
   },
   h4: {
     fontSize: 40,
     lineHeight: 40,
     letterSpacing: 0,
-    fontFamily: 'Rubik-700'
+    fontFamily: 'Co-Headline-700'
   },
   h5: {
     fontSize: 32,
     lineHeight: 32,
     letterSpacing: 0,
-    fontFamily: 'Rubik-700'
+    fontFamily: 'Co-Headline-700'
   },
   h6: {
     fontSize: 20,
     lineHeight: 20,
     letterSpacing: 0,
-    fontFamily: 'Rubik-700'
+    fontFamily: 'Co-Headline-700'
   },
   p1: {
     fontSize: 18,
     lineHeight: 1.4 * 18,
     letterSpacing: 0,
-    fontFamily: 'Rubik-400'
+    fontFamily: 'Co-Headline-400'
   },
   p2: {
     fontSize: 16,
     lineHeight: 1.4 * 16,
     letterSpacing: 0,
-    fontFamily: 'Rubik-400'
+    fontFamily: 'Co-Headline-400'
   },
   p3: {
     fontSize: 14,
     lineHeight: 1.4 * 14,
     letterSpacing: 0,
-    fontFamily: 'Rubik-400'
+    fontFamily: 'Co-Headline-400'
   },
   p4: {
     fontSize: 12,
     lineHeight: 1.4 * 12,
     letterSpacing: 0,
-    fontFamily: 'Rubik-400'
+    fontFamily: 'Co-Headline-400'
   },
   t1: {
     fontSize: 24,
     lineHeight: 1.4 * 24,
     letterSpacing: 0,
-    fontFamily: 'Rubik-400'
+    fontFamily: 'Co-Headline-400'
   },
   t2: {
     fontSize: 18,
     lineHeight: 1.4 * 18,
     letterSpacing: 0,
-    fontFamily: 'Rubik-400'
+    fontFamily: 'Co-Headline-400'
   },
   label1: {
     fontSize: 20,
     lineHeight: 1.4 * 20,
     letterSpacing: 0,
-    fontFamily: 'Rubik-700'
+    fontFamily: 'Co-Headline-700'
   },
   label2: {
     fontSize: 12,
     lineHeight: 1.4 * 12,
     letterSpacing: 0,
-    fontFamily: 'Rubik-700'
+    fontFamily: 'Co-Headline-700'
   },
   button1: {
     fontSize: 18,
     lineHeight: 1.4 * 18,
     letterSpacing: 0,
-    fontFamily: 'Rubik-700'
+    fontFamily: 'Co-Headline-700'
   },
   button2: {
     fontSize: 14,
     lineHeight: 1.4 * 14,
     letterSpacing: 0,
-    fontFamily: 'Rubik-700'
+    fontFamily: 'Co-Headline-700'
   },
   button3: {
     fontSize: 12,
     lineHeight: 1.4 * 12,
     letterSpacing: 0,
-    fontFamily: 'Rubik-700'
+    fontFamily: 'Co-Headline-700'
   },
 }
 

@@ -9,13 +9,11 @@ SplashScreen.preventAutoHideAsync();
 
 export default function Main() {
   const [fontsLoaded] = useFonts({
-    'Rubik-300': require('./assets/fonts/Rubik-Light.ttf'),
-    'Rubik-400': require('./assets/fonts/Rubik-Regular.ttf'),
-    'Rubik-500': require('./assets/fonts/Rubik-Medium.ttf'),
-    'Rubik-600': require('./assets/fonts/Rubik-SemiBold.ttf'),
-    'Rubik-700': require('./assets/fonts/Rubik-Bold.ttf'),
-    'Rubik-800': require('./assets/fonts/Rubik-ExtraBold.ttf'),
-    'Rubik-900': require('./assets/fonts/Rubik-Black.ttf'),
+    'Co-Headline-300': require('./assets/fonts/Co-Headline-Light.otf'),
+    'Co-Headline-400': require('./assets/fonts/Co-Headline-Regular.otf'),
+    'Co-Headline-700': require('./assets/fonts/Co-Headline-Bold.otf'),
+    'Lexend-300': require('./assets/fonts/Lexend-Light.ttf'),
+    'Lexend-400': require('./assets/fonts/Lexend-Regular.ttf'),
   });
 
   const onLayoutRootView = useCallback(async () => {
