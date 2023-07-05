@@ -1,5 +1,4 @@
 import { StatusBar } from "expo-status-bar";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleProp, View, ViewStyle } from "react-native";
 import { p, spacing } from "../styles/spacing";
 import theme from "../../theme";

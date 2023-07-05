@@ -1,11 +1,10 @@
 import { StyleSheet, TouchableWithoutFeedback, TouchableWithoutFeedbackProps, View, ViewProps } from "react-native";
 import { useState } from "react";
 import theme from "../../theme";
-import { IconButton, Text } from "react-native-paper";
+import { IconButton } from "react-native-paper";
 import { typography } from "../styles/typography";
 import { capitalize } from "../../util/text";
 import { animated, useSpring, easings } from "@react-spring/native";
-
 
 const AnimatedIconButton = animated(IconButton)
 const animationTime = 280

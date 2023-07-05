@@ -92,13 +92,13 @@ const typography: Typography = {
     fontSize: 24,
     lineHeight: 1.4 * 24,
     letterSpacing: 0,
-    fontFamily: 'Co-Headline-400'
+    fontFamily: 'Lexend-400'
   },
   t2: {
     fontSize: 18,
     lineHeight: 1.4 * 18,
     letterSpacing: 0,
-    fontFamily: 'Co-Headline-400'
+    fontFamily: 'Lexend-400'
   },
   label1: {
     fontSize: 20,

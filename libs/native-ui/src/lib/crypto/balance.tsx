@@ -1,5 +1,5 @@
 import { View, ViewProps, StyleSheet } from "react-native";
-import { Text } from "react-native-paper"
+import { Text } from "../text/text"
 import { theme } from "../../theme"
 import Sol from "../candy/sol";
 import { m, p } from "../styles/spacing";

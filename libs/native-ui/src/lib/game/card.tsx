@@ -1,8 +1,9 @@
-import { ColorValue, ImageSourcePropType, StyleSheet, View, ViewProps } from "react-native";
+import { ColorValue, ImageSourcePropType, StyleSheet, View } from "react-native";
 import Svg, { Defs, LinearGradient, Path, Pattern, Stop, SvgProps, Use, Image} from "react-native-svg";
 import { m, p } from "../styles/spacing";
 import theme from "../../theme";
-import { IconButton, Text } from "react-native-paper";
+import { IconButton } from "react-native-paper";
+import { Text } from "../text/text"
 import { typography } from "../styles/typography";
 import { LogoText } from "../logoText/logoText";
 

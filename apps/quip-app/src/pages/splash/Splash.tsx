@@ -15,7 +15,6 @@ import {
 } from "@quip/native-ui";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
-import React, {useState} from "react";
 import { Button } from "react-native-paper"
 import { ParamListBase } from "@react-navigation/native";
 

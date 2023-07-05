@@ -1,3 +1,4 @@
+//components
 export * from './lib/logoText/logoText'
 export * from './lib/logoIcon/logoIcon'
 export * from './lib/candy/arrow'
@@ -15,6 +16,11 @@ export * from './lib/avatar/avatar_xp'
 export * from './lib/crypto/balance'
 export * from './lib/slider/slider'
 export * from './lib/nav/quip_nav'
-export * from './theme'
-export * from './util/text'
+export * from './lib/text/text'
 export * from './lib/game/card'
+
+//theme
+export * from './theme'
+
+//util
+export * from './util/text'

@@ -5,15 +5,15 @@ import {
   LogoText,
   m,
   p,
-  Card,
   Screen,
   Slider,
   spacing,
   theme,
   typography,
+  Text
 } from "@quip/native-ui";
 import { StyleSheet, View } from "react-native";
-import { Button, Text } from "react-native-paper";
+import { Button } from "react-native-paper";
 import { ParamListBase } from "@react-navigation/native";
 
 export default function Home({navigation}: NativeStackScreenProps<ParamListBase, "games">) {
@@ -46,7 +46,7 @@ export default function Home({navigation}: NativeStackScreenProps<ParamListBase,
               </Text>
             </View>
             <View style={[m('t', 2)]}>
-              <Text style={[typography.t2, {color: theme.colors.s1}]}>
+              <Text style={[typography.t2]}>
                 Enjoy fun physics-based games from your favorite creators.
               </Text>
             </View>

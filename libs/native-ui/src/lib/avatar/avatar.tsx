@@ -1,5 +1,4 @@
-import { Image, ImageSourcePropType, View, ViewProps } from "react-native";
-import { Avatar as PaperAvatar } from 'react-native-paper';
+import { Image, ImageSourcePropType, ViewProps } from "react-native";
 
 export interface AvatarProps {
   source: ImageSourcePropType

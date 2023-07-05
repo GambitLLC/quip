@@ -1,5 +1,4 @@
 import Svg, { Path, SvgProps, G } from "react-native-svg";
-import React from "react";
 
 export function Sol(props: SvgProps) {
   return (

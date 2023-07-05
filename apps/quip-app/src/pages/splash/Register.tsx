@@ -1,5 +1,4 @@
-import { Button, Text } from "react-native-paper";
-import { p, Screen, spacing } from "@quip/native-ui";
+import { Screen, spacing } from "@quip/native-ui";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
 import { ParamListBase } from "@react-navigation/native";
