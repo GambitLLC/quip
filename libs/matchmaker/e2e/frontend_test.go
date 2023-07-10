@@ -6,23 +6,36 @@ import (
 	"github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/GambitLLC/quip/libs/rpc"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/oauth"
 )
 
-func TestConnection(t *testing.T) {
+func TestGetStatus(t *testing.T) {
 	ctx := newContext(t)
 
-	client, err := newFrontendClient()
+	client, id, err := newFrontendClient(t)
 	require.NoError(t, err, "create frontend client failed")
 
-	_, err = client.GetStatus(ctx, &matchmaker.GetStatusRequest{})
+	resp, err := client.GetStatus(ctx, &matchmaker.GetStatusRequest{
+		Target: id,
+	})
 	require.NoError(t, err, "GetStatus failed")
+	require.Equal(t, matchmaker.State_STATE_IDLE, resp.GetState(), "expected idle status")
 }
 
-func newFrontendClient() (matchmaker.FrontendClient, error) {
-	conn, err := rpc.GRPCClientFromConfig(cfg, "matchmaker.frontend")
+func newFrontendClient(t *testing.T) (matchmaker.FrontendClient, string, error) {
+	token, id := createDidToken(t)
+	conn, err := rpc.GRPCClientFromConfig(cfg, "matchmaker.frontend", grpc.WithPerRPCCredentials(
+		oauth.TokenSource{
+			TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
+				AccessToken: token,
+			}),
+		},
+	))
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return matchmaker.NewFrontendClient(conn), nil
+	return matchmaker.NewFrontendClient(conn), id, nil
 }
