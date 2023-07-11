@@ -7,10 +7,9 @@ import {
   ParamListBase, TabNavigationState,
   TabRouter,
   useNavigationBuilder,
-  TabRouterOptions, createNavigatorFactory, TabActionHelpers, CommonActions
+  TabRouterOptions, createNavigatorFactory, TabActionHelpers, CommonActions,
+  useRoute,
 } from "@react-navigation/native";
-
-import {useState} from "react";
 
 type QuipTab = "games" | "wallet" | "settings"
 type QuipTabIcon = "gamepad-variant" | "wallet" | "cog"
@@ -60,8 +59,6 @@ export function QuipNavigator({
   quipNavBarStyle,
   contentStyle,
 }: QuipNavProps) {
-  const [activeTab, setActiveTab] = useState<QuipTab>("games")
-
   const { state, navigation, descriptors, NavigationContent } =
     useNavigationBuilder<
       TabNavigationState<ParamListBase>,
@@ -96,7 +93,6 @@ export function QuipNavigator({
         <View style={[styles.quipNav, p('x', 6), quipNavBarStyle]}>
           {state.routes.map((route, i) => {
             return (<NavItem onPress={() => {
-              setActiveTab(route.name as QuipTab)
               const event = navigation.emit({
                 type: 'tabPress',
                 target: route.key,
@@ -112,7 +108,7 @@ export function QuipNavigator({
                   target: state.key,
                 });
               }
-            }} key={i} active={activeTab === route.name} icon={ icons[route.name as QuipTab] } label={route.name}/>)
+            }} key={i} active={state.routes[state.index].name === route.name} icon={ icons[route.name as QuipTab] } label={route.name}/>)
           })}
         </View>
       </View>

@@ -30,7 +30,8 @@
     "react-native-reanimated": "*",
     "@react-three/postprocessing": "*",
     "@ethersproject/shims": "*",
-    "base-64": "*"
+    "base-64": "*",
+    "zustand": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/quip-app && cp package-lock.json apps/quip-app",

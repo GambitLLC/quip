@@ -1,4 +1,4 @@
-import { View, ViewProps } from "react-native";
+import { Pressable, PressableProps, View, ViewProps } from "react-native";
 import Avatar, { AvatarProps } from "./avatar";
 import theme from "../../theme";
 import { typography } from "../styles/typography";
@@ -20,30 +20,7 @@ function polarToCartesian(centerX: number, centerY: number, radius: number, angl
   };
 }
 
-function circleSvgPath(angleInDegrees: number, radius: number) {
-  const start = polarToCartesian(radius, radius, radius, 0);
-  const end = polarToCartesian(radius, radius, radius, angleInDegrees);
-
-  const largeArcFlag = angleInDegrees <= 180 ? "0" : "1";
-
-  const d = [
-    "M",
-    start.x,
-    start.y,
-    "A",
-    radius,
-    radius,
-    0,
-    largeArcFlag,
-    0,
-    end.x,
-    end.y,
-  ].join(" ");
-
-  return d;
-}
-
-export function AvatarXp(props: ViewProps & AvatarXpProps) {
+export function AvatarXp(props: ViewProps & AvatarXpProps & PressableProps) {
   const svgPercentage = 1 - props.percentage
   const size = 64
   const radius = size / 2
@@ -51,74 +28,76 @@ export function AvatarXp(props: ViewProps & AvatarXpProps) {
   const circum = radius * 2 * Math.PI
 
   return (
-    <View style={[{
-      width: size,
-      height: size,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      position: "relative"
-    }, props.style]}>
-      <View style={{
-        position: "absolute",
-        width: "100%",
-        height: "100%",
+    <Pressable {...props}>
+      <View style={[{
+        width: size,
+        height: size,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-      }}>
-        <Avatar style={{position: "absolute"}} source={props.source}/>
-      </View>
-      <View style={{
-        position: "absolute",
-        padding: 2,
-        backgroundColor: theme.colors.background,
-        borderRadius: 9999,
-        right: -6,
-        bottom: -6,
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 5,
-      }}>
+        position: "relative"
+      }, props.style]}>
         <View style={{
+          position: "absolute",
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}>
+          <Avatar style={{position: "absolute"}} source={props.source}/>
+        </View>
+        <View style={{
+          position: "absolute",
+          padding: 2,
+          backgroundColor: theme.colors.background,
+          borderRadius: 9999,
+          right: -6,
+          bottom: -6,
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
-          borderRadius: 9999,
-          backgroundColor: theme.colors.p1,
+          zIndex: 5,
         }}>
-          <Text style={[typography.p3, p('x', 2), { color: theme.colors.s2 }]}>
-            {props.level}
-          </Text>
+          <View style={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 9999,
+            backgroundColor: theme.colors.p1,
+          }}>
+            <Text style={[typography.p3, p('x', 2), { color: theme.colors.s2 }]}>
+              {props.level}
+            </Text>
+          </View>
         </View>
+        <Svg width={size} height={size}>
+          <Circle
+            cx={size/2}
+            cy={size/2}
+            fill="transparent"
+            strokeLinecap="round"
+            strokeWidth={strokeWidth}
+            stroke={"#E7E9FD"}
+            r={size/2 - strokeWidth/2}
+          />
+          <Circle
+            cx={size/2}
+            cy={size/2}
+            fill="transparent"
+            strokeLinecap="round"
+            strokeWidth={strokeWidth}
+            stroke={theme.colors.p1}
+            r={size/2 - strokeWidth/2}
+            strokeDasharray={`${circum} ${circum}`}
+            strokeDashoffset={radius * Math.PI * 2 * svgPercentage}
+            transform={`rotate(90, ${size/2}, ${size/2})`}
+          />
+        </Svg>
       </View>
-      <Svg width={size} height={size}>
-        <Circle
-          cx={size/2}
-          cy={size/2}
-          fill="transparent"
-          strokeLinecap="round"
-          strokeWidth={strokeWidth}
-          stroke={"#E7E9FD"}
-          r={size/2 - strokeWidth/2}
-        />
-        <Circle
-          cx={size/2}
-          cy={size/2}
-          fill="transparent"
-          strokeLinecap="round"
-          strokeWidth={strokeWidth}
-          stroke={theme.colors.p1}
-          r={size/2 - strokeWidth/2}
-          strokeDasharray={`${circum} ${circum}`}
-          strokeDashoffset={radius * Math.PI * 2 * svgPercentage}
-          transform={`rotate(90, ${size/2}, ${size/2})`}
-        />
-      </Svg>
-    </View>
+    </Pressable>
   )
 
   return (

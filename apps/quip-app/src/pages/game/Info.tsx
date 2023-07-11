@@ -1,10 +1,23 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ParamListBase } from "@react-navigation/native";
-import { spacing, Text, Screen, InfoImage, typography, p, m, theme, PlayerCountLabel } from "@quip/native-ui";
+import {
+  spacing,
+  Text,
+  Screen,
+  InfoImage,
+  typography,
+  p,
+  m,
+  theme,
+  PlayerCountLabel,
+  useGameStore
+} from "@quip/native-ui";
 import { Button, IconButton } from "react-native-paper";
 import { View, StyleSheet } from "react-native";
 
 export default function Info({navigation}: NativeStackScreenProps<ParamListBase, "gameInfo">) {
+  const {quip} = useGameStore()
+
   return (
     <Screen hasSafeArea={false} style={[spacing.fill]}>
       <View style={{width: "100%", height: "100%", display:"flex", flexDirection:"column"}}>
@@ -35,7 +48,7 @@ export default function Info({navigation}: NativeStackScreenProps<ParamListBase,
         </View>
         <View style={{flexGrow: 1}}/>
         <View style={[m('x', 6), m('b', 12)]}>
-          <Button labelStyle={typography.button1} contentStyle={styles.playButton} mode="contained">
+          <Button buttonColor={quip.color as string} labelStyle={typography.button1} contentStyle={styles.playButton} mode="contained">
             Play Now
           </Button>
         </View>

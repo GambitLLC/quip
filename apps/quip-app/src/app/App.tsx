@@ -5,10 +5,8 @@ import Info from "../pages/game/Info"
 import { theme } from "@quip/native-ui";
 import { PaperProvider } from "react-native-paper";
 import { NavigationContainer } from "@react-navigation/native";
-import { createQuipNavigator } from "@quip/native-ui";
-import Wallet from "../pages/wallet/Wallet";
-import Settings from "../pages/settings/Settings";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import Profile from "../pages/profile/Profile";
 const Stack = createNativeStackNavigator();
 
 export const App = () => {
@@ -18,6 +16,7 @@ export const App = () => {
         <Stack.Navigator screenOptions={{headerShown: false}}>
           <Stack.Screen name="gameHome" component={Home}/>
           <Stack.Screen name="gameInfo" component={Info}/>
+          <Stack.Screen name="profile" component={Profile} />
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>

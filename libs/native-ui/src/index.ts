@@ -1,3 +1,12 @@
+//theme
+export * from './theme'
+
+//util
+export * from './util/text'
+
+//store
+export * from './lib/store/GameStore'
+
 //components
 export * from './lib/logoText/logoText'
 export * from './lib/logoIcon/logoIcon'
@@ -20,9 +29,3 @@ export * from './lib/text/text'
 export * from './lib/game/card'
 export * from './lib/game/player_count_label'
 export * from './lib/info/infoImage'
-
-//theme
-export * from './theme'
-
-//util
-export * from './util/text'
