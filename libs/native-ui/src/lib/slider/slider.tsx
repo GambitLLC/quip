@@ -13,11 +13,13 @@ import Card from "../game/card";
 import theme from "../../theme";
 import { ParamListBase, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp, NativeStackScreenProps } from "@react-navigation/native-stack";
+import { useGameStore } from "../store/GameStore";
 
 const scrollOffset = 0
 
 interface SliderProps {
-  navigation:  NativeStackNavigationProp<ParamListBase>
+  navigation:  NativeStackNavigationProp<ParamListBase>,
+
 }
 
 export function Slider(props: ViewProps & SliderProps) {
@@ -27,22 +29,7 @@ export function Slider(props: ViewProps & SliderProps) {
   const dragStartOffset = useRef<number>(0);
   const scrollX = useRef(new Animated.Value(snapOffsets[1])).current;
 
-  // const [card1Props, card1Api] = useSpring({
-  //   rotateZ: `${(224 - scrollX)/40}deg`,
-  //   config
-  // }, [currentOffset])
-  //
-  // const [card2Props, card2Api] = useSpring( {
-  //   rotateZ: `${(498 - currentOffset)/40}deg`,
-  //   config
-  // }, [currentOffset])
-  //
-  // const [card3Props, card3Api] = useSpring({
-  //   rotateZ: `${(772 - currentOffset)/40}deg`,
-  //   config
-  // }, [currentOffset])
-
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const { quipIdx, left, right} = useGameStore()
 
   function onScrollBeginDrag(e: NativeSyntheticEvent<NativeScrollEvent>) {
     dragStartOffset.current = e.nativeEvent.contentOffset.x;
@@ -52,16 +39,16 @@ export function Slider(props: ViewProps & SliderProps) {
     //if the drag offset was positive (dragged right) then we want to snap to the next page
     if (dragStartOffset.current - e.nativeEvent.contentOffset.x < -scrollOffset) {
       //if the current page is not the last page
-      if (currentPage < snapOffsets.length - 1) {
+      if (quipIdx < snapOffsets.length - 1) {
         scrollRef.current?.scrollTo({
-          x: snapOffsets[currentPage + 1],
+          x: snapOffsets[quipIdx + 1],
           y: 0,
           animated: true,
         });
-        setCurrentPage(currentPage + 1);
+        right()
       } else {
         scrollRef.current?.scrollTo({
-          x: snapOffsets[currentPage],
+          x: snapOffsets[quipIdx],
           y: 0,
           animated: true,
         });
@@ -70,16 +57,16 @@ export function Slider(props: ViewProps & SliderProps) {
 
     if (dragStartOffset.current - e.nativeEvent.contentOffset.x > scrollOffset) {
       //if the current page is not the first page
-      if (currentPage > 0) {
+      if (quipIdx > 0) {
         scrollRef.current?.scrollTo({
-          x: snapOffsets[currentPage - 1],
+          x: snapOffsets[quipIdx - 1],
           y: 0,
           animated: true,
         });
-        setCurrentPage(currentPage - 1);
+        left()
       } else {
         scrollRef.current?.scrollTo({
-          x: snapOffsets[currentPage],
+          x: snapOffsets[quipIdx],
           y: 0,
           animated: true,
         });

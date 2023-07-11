@@ -1,20 +1,22 @@
-import { View, ViewProps, StyleSheet } from "react-native";
+import { View, ViewProps, StyleSheet, PressableProps, Pressable } from "react-native";
 import { Text } from "../text/text"
 import { theme } from "../../theme"
 import Sol from "../candy/sol";
 import { m, p } from "../styles/spacing";
 import { typography } from "../styles/typography";
 
-export function Balance(props: ViewProps & {
+export function Balance(props: ViewProps & PressableProps & {
   amount: number
 }) {
   return (
-    <View {...props} style={[styles.balance, p('a', 2), p('r', 4)]}>
-      <Sol style={styles.icon}/>
-      <Text style={[typography.p3, m('l', 2)]}>
-        {props.amount} SOL
-      </Text>
-    </View>
+    <Pressable {...props}>
+      <View {...props} style={[styles.balance, p('a', 2), p('r', 4)]}>
+        <Sol style={styles.icon}/>
+        <Text style={[typography.p3, m('l', 2)]}>
+          {props.amount} SOL
+        </Text>
+      </View>
+    </Pressable>
   )
 }
 
