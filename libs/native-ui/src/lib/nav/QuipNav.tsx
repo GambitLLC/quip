@@ -1,7 +1,7 @@
 import { View, StyleSheet, StyleProp, ViewStyle } from "react-native";
 import theme from "../../theme";
-import NavItem from "./nav_item";
-import { p } from "../styles/spacing";
+import NavItem from "./NavItem";
+import { p } from "../styles/Spacing";
 import {
   DefaultNavigatorOptions,
   ParamListBase, TabNavigationState,

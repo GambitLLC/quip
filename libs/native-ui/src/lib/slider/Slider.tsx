@@ -8,8 +8,8 @@ import {
   ViewProps
 } from "react-native";
 import React, { useRef, useState } from "react";
-import { p } from "../styles/spacing";
-import Card from "../game/card";
+import { p } from "../styles/Spacing";
+import Card from "../game/Card";
 import theme from "../../theme";
 import { ParamListBase, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp, NativeStackScreenProps } from "@react-navigation/native-stack";

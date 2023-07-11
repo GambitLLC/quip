@@ -13,14 +13,6 @@ const spacing = StyleSheet.create({
   }
 })
 
-const debug = StyleSheet.create({
-  border: {
-    borderStyle: "solid",
-    borderWidth: 1,
-    borderColor: "red",
-  }
-})
-
 type Direction = "t" | "r" | "b" | "l" | "x" | "y" | "a";
 type Size = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
 type DirHepler = "" | "Top" | "Right" | "Bottom" | "Left"
@@ -72,5 +64,4 @@ export {
   spacing,
   p,
   m,
-  debug
 }

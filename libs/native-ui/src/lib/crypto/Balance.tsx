@@ -1,9 +1,9 @@
 import { View, ViewProps, StyleSheet, PressableProps, Pressable } from "react-native";
-import { Text } from "../text/text"
+import { Text } from "../text/Text"
 import { theme } from "../../theme"
-import Sol from "../candy/sol";
-import { m, p } from "../styles/spacing";
-import { typography } from "../styles/typography";
+import Sol from "../candy/Sol";
+import { m, p } from "../styles/Spacing";
+import { typography } from "../styles/Typography";
 
 export function Balance(props: ViewProps & PressableProps & {
   amount: number

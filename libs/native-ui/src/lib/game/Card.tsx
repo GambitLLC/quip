@@ -1,14 +1,14 @@
 import { ColorValue, ImageSourcePropType, StyleSheet, View } from "react-native";
 import Svg, { Defs, LinearGradient, Path, Pattern, Stop, SvgProps, Use, Image} from "react-native-svg";
-import { m, p } from "../styles/spacing";
+import { m, p } from "../styles/Spacing";
 import theme from "../../theme";
 import { IconButton } from "react-native-paper";
-import { Text } from "../text/text"
-import { typography } from "../styles/typography";
-import { LogoText } from "../logoText/logoText";
+import { Text } from "../text/Text"
+import { typography } from "../styles/Typography";
+import { LogoText } from "../logoText/LogoText";
 import { CommonActions, ParamListBase, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import PlayerCountLabel from "./player_count_label";
+import PlayerCountLabel from "./PlayerCountLabel";
 
 interface CardProps {
   imgSrc: ImageSourcePropType,

@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import { StyleProp, View, ViewStyle } from "react-native";
-import { p, spacing } from "../styles/spacing";
+import { p, spacing } from "../styles/Spacing";
 import theme from "../../theme";
 import React from "react";
 

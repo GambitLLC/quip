@@ -2,8 +2,8 @@ import { StyleSheet, TouchableWithoutFeedback, TouchableWithoutFeedbackProps, Vi
 import { useState } from "react";
 import theme from "../../theme";
 import { IconButton } from "react-native-paper";
-import { typography } from "../styles/typography";
-import { capitalize } from "../../util/text";
+import { typography } from "../styles/Typography";
+import { capitalize } from "../../util/TextUtil";
 import { animated, useSpring, easings } from "@react-spring/native";
 
 const AnimatedIconButton = animated(IconButton)
