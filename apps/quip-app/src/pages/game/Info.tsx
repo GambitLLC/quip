@@ -19,7 +19,7 @@ export default function Info({navigation}: NativeStackScreenProps<ParamListBase,
   const {quip} = useGameStore()
 
   return (
-    <Screen hasSafeArea={false} style={[spacing.fill]}>
+    <Screen hasSafeArea={false} style={[spacing.fill, {backgroundColor: quip.bgColor}]}>
       <View style={{width: "100%", height: "100%", display:"flex", flexDirection:"column"}}>
         <View style={{position: "relative"}}>
           <InfoImage imgSrc={require('../../../assets/game1.jpg')}/>

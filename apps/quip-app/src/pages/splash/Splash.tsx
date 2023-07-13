@@ -16,7 +16,7 @@ import {
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
 import { Button } from "react-native-paper"
-import { ParamListBase } from "@react-navigation/native";
+import { CommonActions, ParamListBase } from "@react-navigation/native";
 
 export default function Splash({navigation}: NativeStackScreenProps<ParamListBase, "splash">) {
   return (
@@ -40,7 +40,9 @@ export default function Splash({navigation}: NativeStackScreenProps<ParamListBas
           <View style={m('b', 2)}>
             <Button
               onPress={() => {
-                navigation.navigate("home")
+                navigation.dispatch({
+                  ...CommonActions.navigate("auth"),
+                })
               }}
               contentStyle={[styles.loginButton]}
               labelStyle={[typography.button1]}
@@ -52,7 +54,9 @@ export default function Splash({navigation}: NativeStackScreenProps<ParamListBas
           <View>
             <Button
               onPress={() => {
-                navigation.navigate("home")
+                navigation.dispatch({
+                  ...CommonActions.navigate("auth"),
+                })
               }}
               contentStyle={[styles.registerButton]}
               labelStyle={[typography.button1]}
