@@ -67,7 +67,6 @@ export function Auth(props: AuthProps) {
         <Button onPress={logout}>
           <Text>Logout</Text>
         </Button>
-        <magic.Relayer />
       </View>
     </Screen>
   );
