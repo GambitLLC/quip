@@ -35,7 +35,8 @@
     "@magic-sdk/react-native-expo": "*",
     "react-native-webview": "*",
     "@magic-ext/auth": "*",
-    "@magic-ext/solana": "*"
+    "@magic-ext/solana": "*",
+    "@magic-sdk/types": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/quip-app && cp package-lock.json apps/quip-app",

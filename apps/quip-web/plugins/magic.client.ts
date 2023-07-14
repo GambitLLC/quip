@@ -309,6 +309,10 @@ export default defineNuxtPlugin(nuxtApp => {
     ],
   })
 
+
+  // @ts-ignore
+  console.log(magic.parameters)
+
   const ticker = _useTicker()
   const crypto = _useMagic(magic)
 

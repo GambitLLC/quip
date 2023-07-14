@@ -1,25 +1,9 @@
 import { View, StyleSheet, NativeSyntheticEvent, TextInputSubmitEditingEventData } from "react-native";
-import { m, p, Screen, spacing, Text } from "@quip/native-ui";
-import { Magic } from "@magic-sdk/react-native-expo";
+import { m, p, Screen, spacing, Text, useCrypto } from "@quip/native-ui";
 import { Button, TextInput } from "react-native-paper";
 import { useState } from "react";
-import { SolanaExtension } from "@magic-ext/solana";
-import { AuthExtension } from "@magic-ext/auth";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 
-const solanaExtension = new SolanaExtension({
-  rpcUrl: 'https://api.devnet.solana.com',
-})
-
-const authExtension = new AuthExtension()
-
-const magic = new Magic('pk_live_79385C11B09DBB96', {
-  extensions: [
-    // @ts-ignore
-    solanaExtension,
-    // @ts-ignore
-    authExtension,
-  ]
-});
 
 interface AuthProps {
 
@@ -29,14 +13,21 @@ type LoginModalState = "login" | "otp" | "loading" | "error"
 
 export function Auth(props: AuthProps) {
   const [state, setState] = useState<LoginModalState>("login")
+  const { magic, init } = useCrypto()
+
+  const navigation = useNavigation()
 
   function login(e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) {
     const email = e.nativeEvent.text
+
+    console.log(magic.config)
+    console.log(email)
 
     const loginEvent = magic.auth.loginWithEmailOTP({ email })
 
     loginEvent
       .on('email-otp-sent', () => {
+        console.log("otp set!")
         setState("otp")
       })
       .on('invalid-email-otp', () => {
@@ -44,8 +35,13 @@ export function Auth(props: AuthProps) {
         setState("error")
         loginEvent.emit('cancel');
       })
-      .on('done',(result) => {
+      .on('done',async (result) => {
         console.log(`done ${result}`)
+
+        await init()
+        navigation.dispatch({
+          ...CommonActions.navigate("gameHome"),
+        })
       })
       .on('error', (error) => {
         setState("error")
@@ -55,10 +51,12 @@ export function Auth(props: AuthProps) {
 
   function logout() {
     magic.user.logout()
+    console.log("logged out")
   }
 
   return (
-    <Screen style={[spacing.fill]}>
+    <Screen style={[spacing.fill, styles.container]}>
+      <magic.Relayer/>
       <View style={[spacing.fill]}>
         <View style={[m('a', 6)]}>
           <Text style={[m('b', 2)]}>Auth!</Text>
@@ -72,6 +70,16 @@ export function Auth(props: AuthProps) {
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container: {
+    position: "relative",
+  },
+
+  magic: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+  }
+});
 
 export default Auth;
