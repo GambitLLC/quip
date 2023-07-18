@@ -23,3 +23,25 @@ service Frontend {
   // StopQueue stops searching for a match. Idempotent.
   rpc StopQueue(google.protobuf.Empty) returns (google.protobuf.Empty);
 }
+
+// TODO: keepalive?
+message StreamRequest {
+  oneof message {
+    GetStatusRequest get_status = 1;
+    StartQueueRequest start_queue = 2;
+    google.protobuf.Empty stop_queue = 3;
+  }
+}
+
+message StreamResponse {
+  oneof message {
+    // error is sent whenever some stream request failed
+    string error = 1;
+
+    Status status_update = 2;
+  }
+}
+
+service FrontendStream {
+  rpc Stream(stream StreamRequest) returns (stream StreamResponse);
+}

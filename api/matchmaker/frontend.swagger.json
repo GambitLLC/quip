@@ -7,6 +7,9 @@
   "tags": [
     {
       "name": "Frontend"
+    },
+    {
+      "name": "FrontendStream"
     }
   ],
   "consumes": [
@@ -42,9 +45,18 @@
         "gamemode": {
           "type": "string"
         }
+      },
+      "description": "GameConfiguration contains information for specifying a desired match."
+    },
+    "matchmakerGetStatusRequest": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "type": "string"
+        }
       }
     },
-    "matchmakerMatchFound": {
+    "matchmakerMatchDetails": {
       "type": "object",
       "properties": {
         "match_id": {
@@ -53,25 +65,36 @@
         "connection": {
           "type": "string"
         }
-      }
+      },
+      "description": "MatchDetails contains necessary match information to identify and connect to a match."
     },
-    "matchmakerQueueSearching": {
+    "matchmakerQueueDetails": {
       "type": "object",
       "properties": {
-        "gamemode": {
-          "type": "string"
+        "config": {
+          "$ref": "#/definitions/matchmakerGameConfiguration"
         },
         "start_time": {
           "type": "string",
           "format": "date-time"
         }
-      }
+      },
+      "description": "QueueDetails contains information about a currently running queue."
     },
     "matchmakerQueueStopped": {
       "type": "object",
       "properties": {
-        "reason": {
+        "message": {
           "type": "string"
+        }
+      },
+      "description": "QueueStopped contains information about why a queue has stopped."
+    },
+    "matchmakerStartQueueRequest": {
+      "type": "object",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/matchmakerGameConfiguration"
         }
       }
     },
@@ -84,6 +107,18 @@
         "STATE_PLAYING"
       ],
       "default": "STATE_OFFLINE"
+    },
+    "matchmakerStreamResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "title": "error is sent whenever some stream request failed"
+        },
+        "status_update": {
+          "$ref": "#/definitions/quipmatchmakerStatus"
+        }
+      }
     },
     "protobufAny": {
       "type": "object",
@@ -101,15 +136,16 @@
           "$ref": "#/definitions/matchmakerState"
         },
         "searching": {
-          "$ref": "#/definitions/matchmakerQueueSearching"
+          "$ref": "#/definitions/matchmakerQueueDetails"
         },
         "stopped": {
           "$ref": "#/definitions/matchmakerQueueStopped"
         },
         "matched": {
-          "$ref": "#/definitions/matchmakerMatchFound"
+          "$ref": "#/definitions/matchmakerMatchDetails"
         }
-      }
+      },
+      "description": "Status represents the current matchmaking status for any target."
     }
   }
 }

@@ -3,8 +3,10 @@ import {
   CallOptions,
   ChannelCredentials,
   Client,
+  ClientDuplexStream,
   ClientOptions,
   ClientUnaryCall,
+  handleBidiStreamingCall,
   handleUnaryCall,
   makeGenericClientConstructor,
   Metadata,
@@ -23,6 +25,19 @@ export interface GetStatusRequest {
 
 export interface StartQueueRequest {
   config: GameConfiguration | undefined;
+}
+
+/** TODO: keepalive? */
+export interface StreamRequest {
+  getStatus?: GetStatusRequest | undefined;
+  startQueue?: StartQueueRequest | undefined;
+  stopQueue?: Empty | undefined;
+}
+
+export interface StreamResponse {
+  /** error is sent whenever some stream request failed */
+  error?: string | undefined;
+  statusUpdate?: Status | undefined;
 }
 
 function createBaseGetStatusRequest(): GetStatusRequest {
@@ -130,6 +145,151 @@ export const StartQueueRequest = {
   },
 };
 
+function createBaseStreamRequest(): StreamRequest {
+  return { getStatus: undefined, startQueue: undefined, stopQueue: undefined };
+}
+
+export const StreamRequest = {
+  encode(message: StreamRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.getStatus !== undefined) {
+      GetStatusRequest.encode(message.getStatus, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.startQueue !== undefined) {
+      StartQueueRequest.encode(message.startQueue, writer.uint32(18).fork()).ldelim();
+    }
+    if (message.stopQueue !== undefined) {
+      Empty.encode(message.stopQueue, writer.uint32(26).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): StreamRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStreamRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.getStatus = GetStatusRequest.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.startQueue = StartQueueRequest.decode(reader, reader.uint32());
+          break;
+        case 3:
+          message.stopQueue = Empty.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StreamRequest {
+    return {
+      getStatus: isSet(object.getStatus) ? GetStatusRequest.fromJSON(object.getStatus) : undefined,
+      startQueue: isSet(object.startQueue) ? StartQueueRequest.fromJSON(object.startQueue) : undefined,
+      stopQueue: isSet(object.stopQueue) ? Empty.fromJSON(object.stopQueue) : undefined,
+    };
+  },
+
+  toJSON(message: StreamRequest): unknown {
+    const obj: any = {};
+    message.getStatus !== undefined &&
+      (obj.getStatus = message.getStatus ? GetStatusRequest.toJSON(message.getStatus) : undefined);
+    message.startQueue !== undefined &&
+      (obj.startQueue = message.startQueue ? StartQueueRequest.toJSON(message.startQueue) : undefined);
+    message.stopQueue !== undefined &&
+      (obj.stopQueue = message.stopQueue ? Empty.toJSON(message.stopQueue) : undefined);
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StreamRequest>, I>>(base?: I): StreamRequest {
+    return StreamRequest.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<StreamRequest>, I>>(object: I): StreamRequest {
+    const message = createBaseStreamRequest();
+    message.getStatus = (object.getStatus !== undefined && object.getStatus !== null)
+      ? GetStatusRequest.fromPartial(object.getStatus)
+      : undefined;
+    message.startQueue = (object.startQueue !== undefined && object.startQueue !== null)
+      ? StartQueueRequest.fromPartial(object.startQueue)
+      : undefined;
+    message.stopQueue = (object.stopQueue !== undefined && object.stopQueue !== null)
+      ? Empty.fromPartial(object.stopQueue)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseStreamResponse(): StreamResponse {
+  return { error: undefined, statusUpdate: undefined };
+}
+
+export const StreamResponse = {
+  encode(message: StreamResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.error !== undefined) {
+      writer.uint32(10).string(message.error);
+    }
+    if (message.statusUpdate !== undefined) {
+      Status.encode(message.statusUpdate, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): StreamResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStreamResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.error = reader.string();
+          break;
+        case 2:
+          message.statusUpdate = Status.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StreamResponse {
+    return {
+      error: isSet(object.error) ? String(object.error) : undefined,
+      statusUpdate: isSet(object.statusUpdate) ? Status.fromJSON(object.statusUpdate) : undefined,
+    };
+  },
+
+  toJSON(message: StreamResponse): unknown {
+    const obj: any = {};
+    message.error !== undefined && (obj.error = message.error);
+    message.statusUpdate !== undefined &&
+      (obj.statusUpdate = message.statusUpdate ? Status.toJSON(message.statusUpdate) : undefined);
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StreamResponse>, I>>(base?: I): StreamResponse {
+    return StreamResponse.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<StreamResponse>, I>>(object: I): StreamResponse {
+    const message = createBaseStreamResponse();
+    message.error = object.error ?? undefined;
+    message.statusUpdate = (object.statusUpdate !== undefined && object.statusUpdate !== null)
+      ? Status.fromPartial(object.statusUpdate)
+      : undefined;
+    return message;
+  },
+};
+
 export type FrontendService = typeof FrontendService;
 export const FrontendService = {
   /** GetStatus returns the current status of the specified player. */
@@ -224,6 +384,37 @@ export interface FrontendClient extends Client {
 export const FrontendClient = makeGenericClientConstructor(FrontendService, "quip.matchmaker.Frontend") as unknown as {
   new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): FrontendClient;
   service: typeof FrontendService;
+};
+
+export type FrontendStreamService = typeof FrontendStreamService;
+export const FrontendStreamService = {
+  stream: {
+    path: "/quip.matchmaker.FrontendStream/Stream",
+    requestStream: true,
+    responseStream: true,
+    requestSerialize: (value: StreamRequest) => Buffer.from(StreamRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => StreamRequest.decode(value),
+    responseSerialize: (value: StreamResponse) => Buffer.from(StreamResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => StreamResponse.decode(value),
+  },
+} as const;
+
+export interface FrontendStreamServer extends UntypedServiceImplementation {
+  stream: handleBidiStreamingCall<StreamRequest, StreamResponse>;
+}
+
+export interface FrontendStreamClient extends Client {
+  stream(): ClientDuplexStream<StreamRequest, StreamResponse>;
+  stream(options: Partial<CallOptions>): ClientDuplexStream<StreamRequest, StreamResponse>;
+  stream(metadata: Metadata, options?: Partial<CallOptions>): ClientDuplexStream<StreamRequest, StreamResponse>;
+}
+
+export const FrontendStreamClient = makeGenericClientConstructor(
+  FrontendStreamService,
+  "quip.matchmaker.FrontendStream",
+) as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): FrontendStreamClient;
+  service: typeof FrontendStreamService;
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

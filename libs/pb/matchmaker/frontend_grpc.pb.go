@@ -186,3 +186,123 @@ var Frontend_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "matchmaker/frontend.proto",
 }
+
+const (
+	FrontendStream_Stream_FullMethodName = "/quip.matchmaker.FrontendStream/Stream"
+)
+
+// FrontendStreamClient is the client API for FrontendStream service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type FrontendStreamClient interface {
+	Stream(ctx context.Context, opts ...grpc.CallOption) (FrontendStream_StreamClient, error)
+}
+
+type frontendStreamClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewFrontendStreamClient(cc grpc.ClientConnInterface) FrontendStreamClient {
+	return &frontendStreamClient{cc}
+}
+
+func (c *frontendStreamClient) Stream(ctx context.Context, opts ...grpc.CallOption) (FrontendStream_StreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &FrontendStream_ServiceDesc.Streams[0], FrontendStream_Stream_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &frontendStreamStreamClient{stream}
+	return x, nil
+}
+
+type FrontendStream_StreamClient interface {
+	Send(*StreamRequest) error
+	Recv() (*StreamResponse, error)
+	grpc.ClientStream
+}
+
+type frontendStreamStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *frontendStreamStreamClient) Send(m *StreamRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *frontendStreamStreamClient) Recv() (*StreamResponse, error) {
+	m := new(StreamResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// FrontendStreamServer is the server API for FrontendStream service.
+// All implementations should embed UnimplementedFrontendStreamServer
+// for forward compatibility
+type FrontendStreamServer interface {
+	Stream(FrontendStream_StreamServer) error
+}
+
+// UnimplementedFrontendStreamServer should be embedded to have forward compatible implementations.
+type UnimplementedFrontendStreamServer struct {
+}
+
+func (UnimplementedFrontendStreamServer) Stream(FrontendStream_StreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method Stream not implemented")
+}
+
+// UnsafeFrontendStreamServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to FrontendStreamServer will
+// result in compilation errors.
+type UnsafeFrontendStreamServer interface {
+	mustEmbedUnimplementedFrontendStreamServer()
+}
+
+func RegisterFrontendStreamServer(s grpc.ServiceRegistrar, srv FrontendStreamServer) {
+	s.RegisterService(&FrontendStream_ServiceDesc, srv)
+}
+
+func _FrontendStream_Stream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(FrontendStreamServer).Stream(&frontendStreamStreamServer{stream})
+}
+
+type FrontendStream_StreamServer interface {
+	Send(*StreamResponse) error
+	Recv() (*StreamRequest, error)
+	grpc.ServerStream
+}
+
+type frontendStreamStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *frontendStreamStreamServer) Send(m *StreamResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *frontendStreamStreamServer) Recv() (*StreamRequest, error) {
+	m := new(StreamRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// FrontendStream_ServiceDesc is the grpc.ServiceDesc for FrontendStream service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var FrontendStream_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "quip.matchmaker.FrontendStream",
+	HandlerType: (*FrontendStreamServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Stream",
+			Handler:       _FrontendStream_Stream_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "matchmaker/frontend.proto",
+}
