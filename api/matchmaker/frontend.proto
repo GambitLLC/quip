@@ -4,6 +4,7 @@ option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
 
 import "matchmaker/messages.proto";
 import "google/protobuf/empty.proto";
+import "google/rpc/status.proto";
 
 message GetStatusRequest {
   string target = 1;
@@ -36,7 +37,7 @@ message StreamRequest {
 message StreamResponse {
   oneof message {
     // error is sent whenever some stream request failed
-    string error = 1;
+    google.rpc.Status error = 1;
 
     Status status_update = 2;
   }

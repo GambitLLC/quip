@@ -15,7 +15,8 @@ import {
 } from "@grpc/grpc-js";
 import _m0 from "protobufjs/minimal";
 import { Empty } from "../google/protobuf/empty";
-import { GameConfiguration, Status } from "./messages";
+import { Status } from "../google/rpc/status";
+import { GameConfiguration, Status as Status1 } from "./messages";
 
 export const protobufPackage = "quip.matchmaker";
 
@@ -36,8 +37,8 @@ export interface StreamRequest {
 
 export interface StreamResponse {
   /** error is sent whenever some stream request failed */
-  error?: string | undefined;
-  statusUpdate?: Status | undefined;
+  error?: Status | undefined;
+  statusUpdate?: Status1 | undefined;
 }
 
 function createBaseGetStatusRequest(): GetStatusRequest {
@@ -232,10 +233,10 @@ function createBaseStreamResponse(): StreamResponse {
 export const StreamResponse = {
   encode(message: StreamResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.error !== undefined) {
-      writer.uint32(10).string(message.error);
+      Status.encode(message.error, writer.uint32(10).fork()).ldelim();
     }
     if (message.statusUpdate !== undefined) {
-      Status.encode(message.statusUpdate, writer.uint32(18).fork()).ldelim();
+      Status1.encode(message.statusUpdate, writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -248,10 +249,10 @@ export const StreamResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.error = reader.string();
+          message.error = Status.decode(reader, reader.uint32());
           break;
         case 2:
-          message.statusUpdate = Status.decode(reader, reader.uint32());
+          message.statusUpdate = Status1.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -263,16 +264,16 @@ export const StreamResponse = {
 
   fromJSON(object: any): StreamResponse {
     return {
-      error: isSet(object.error) ? String(object.error) : undefined,
-      statusUpdate: isSet(object.statusUpdate) ? Status.fromJSON(object.statusUpdate) : undefined,
+      error: isSet(object.error) ? Status.fromJSON(object.error) : undefined,
+      statusUpdate: isSet(object.statusUpdate) ? Status1.fromJSON(object.statusUpdate) : undefined,
     };
   },
 
   toJSON(message: StreamResponse): unknown {
     const obj: any = {};
-    message.error !== undefined && (obj.error = message.error);
+    message.error !== undefined && (obj.error = message.error ? Status.toJSON(message.error) : undefined);
     message.statusUpdate !== undefined &&
-      (obj.statusUpdate = message.statusUpdate ? Status.toJSON(message.statusUpdate) : undefined);
+      (obj.statusUpdate = message.statusUpdate ? Status1.toJSON(message.statusUpdate) : undefined);
     return obj;
   },
 
@@ -282,9 +283,11 @@ export const StreamResponse = {
 
   fromPartial<I extends Exact<DeepPartial<StreamResponse>, I>>(object: I): StreamResponse {
     const message = createBaseStreamResponse();
-    message.error = object.error ?? undefined;
+    message.error = (object.error !== undefined && object.error !== null)
+      ? Status.fromPartial(object.error)
+      : undefined;
     message.statusUpdate = (object.statusUpdate !== undefined && object.statusUpdate !== null)
-      ? Status.fromPartial(object.statusUpdate)
+      ? Status1.fromPartial(object.statusUpdate)
       : undefined;
     return message;
   },
@@ -299,8 +302,8 @@ export const FrontendService = {
     responseStream: false,
     requestSerialize: (value: GetStatusRequest) => Buffer.from(GetStatusRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer) => GetStatusRequest.decode(value),
-    responseSerialize: (value: Status) => Buffer.from(Status.encode(value).finish()),
-    responseDeserialize: (value: Buffer) => Status.decode(value),
+    responseSerialize: (value: Status1) => Buffer.from(Status1.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => Status1.decode(value),
   },
   /** StartQueue starts searching for a match with the given parameters. */
   startQueue: {
@@ -326,7 +329,7 @@ export const FrontendService = {
 
 export interface FrontendServer extends UntypedServiceImplementation {
   /** GetStatus returns the current status of the specified player. */
-  getStatus: handleUnaryCall<GetStatusRequest, Status>;
+  getStatus: handleUnaryCall<GetStatusRequest, Status1>;
   /** StartQueue starts searching for a match with the given parameters. */
   startQueue: handleUnaryCall<StartQueueRequest, Empty>;
   /** StopQueue stops searching for a match. Idempotent. */
@@ -337,18 +340,18 @@ export interface FrontendClient extends Client {
   /** GetStatus returns the current status of the specified player. */
   getStatus(
     request: GetStatusRequest,
-    callback: (error: ServiceError | null, response: Status) => void,
+    callback: (error: ServiceError | null, response: Status1) => void,
   ): ClientUnaryCall;
   getStatus(
     request: GetStatusRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: Status) => void,
+    callback: (error: ServiceError | null, response: Status1) => void,
   ): ClientUnaryCall;
   getStatus(
     request: GetStatusRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: Status) => void,
+    callback: (error: ServiceError | null, response: Status1) => void,
   ): ClientUnaryCall;
   /** StartQueue starts searching for a match with the given parameters. */
   startQueue(

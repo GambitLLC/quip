@@ -3,58 +3,32 @@ package frontend
 import (
 	"context"
 	"io"
+	"log"
 	"net"
 	"testing"
 	"time"
 
-	"github.com/GambitLLC/quip/libs/pb/matchmaker"
+	"github.com/google/uuid"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+
+	"github.com/GambitLLC/quip/libs/config"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
+	statestoreTesting "github.com/GambitLLC/quip/libs/matchmaker/internal/statestore/testing"
+	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
+	"github.com/GambitLLC/quip/libs/rpc"
 )
 
-type wrappedStream struct {
-	grpc.ServerStream
-	ctx context.Context
-}
-
-func (s *wrappedStream) Context() context.Context {
-	return s.ctx
-}
-
 func TestStream(t *testing.T) {
-	s := grpc.NewServer(grpc.StreamInterceptor(func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		md, ok := metadata.FromIncomingContext(ss.Context())
-		if !ok {
-			return status.Error(codes.InvalidArgument, "missing metadata")
-		}
+	cfg := newStreamService(t)
 
-		md.Set("Player-Id", "player-id")
-
-		ctx := metadata.NewIncomingContext(ss.Context(), md)
-		return handler(srv, &wrappedStream{ServerStream: ss, ctx: ctx})
-	}))
-	matchmaker.RegisterFrontendStreamServer(s, &StreamService{})
-
-	ln, err := net.Listen("tcp", ":0")
-	require.NoError(t, err, "net.Listen failed")
-
-	go func() {
-		err := s.Serve(ln)
-		require.NoError(t, err, "Serve failed")
-	}()
-	defer s.Stop()
-
-	conn, err := grpc.Dial(ln.Addr().String(), grpc.WithTransportCredentials(
-		insecure.NewCredentials(),
-	))
-	require.NoError(t, err, "grpc.Dial failed")
-
-	client := matchmaker.NewFrontendStreamClient(conn)
+	client, _ := newClient(t, cfg)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -65,15 +39,21 @@ func TestStream(t *testing.T) {
 	eg := errgroup.Group{}
 	// sending
 	eg.Go(func() error {
-		msgs := []*matchmaker.StreamRequest{
+		msgs := []*pb.StreamRequest{
 			{
-				Message: &matchmaker.StreamRequest_GetStatus{},
+				Message: &pb.StreamRequest_GetStatus{},
 			},
 			{
-				Message: &matchmaker.StreamRequest_StartQueue{},
+				Message: &pb.StreamRequest_StartQueue{
+					StartQueue: &pb.StartQueueRequest{
+						Config: &pb.GameConfiguration{
+							Gamemode: "test",
+						},
+					},
+				},
 			},
 			{
-				Message: &matchmaker.StreamRequest_StopQueue{},
+				Message: &pb.StreamRequest_StopQueue{},
 			},
 		}
 		for _, msg := range msgs {
@@ -82,7 +62,7 @@ func TestStream(t *testing.T) {
 			}
 		}
 
-		return stream.CloseSend()
+		return nil
 	})
 
 	// receiving
@@ -90,6 +70,7 @@ func TestStream(t *testing.T) {
 		for {
 			msg, err := stream.Recv()
 			if err == io.EOF {
+				log.Print("recv closed")
 				return nil
 			}
 
@@ -101,6 +82,79 @@ func TestStream(t *testing.T) {
 		}
 	})
 
+	<-time.After(2 * time.Second)
+	_ = stream.CloseSend()
+
 	err = eg.Wait()
 	t.Log(err)
+
+}
+
+func newStreamService(t *testing.T) config.View {
+	cfg := viper.New()
+	_ = statestoreTesting.NewService(t, cfg)
+	cfg.Set("broker.hostname", cfg.Get("matchmaker.redis.hostname"))
+	cfg.Set("broker.port", cfg.Get("matchmaker.redis.port"))
+
+	s := grpc.NewServer(grpc.StreamInterceptor(func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		md, ok := metadata.FromIncomingContext(ss.Context())
+		if !ok {
+			return status.Error(codes.InvalidArgument, "missing metadata")
+		}
+
+		if len(md.Get("Player-Id")) == 0 {
+			return status.Error(codes.Unauthenticated, "missing player-id")
+		}
+
+		return handler(srv, ss)
+	}))
+
+	srv := NewStreamService(cfg)
+
+	// override game cache for testing
+	srv.gc = &games.GameDetailCache{
+		Cacher: config.NewViewCacher(cfg, func(cfg config.View) (interface{}, func(), error) {
+			return map[string]*ipb.GameDetails{
+				"test": {
+					Players: 1,
+					Teams:   1,
+				},
+			}, nil, nil
+		}),
+	}
+
+	pb.RegisterFrontendStreamServer(s, srv)
+
+	ln, err := net.Listen("tcp", ":0")
+	require.NoError(t, err, "net.Listen failed")
+
+	_, port, err := net.SplitHostPort(ln.Addr().String())
+	require.NoError(t, err, "net.SplitHostPort failed")
+
+	cfg.Set("matchmaker.frontend.hostname", "localhost")
+	cfg.Set("matchmaker.frontend.port", port)
+
+	go func() {
+		err := s.Serve(ln)
+		require.NoError(t, err, "Serve failed")
+	}()
+	t.Cleanup(s.Stop)
+
+	return cfg
+}
+
+func newClient(t *testing.T, cfg config.View) (pb.FrontendStreamClient, string) {
+	id := uuid.NewString()
+	conn, err := rpc.GRPCClientFromConfig(
+		cfg,
+		"matchmaker.frontend",
+		grpc.WithStreamInterceptor(
+			func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+				return streamer(metadata.AppendToOutgoingContext(ctx, "Player-Id", id), desc, cc, method, opts...)
+			},
+		),
+	)
+	require.NoError(t, err, "GRPCClientFromConfig failed")
+
+	return pb.NewFrontendStreamClient(conn), id
 }

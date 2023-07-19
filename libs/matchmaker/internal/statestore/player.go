@@ -91,7 +91,7 @@ func (rb *redisBackend) modifyPlayers(ctx context.Context, playerIds []string, m
 	players := make([]*ipb.PlayerInternal, 0, len(res))
 	for _, val := range res {
 		if val == nil {
-			// TODO: return failure type for players not found
+			// TODO: just create empty PlayerInternal struct for players that were not found
 			continue
 		}
 

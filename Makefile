@@ -111,15 +111,16 @@ build/e2e/bin/synchronizer:
 	cd $(BUILD_DIR)/e2e/bin && $(GO) get open-match.dev/open-match/cmd/synchronizer && $(GO) build -pkgdir . open-match.dev/open-match/cmd/synchronizer
 
 
-api/third-party/: api/third-party/google/api api/third-party/protoc-gen-openapiv2/options
+api/third-party/: api/third-party/google api/third-party/protoc-gen-openapiv2/options
 
-GOOGLE_API_FILES := http annotations
-api/third-party/google/api:
+GOOGLE_API_FILES := api/http api/annotations rpc/status
+api/third-party/google:
 	mkdir -p $(TOOLCHAIN_DIR)/googleapis-temp/
 	mkdir -p $(REPOSITORY_ROOT)/api/third-party/google/api
 	curl -o $(TOOLCHAIN_DIR)/googleapis-temp/googleapis.zip -L https://github.com/googleapis/googleapis/archive/$(GOOGLE_APIS_VERSION).zip
 	(cd $(TOOLCHAIN_DIR)/googleapis-temp/; unzip -q -o googleapis.zip)
-	cp -f $(foreach file,$(GOOGLE_API_FILES),$(TOOLCHAIN_DIR)/googleapis-temp/googleapis-$(GOOGLE_APIS_VERSION)/google/api/$(file).proto) $(REPOSITORY_ROOT)/api/third-party/google/api/
+	$(foreach file,$(GOOGLE_API_FILES),mkdir -p $(REPOSITORY_ROOT)/api/third-party/google/$(dir $(file)))
+	$(foreach file,$(GOOGLE_API_FILES),cp -f $(TOOLCHAIN_DIR)/googleapis-temp/googleapis-$(GOOGLE_APIS_VERSION)/google/$(file).proto $(REPOSITORY_ROOT)/api/third-party/google/$(dir $(file));)
 	rm -rf $(TOOLCHAIN_DIR)/googleapis-temp
 
 api/third-party/protoc-gen-openapiv2/options:
