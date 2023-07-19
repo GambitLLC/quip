@@ -62,7 +62,7 @@ interface GameProps {
 export function Game(props: GameProps) {
   return (
     <Screen hasSafeArea={false} style={[spacing.fill]}>
-      <Canvas>
+      <Canvas camera={{position: [0, 3, 5]}}>
         {props.children}
       </Canvas>
     </Screen>
