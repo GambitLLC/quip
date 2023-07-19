@@ -8,20 +8,17 @@ module.exports = (async () => {
     'react-native-svg-transformer'
   );
 
-  defaultConfig.resolver.sourceExts.push('json')
-  defaultConfig.resolver.sourceExts.push('cjs')
-  defaultConfig.resolver.sourceExts.push('mjs')
+  defaultConfig.resolver = {
+    sourceExts: ['js', 'jsx', 'json', 'ts', 'tsx', 'cjs'],
+    assetExts: ['glb', 'gltf', 'png', 'jpg', 'svg', 'otf', 'ttf'],
+  }
 
-  defaultConfig.resolver.assetExts = defaultConfig.resolver.assetExts.filter(
-    (ext) => ext !== 'svg'
-  );
-  defaultConfig.resolver.sourceExts.push('svg');
   return withNxMetro(defaultConfig, {
     // Change this to true to see debugging info.
     // Useful if you have issues resolving modules
     debug: true,
     // all the file extensions used for imports other than 'ts', 'tsx', 'js', 'jsx'
-    extensions: [],
+    extensions: ['glb', 'gltf', 'png', 'jpg', 'svg', 'otf', 'ttf'],
     // the project root to start the metro server
     projectRoot: __dirname,
     // Specify any additional (to projectRoot) watch folders, this is used to know which files to watch

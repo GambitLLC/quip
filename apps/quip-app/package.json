@@ -7,7 +7,7 @@
     "@testing-library/react-native": "*",
     "react-native": "*",
     "expo": "*",
-    "expo-asset": "*",
+    "expo-asset": "~8.9.1",
     "expo-file-system": "*",
     "expo-gl": "*",
     "expo-font": "*",
@@ -29,7 +29,6 @@
     "@react-native-masked-view/masked-view": "*",
     "react-native-reanimated": "*",
     "@react-three/postprocessing": "*",
-    "@react-three/cannon": "*",
     "@ethersproject/shims": "*",
     "base-64": "*",
     "zustand": "*",
@@ -37,7 +36,11 @@
     "react-native-webview": "*",
     "@magic-ext/auth": "*",
     "@magic-ext/solana": "*",
-    "@magic-sdk/types": "*"
+    "@magic-sdk/types": "*",
+    "expo-dev-client": "~2.2.1",
+    "cannon-es": "*",
+    "@use-gesture/react": "*",
+    "react-native-svg-transformer": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/quip-app && cp package-lock.json apps/quip-app",

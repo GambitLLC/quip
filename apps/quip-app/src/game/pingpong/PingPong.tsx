@@ -1,34 +1,15 @@
-import { Canvas } from "@react-three/fiber";
-import {Screen, spacing} from "@quip/native-ui";
-import { Physics, usePlane, useBox } from '@react-three/cannon'
-
-function Plane(props) {
-  const [ref] = usePlane(() => ({ rotation: [-Math.PI / 2, 0, 0], ...props }))
-  return (
-    <mesh ref={ref}>
-      <planeGeometry args={[100, 100]} />
-    </mesh>
-  )
-}
-
-function Cube(props) {
-  const [ref] = useBox(() => ({ mass: 1, position: [0, 5, 0], ...props }))
-  return (
-    <mesh ref={ref}>
-      <boxGeometry />
-    </mesh>
-  )
-}
+import Game from "../Game";
+import {PerspectiveCamera} from "@react-three/drei/native";
+// @ts-ignore
+import {Model} from "../../../assets/models/Low_poly_ping_pong_table";
 
 export function PingPong() {
   return (
-    <Screen hasSafeArea={false} style={[spacing.fill]}>
-      <Canvas>
-        <Physics>
-          <Plane />
-          <Cube />
-        </Physics>
-      </Canvas>
-    </Screen>
+    <Game>
+      <PerspectiveCamera makeDefault position={[0, 0, 10]} />
+      <ambientLight intensity={0.1} />
+      <directionalLight color="red" position={[0, 0, 5]} />
+      <Model />
+    </Game>
   )
 }
