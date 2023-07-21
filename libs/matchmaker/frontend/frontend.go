@@ -17,13 +17,13 @@ import (
 )
 
 func BindService(cfg config.View, b *appmain.GRPCBindings) error {
-	service := New(cfg)
+	service := NewStreamService(cfg)
 	b.AddHandler(func(s *grpc.Server) {
-		pb.RegisterFrontendServer(s, service)
+		pb.RegisterFrontendStreamServer(s, service)
 	})
-	b.AddCloser(service.broker.Close)
+	// b.AddCloser(service.broker.Close)
 	b.AddCloser(service.store.Close)
-	b.SetAuth(func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	b.SetAuth(func(ctx context.Context) (context.Context, error) {
 		md := metautils.ExtractIncoming(ctx)
 		didToken := strings.TrimPrefix(md.Get("authorization"), "Bearer ")
 
@@ -39,7 +39,7 @@ func BindService(cfg config.View, b *appmain.GRPCBindings) error {
 		// TODO: validate audience
 
 		md = md.Set("Player-Id", token.GetIssuer())
-		return handler(md.ToIncoming(ctx), req)
+		return md.ToIncoming(ctx), nil
 	})
 
 	return nil

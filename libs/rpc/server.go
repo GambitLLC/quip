@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net"
@@ -24,6 +25,8 @@ const (
 
 type GRPCHandler func(*grpc.Server)
 
+type AuthFunction func(context.Context) (context.Context, error)
+
 type ServerParams struct {
 	logger   zerolog.Logger
 	ln       net.Listener
@@ -35,7 +38,7 @@ type ServerParams struct {
 	// Private key in PEM format.
 	privateKeyData []byte
 
-	authenticator grpc.UnaryServerInterceptor
+	authenticator AuthFunction
 }
 
 func NewServerParams(cfg config.View, serviceName string, listen func(string, string) (net.Listener, error)) (*ServerParams, error) {
@@ -87,12 +90,21 @@ func (p *ServerParams) AddHandler(h GRPCHandler) {
 	p.handlers = append(p.handlers, h)
 }
 
-func (p *ServerParams) SetAuth(h grpc.UnaryServerInterceptor) {
+func (p *ServerParams) SetAuth(h AuthFunction) {
 	p.authenticator = h
 }
 
 type Server struct {
 	srv *grpc.Server
+}
+
+type wrappedStream struct {
+	grpc.ServerStream
+	ctx context.Context
+}
+
+func (s *wrappedStream) Context() context.Context {
+	return s.ctx
 }
 
 func (s *Server) Start(p *ServerParams) error {
@@ -115,7 +127,27 @@ func (s *Server) Start(p *ServerParams) error {
 
 	// TODO: chain with other unary interceptors
 	if p.authenticator != nil {
-		opts = append(opts, grpc.UnaryInterceptor(p.authenticator))
+		opts = append(opts,
+			grpc.UnaryInterceptor(func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+				ctx, err = p.authenticator(ctx)
+				if err != nil {
+					return
+				}
+
+				return handler(ctx, req)
+			}),
+			grpc.StreamInterceptor(func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+				ctx, err := p.authenticator(ss.Context())
+				if err != nil {
+					return err
+				}
+
+				return handler(srv, &wrappedStream{
+					ServerStream: ss,
+					ctx:          ctx,
+				})
+			}),
+		)
 	}
 
 	s.srv = grpc.NewServer(opts...)

@@ -35,7 +35,7 @@ func TestAuth(t *testing.T) {
 		grpc_testing.RegisterTestServiceServer(s, &TestService{})
 	})
 
-	params.SetAuth(func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	params.SetAuth(func(ctx context.Context) (context.Context, error) {
 		token := strings.TrimPrefix(metautils.ExtractIncoming(ctx).Get("authorization"), "Bearer ")
 
 		if token == "" {
@@ -47,7 +47,7 @@ func TestAuth(t *testing.T) {
 			return nil, status.Error(codes.PermissionDenied, "invalid token")
 		}
 
-		return handler(ctx, req)
+		return ctx, nil
 	})
 
 	server := Server{}
