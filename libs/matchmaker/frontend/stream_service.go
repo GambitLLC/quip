@@ -135,8 +135,7 @@ func (s *session) send() {
 
 // cleanup makes sure closed sessions are reset to an initial state (e.g. queue is stopped)
 func (s *session) cleanup() {
-	// stopQueue usually has no response, but even if it did session is closing so
-	// resp can be discarded
+	// discard irrelevant stop queue response message
 	_, err := s.stopQueue(&emptypb.Empty{})
 	if err != nil {
 		// TODO: handle error

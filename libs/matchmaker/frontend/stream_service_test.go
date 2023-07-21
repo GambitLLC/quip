@@ -3,7 +3,6 @@ package frontend
 import (
 	"context"
 	"io"
-	"log"
 	"net"
 	"testing"
 	"time"
@@ -26,71 +25,175 @@ import (
 )
 
 func TestStream(t *testing.T) {
-	cfg := newStreamService(t)
+	type StreamAction struct {
+		request *pb.StreamRequest
+		wantErr bool // if wantErr is false, any StreamResponse_Errors fail the test case
+		wait    func(*pb.StreamResponse) bool
+	}
 
-	client, _ := newClient(t, cfg)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	stream, err := client.Stream(ctx)
-	require.NoError(t, err, "client.Stream failed")
-
-	eg := errgroup.Group{}
-	// sending
-	eg.Go(func() error {
-		msgs := []*pb.StreamRequest{
-			{
-				Message: &pb.StreamRequest_GetStatus{},
-			},
-			{
-				Message: &pb.StreamRequest_StartQueue{
-					StartQueue: &pb.StartQueueRequest{
-						Config: &pb.GameConfiguration{
-							Gamemode: "test",
-						},
+	tests := []struct {
+		name    string
+		actions []StreamAction
+	}{
+		{
+			name: "get status returns idle",
+			actions: []StreamAction{
+				{
+					request: &pb.StreamRequest{
+						Message: &pb.StreamRequest_GetStatus{},
+					},
+					wait: func(sr *pb.StreamResponse) bool {
+						switch msg := sr.Message.(type) {
+						case *pb.StreamResponse_StatusUpdate:
+							return msg.StatusUpdate.State == pb.State_STATE_IDLE
+						default:
+							return false
+						}
 					},
 				},
 			},
-			{
-				Message: &pb.StreamRequest_StopQueue{},
+		},
+		{
+			name: "start and stop queue get status updates",
+			actions: []StreamAction{
+				{
+					request: &pb.StreamRequest{
+						Message: &pb.StreamRequest_StartQueue{
+							StartQueue: &pb.StartQueueRequest{
+								Config: &pb.GameConfiguration{
+									Gamemode: "test",
+								},
+							},
+						},
+					},
+					wait: func(sr *pb.StreamResponse) bool {
+						switch msg := sr.Message.(type) {
+						case *pb.StreamResponse_StatusUpdate:
+							return msg.StatusUpdate.State == pb.State_STATE_SEARCHING
+						default:
+							return false
+						}
+					},
+				},
+				{
+					request: &pb.StreamRequest{
+						Message: &pb.StreamRequest_StopQueue{},
+					},
+					wait: func(sr *pb.StreamResponse) bool {
+						switch msg := sr.Message.(type) {
+						case *pb.StreamResponse_StatusUpdate:
+							return msg.StatusUpdate.State == pb.State_STATE_IDLE
+						default:
+							return false
+						}
+					},
+				},
 			},
-		}
-		for _, msg := range msgs {
-			if err := stream.Send(msg); err != nil {
-				return err
+		},
+		{
+			name: "starting queue twice errors",
+			actions: []StreamAction{
+				{
+					request: &pb.StreamRequest{
+						Message: &pb.StreamRequest_StartQueue{
+							StartQueue: &pb.StartQueueRequest{
+								Config: &pb.GameConfiguration{
+									Gamemode: "test",
+								},
+							},
+						},
+					},
+				},
+				{
+					request: &pb.StreamRequest{
+						Message: &pb.StreamRequest_StartQueue{
+							StartQueue: &pb.StartQueueRequest{
+								Config: &pb.GameConfiguration{
+									Gamemode: "test",
+								},
+							},
+						},
+					},
+					wantErr: true,
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc // capture range variable
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newStreamService(t)
+			newOMFrontend(t, cfg)
+
+			client, _ := newClient(t, cfg)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			stream, err := client.Stream(ctx)
+			require.NoError(t, err, "client.Stream failed")
+
+			msgs := make(chan *pb.StreamResponse, 1)
+
+			eg := &errgroup.Group{}
+			eg.Go(func() error {
+				for {
+					msg, err := stream.Recv()
+					if err == io.EOF {
+						return nil
+					}
+
+					if err != nil {
+						return err
+					}
+
+					msgs <- msg
+				}
+			})
+
+			for _, action := range tc.actions {
+				if action.request != nil {
+					err := stream.Send(action.request)
+					require.NoError(t, err, "stream.Send failed")
+				}
+
+				if action.wantErr || action.wait != nil {
+					found := false
+					for !found {
+						select {
+						case <-ctx.Done():
+							require.Fail(t, "test timed out")
+						case <-stream.Context().Done():
+							require.Fail(t, "stream closed")
+						case msg := <-msgs:
+							if action.wantErr {
+								found = msg.GetError() != nil
+								break
+							}
+
+							if err := msg.GetError(); err != nil {
+								require.Fail(t, "got StreamResponse_Error", err)
+							}
+
+							found = action.wait(msg)
+
+						}
+					}
+
+				}
 			}
-		}
 
-		return nil
-	})
+			err = stream.CloseSend()
+			require.NoError(t, err, "stream.CloseSend failed")
 
-	// receiving
-	eg.Go(func() error {
-		for {
-			msg, err := stream.Recv()
-			if err == io.EOF {
-				log.Print("recv closed")
-				return nil
-			}
-
-			if err != nil {
-				return err
-			}
-
-			t.Logf("recv: %+v", msg)
-		}
-	})
-
-	<-time.After(2 * time.Second)
-	_ = stream.CloseSend()
-
-	err = eg.Wait()
-	t.Log(err)
-
+			err = eg.Wait()
+			require.NoError(t, err, "eg.Wait returned error")
+		})
+	}
 }
 
-func newStreamService(t *testing.T) config.View {
+func newStreamService(t *testing.T) config.Mutable {
 	cfg := viper.New()
 	_ = statestoreTesting.NewService(t, cfg)
 	cfg.Set("broker.hostname", cfg.Get("matchmaker.redis.hostname"))
