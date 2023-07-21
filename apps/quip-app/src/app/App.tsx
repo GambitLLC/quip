@@ -14,7 +14,7 @@ import QRCode from "../pages/wallet/QRCode";
 import Splash from "../pages/splash/Splash";
 import Auth from "../pages/splash/Auth";
 import { CryptoProvider } from "@quip/native-ui";
-import {PingPong} from "../game/pingpong/PingPong";
+import GameScreen from "../pages/game/GameScreen";
 const Stack = createNativeStackNavigator();
 
 export const App = () => {
@@ -22,8 +22,8 @@ export const App = () => {
     <PaperProvider theme={theme}>
       <CryptoProvider>
         <NavigationContainer>
-          <Stack.Navigator initialRouteName="pingpong" screenOptions={{headerShown: false}}>
-            <Stack.Screen name="pingpong" component={PingPong} />
+          <Stack.Navigator initialRouteName="game" screenOptions={{headerShown: false}}>
+            <Stack.Screen name="game" component={GameScreen} />
             <Stack.Screen name="splash" component={Splash}/>
             <Stack.Screen name="auth" component={Auth} />
             <Stack.Screen name="gameHome" component={Home}/>

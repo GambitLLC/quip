@@ -1,19 +1,26 @@
-import { Screen, spacing} from "@quip/native-ui";
-import { Canvas, useFrame } from "@react-three/fiber/native";
-import React, { createContext, useEffect, useRef, useContext, useState } from 'react'
+import {useFrame} from "@react-three/fiber/native";
+import React, {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react'
 import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
-import {View} from "react-native";
-import useControls from "r3f-native-orbitcontrols";
 
 const WorldContext = createContext<CANNON.World | null>(null)
 
 interface PhysicsProviderProps {
+  timeStep?: number
+  maxSubSteps?: number
   children: React.ReactNode
 }
 
-const PhysicsProvider = (props: PhysicsProviderProps) => {
-  const [ world ] = useState(() => new CANNON.World())
+function useFrameProcessor(frameProcessor: () => void, dependencies: any): () => void {
+  return useCallback(() => {
+    'worklet';
+    frameProcessor();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, dependencies);
+}
+
+export const PhysicsProvider = (props: PhysicsProviderProps) => {
+  const world = useMemo(() => new CANNON.World(), [])
 
   useEffect(() => {
     world.broadphase = new CANNON.NaiveBroadphase()
@@ -21,8 +28,18 @@ const PhysicsProvider = (props: PhysicsProviderProps) => {
     world.gravity.set(0, -9.82, 0)
   }, [ world ])
 
-  // Run world stepper every frame
-  useFrame(() => world.fixedStep())
+  const [lastFrameTime, setLastFrameTime] = useState(performance.now())
+
+  useFrame(() => {
+      const now = performance.now()
+      const delta = now - lastFrameTime
+      setLastFrameTime(now)
+      world.step(
+        props.timeStep ?? 1/60,
+        delta / 1000,
+        props.maxSubSteps ?? 10
+      )
+  })
 
   return (
     <WorldContext.Provider value={world}>
@@ -54,73 +71,21 @@ export const useCannon = ({ ...props }, fn: (body: CANNON.Body) => void, deps = 
     }
   })
 
-  return ref
+  return [ref, body] as const // Return
 }
 
-interface GameProps {
-  children: React.ReactNode,
-}
+export type Vec3 = [ number, number, number ]
+export type Vec2 = [ number, number ]
 
-export function Game(props: GameProps) {
-  const [OrbitControls, events] = useControls()
-
-  return (
-    <Screen hasSafeArea={false} style={[spacing.fill]}>
-      <View {...events} style={[spacing.fill]}>
-        <Canvas camera={{position: [0, 3, 5]}}>
-          <OrbitControls />
-          {props.children}
-        </Canvas>
-      </View>
-    </Screen>
-  )
-}
-
-type Vec3 = [ number, number, number ]
-
-export interface BoxProps {
-  position: Vec3
-  width: number
-  height: number
-  length: number
-}
-export const Box = (props: BoxProps) => {
-  const ref = useCannon({ mass: 10 }, body => {
-    body.addShape(
-      new CANNON.Box(
-        new CANNON.Vec3(props.width * 0.5, props.height * 0.5, props.length * 0.5)
-      )
-    )
-    body.position.set(...props.position)
-  })
-  return (
-    <mesh ref={ref}>
-      <boxGeometry attach="geometry" args={[ props.width, props.height, props.length ]} />
-      <meshStandardMaterial attach="material" />
-    </mesh>
-  )
-}
-
-export interface PlaneProps {
-  position: Vec3
-  width: number
-  length: number
-}
-export const Plane = (props: PlaneProps) => {
-  const ref = useCannon({ mass: 0 }, body => {
-    body.addShape(
-      new CANNON.Plane()
-    )
-    body.position.set(...props.position)
+export const PhysicsPlane = (position: Vec3, size: Vec2) =>
+  useCannon({mass: 0}, body => {
+    body.addShape(new CANNON.Plane())
+    body.position.set(...position)
     body.quaternion.setFromEuler(-Math.PI / 2, 0, 0)
   })
 
-  return (
-    <mesh ref={ref}>
-      <planeGeometry attach="geometry" args={[ props.width, props.length ]} />
-      <meshStandardMaterial attach="material" color="blue" />
-    </mesh>
-  )
-}
-
-export default Game;
+export const PhysicsBox = (position: Vec3, size: Vec3) =>
+  useCannon({mass: 2}, body => {
+    body.addShape(new CANNON.Box(new CANNON.Vec3(...size)))
+    body.position.set(...position)
+  })
