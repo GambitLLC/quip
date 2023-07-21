@@ -54,6 +54,7 @@
     "magic-sdk": "^17.1.3",
     "pinia": "^2.0.35",
     "qr-code-styling": "^1.6.0-rc.1",
+    "r3f-native-orbitcontrols": "^1.0.7",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "0.71.8",

@@ -3,6 +3,8 @@ import { Canvas, useFrame } from "@react-three/fiber/native";
 import React, { createContext, useEffect, useRef, useContext, useState } from 'react'
 import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
+import {View} from "react-native";
+import useControls from "r3f-native-orbitcontrols";
 
 const WorldContext = createContext<CANNON.World | null>(null)
 
@@ -60,11 +62,16 @@ interface GameProps {
 }
 
 export function Game(props: GameProps) {
+  const [OrbitControls, events] = useControls()
+
   return (
     <Screen hasSafeArea={false} style={[spacing.fill]}>
-      <Canvas camera={{position: [0, 3, 5]}}>
-        {props.children}
-      </Canvas>
+      <View {...events} style={[spacing.fill]}>
+        <Canvas camera={{position: [0, 3, 5]}}>
+          <OrbitControls />
+          {props.children}
+        </Canvas>
+      </View>
     </Screen>
   )
 }

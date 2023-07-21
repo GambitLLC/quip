@@ -40,7 +40,8 @@
     "expo-dev-client": "~2.2.1",
     "cannon-es": "*",
     "@use-gesture/react": "*",
-    "react-native-svg-transformer": "*"
+    "react-native-svg-transformer": "*",
+    "r3f-native-orbitcontrols": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/quip-app && cp package-lock.json apps/quip-app",
