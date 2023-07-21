@@ -3,28 +3,39 @@ package e2e_test
 import (
 	"testing"
 
-	"github.com/GambitLLC/quip/libs/pb/matchmaker"
-	"github.com/GambitLLC/quip/libs/rpc"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/oauth"
+
+	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
+	"github.com/GambitLLC/quip/libs/rpc"
 )
 
 func TestGetStatus(t *testing.T) {
 	ctx := newContext(t)
 
-	client, id, err := newFrontendClient(t)
-	require.NoError(t, err, "create frontend client failed")
+	client, _ := newFrontendClient(t)
+	stream, err := client.Stream(ctx)
+	require.NoError(t, err, "client.Stream failed")
 
-	resp, err := client.GetStatus(ctx, &matchmaker.GetStatusRequest{
-		Target: id,
+	err = stream.Send(&pb.StreamRequest{
+		Message: &pb.StreamRequest_GetStatus{},
 	})
 	require.NoError(t, err, "GetStatus failed")
-	require.Equal(t, matchmaker.State_STATE_IDLE, resp.GetState(), "expected idle status")
+
+	resp, err := stream.Recv()
+	require.NoError(t, err, "stream.Recv failed")
+
+	switch msg := resp.Message.(type) {
+	case *pb.StreamResponse_Error:
+		require.Fail(t, "recv'd StreamResponse_Error", msg.Error)
+	case *pb.StreamResponse_StatusUpdate:
+		require.Equal(t, pb.State_STATE_IDLE, msg.StatusUpdate.State, "expected status idle")
+	}
 }
 
-func newFrontendClient(t *testing.T) (matchmaker.FrontendClient, string, error) {
+func newFrontendClient(t *testing.T) (pb.FrontendStreamClient, string) {
 	token, id := createDidToken(t)
 	conn, err := rpc.GRPCClientFromConfig(cfg, "matchmaker.frontend", grpc.WithPerRPCCredentials(
 		oauth.TokenSource{
@@ -33,9 +44,6 @@ func newFrontendClient(t *testing.T) (matchmaker.FrontendClient, string, error) 
 			}),
 		},
 	))
-	if err != nil {
-		return nil, "", err
-	}
-
-	return matchmaker.NewFrontendClient(conn), id, nil
+	require.NoError(t, err, "GRPCClientFromConfig failed")
+	return pb.NewFrontendStreamClient(conn), id
 }
