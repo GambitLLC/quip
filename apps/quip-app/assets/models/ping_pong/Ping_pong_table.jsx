@@ -7,7 +7,7 @@ Source: https://sketchfab.com/3d-models/ping-pong-table-e3600e525d444209bc69b32d
 Title: Ping Pong Table
 */
 
-import React, { useRef } from 'react'
+import React, { forwardRef, useRef } from "react";
 
 import modelPath from './ping_pong_table.glb'
 import Image4 from './textures/4.jpg'
@@ -19,9 +19,8 @@ import Image1 from './textures/1.jpg'
 import Image0 from './textures/0.png'
 import {MeshStandardMaterial, Vector3} from 'three'
 import { useGLTF, useTexture } from '@react-three/drei'
-import {PhysicsBox, Vec3} from "../../../src/game/Game";
 
-export function Model(props) {
+export const Model = forwardRef((props, ref) => {
   const { nodes } = useGLTF(modelPath)
   const [Texture4, Texture5, Texture6, Texture2, Texture3, Texture1, Texture0] = useTexture([Image4, Image5, Image6, Image2, Image3, Image1, Image0])
 
@@ -41,14 +40,8 @@ export function Model(props) {
     caucho_negro_p_0: new MeshStandardMaterial({ color: 16777215, roughness: 0.6, metalness: 0, lightMapIntensity: 1, aoMapIntensity: 1, emissive: 0, emissiveIntensity: 1, bumpScale: 1, normalMapType: 0, normalScale: { x: 1, y: -1 }, displacementScale: 1, displacementBias: 0, envMapIntensity: 1, wireframe: false, wireframeLinewidth: 1, flatShading: false, fog: true }),
   }
 
-  const posTable: Vec3 = [0, 3, 0]
-  const [box, api] = PhysicsBox(posTable, [1, 1, 1])
-
-
   return (
-    <group onClick={(e) => {
-      api.position.y += 2.5
-    }} {...props} dispose={null} ref={box}>
+    <group {...props} dispose={null} ref={ref}>
       <group scale={0.01}>
         <group position={[103.94, 76.989, 39.431]} rotation={[-Math.PI / 2, 0, 0]} scale={30.48}>
           <mesh castShadow receiveShadow geometry={nodes.Ping_Pong_Racket_Ping_Pong_Racket_5828_grey_0.geometry} material={materials.grey} />
@@ -94,4 +87,4 @@ export function Model(props) {
       </group>
     </group>
   )
-}
+})

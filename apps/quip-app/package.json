@@ -42,7 +42,14 @@
     "@use-gesture/react": "*",
     "react-native-svg-transformer": "*",
     "r3f-native-orbitcontrols": "*",
-    "react": "*"
+    "react": "*",
+    "@nx/expo": "*",
+    "@expo/metro-config": "*",
+    "@solana/web3.js": "*",
+    "@react-navigation/native-stack": "*",
+    "@react-spring/native": "*",
+    "expo-status-bar": "*",
+    "expo-sensors": "~12.1.1"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/quip-app && cp package-lock.json apps/quip-app",

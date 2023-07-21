@@ -1,9 +1,9 @@
 import {useFrame} from "@react-three/fiber/native";
-import React, {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react'
+import React, {createContext, useContext, useEffect, useMemo, useRef, useState, useTransition} from 'react'
 import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
 
-const WorldContext = createContext<CANNON.World | null>(null)
+export const WorldContext = createContext<CANNON.World | null>(null)
 
 interface PhysicsProviderProps {
   timeStep?: number
@@ -11,35 +11,22 @@ interface PhysicsProviderProps {
   children: React.ReactNode
 }
 
-function useFrameProcessor(frameProcessor: () => void, dependencies: any): () => void {
-  return useCallback(() => {
-    'worklet';
-    frameProcessor();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, dependencies);
-}
-
 export const PhysicsProvider = (props: PhysicsProviderProps) => {
   const world = useMemo(() => new CANNON.World(), [])
 
   useEffect(() => {
-    world.broadphase = new CANNON.NaiveBroadphase()
-    // world.solver.iterations = 10
+    world.allowSleep = true
+    world.broadphase = new CANNON.SAPBroadphase(world)
+    if (world.solver instanceof CANNON.GSSolver) {
+      world.solver.iterations = 10
+      world.solver.tolerance = 1e-7
+    }
     world.gravity.set(0, -9.82, 0)
   }, [ world ])
 
-  const [lastFrameTime, setLastFrameTime] = useState(performance.now())
-
-  useFrame(() => {
-      const now = performance.now()
-      const delta = now - lastFrameTime
-      setLastFrameTime(now)
-      world.step(
-        props.timeStep ?? 1/60,
-        delta / 1000,
-        props.maxSubSteps ?? 10
-      )
-  })
+  useFrame((state, delta, xrFrame) => {
+    world.fixedStep()
+  }, -1)
 
   return (
     <WorldContext.Provider value={world}>
@@ -49,7 +36,7 @@ export const PhysicsProvider = (props: PhysicsProviderProps) => {
 }
 
 export const useCannon = ({ ...props }, fn: (body: CANNON.Body) => void, deps = []) => {
-  const ref = useRef<THREE.Mesh>()
+  const ref = useRef<THREE.Object3D>()
   const world = useContext(WorldContext)
   const [ body ] = useState(() => new CANNON.Body(props))
 
@@ -60,16 +47,13 @@ export const useCannon = ({ ...props }, fn: (body: CANNON.Body) => void, deps = 
     return () => world?.removeBody(body)
   }, deps)
 
+
   useFrame(() => {
     if (ref.current) {
-      // Transport cannon physics into the referenced threejs object
-      const { position, quaternion } = body
-      const { x: px, y: py, z: pz } = position
-      const { x: qx, y: qy, z: qz, w: qw } = quaternion
-      ref.current.position.copy(new THREE.Vector3(px, py, pz))
-      ref.current.quaternion.copy(new THREE.Quaternion(qx, qy, qz, qw))
+      ref.current.position.set(body.position.x, body.position.y, body.position.z)
+      ref.current.quaternion.set(body.quaternion.x, body.quaternion.y, body.quaternion.z, body.quaternion.w)
     }
-  })
+  }, -2)
 
   return [ref, body] as const // Return
 }
@@ -87,5 +71,23 @@ export const PhysicsPlane = (position: Vec3, size: Vec2) =>
 export const PhysicsBox = (position: Vec3, size: Vec3) =>
   useCannon({mass: 2}, body => {
     body.addShape(new CANNON.Box(new CANNON.Vec3(...size)))
+    body.position.set(...position)
+  })
+
+export const PhysicsSphere = (position: Vec3, radius: number) =>
+  useCannon({mass: 1}, body => {
+    body.addShape(new CANNON.Sphere(radius))
+    body.position.set(...position)
+  })
+
+export const PhysicsCylinder = (position: Vec3, radius: number, height: number) =>
+  useCannon({mass: 1}, body => {
+    body.addShape(new CANNON.Cylinder(radius, radius, height, 20))
+    body.position.set(...position)
+  })
+
+export const PhysicsCone = (position: Vec3, radius: number, height: number) =>
+  useCannon({mass: 1}, body => {
+    body.addShape(new CANNON.Cylinder(0, radius, height, 20))
     body.position.set(...position)
   })
