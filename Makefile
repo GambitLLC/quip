@@ -139,7 +139,7 @@ api/third-party/protoc-gen-openapiv2/options:
 
 .PHONY: test
 test: install-npm
-	npx nx run-many --targets=test,e2e --all --exclude database,matchmaker-e2e,sockets
+	npx nx run-many --targets=test,e2e --all --exclude database --skip-nx-cache
 
 ## ####################################
 ## # GraphQL
