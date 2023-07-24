@@ -3,17 +3,16 @@ package frontend
 import (
 	"context"
 	"fmt"
-	"os"
+	"io"
+	"log"
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
-	"github.com/rs/zerolog"
+	rpcStatus "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/GambitLLC/quip/libs/broker"
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
@@ -21,64 +20,155 @@ import (
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
-var logger = zerolog.New(os.Stderr).With().
-	Str("component", "matchmaker.frontend").
-	Logger()
-
-type Service struct {
-	store  statestore.Service
-	broker broker.Client
-	omfc   *omFrontendClient
-	gc     *games.GameDetailCache
+type StreamService struct {
+	store statestore.Service
+	omfc  *omFrontendClient
+	gc    *games.GameDetailCache
 }
 
-func New(cfg config.View) *Service {
-	return &Service{
-		store:  statestore.New(cfg),
-		broker: broker.NewRedis(cfg),
-		omfc:   newOmFrontendClient(cfg),
-		gc:     games.NewGameDetailCache(),
+func NewStreamService(cfg config.View) *StreamService {
+	return &StreamService{
+		store: statestore.New(cfg),
+		omfc:  newOmFrontendClient(cfg),
+		gc:    games.NewGameDetailCache(),
 	}
 }
 
-// getPlayer retrieves the specified player from the statestore.
-// Locks the player mutex and returns an unlock function.
-func getPlayer(ctx context.Context, store statestore.Service, id string, create bool) (player *ipb.PlayerInternal, unlock func(), err error) {
-	if id == "" {
-		err = status.Error(codes.InvalidArgument, "id is required")
-		return
-	}
-
-	lock := store.NewMutex(fmt.Sprintf("player:%s", id))
-	if err = lock.Lock(ctx); err != nil {
-		err = status.Error(codes.Unavailable, err.Error())
-		return
-	}
-
-	unlock = func() {
-		// TODO: determine if unlock error needs to be handled
-		_, _ = lock.Unlock(context.Background())
-	}
-
-	player, err = store.GetPlayer(ctx, id)
+func (s *StreamService) Stream(stream pb.Frontend_StreamServer) error {
+	session, err := s.newSession(stream)
 	if err != nil {
-		if status.Code(err) != codes.NotFound || !create {
-			unlock()
-			return
-		}
-
-		player = &ipb.PlayerInternal{
-			PlayerId: id,
-		}
-		err = store.CreatePlayer(ctx, player)
+		return err
 	}
 
-	return
+	defer session.cleanup()
+
+	go session.send()
+
+	// recv returns when the client disconnects or closes the send direction of the stream
+	// consider Stream finished in both cases
+	return session.recv()
 }
 
-// GetStatus returns the current status of the specified player.
-func (s *Service) GetStatus(ctx context.Context, req *pb.GetStatusRequest) (*pb.Status, error) {
-	player, unlock, err := getPlayer(ctx, s.store, req.Target, false)
+type session struct {
+	srv    *StreamService
+	id     string
+	stream pb.Frontend_StreamServer
+
+	resps chan *pb.StreamResponse
+}
+
+func (s *StreamService) newSession(stream pb.Frontend_StreamServer) (*session, error) {
+	id := metautils.ExtractIncoming(stream.Context()).Get("Player-Id")
+	if id == "" {
+		return nil, status.Error(codes.Unauthenticated, "Player-Id is unknown")
+	}
+
+	return &session{
+		srv:    s,
+		id:     id,
+		stream: stream,
+		resps:  make(chan *pb.StreamResponse, 1),
+	}, nil
+}
+
+// recv consumes from the stream and handles all requests until it closes
+func (s *session) recv() (err error) {
+	for {
+		in, err := s.stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		var resp *pb.StreamResponse
+		switch msg := in.Message.(type) {
+		default:
+			// TODO: log this invalid message type
+			return status.Error(codes.Internal, "unhandled stream request message type")
+		case nil:
+			return status.Error(codes.Internal, "stream request message is nil")
+		case *pb.StreamRequest_GetStatus:
+			resp, err = s.getStatus(msg.GetStatus)
+		case *pb.StreamRequest_StartQueue:
+			resp, err = s.startQueue(msg.StartQueue)
+		case *pb.StreamRequest_StopQueue:
+			resp, err = s.stopQueue(msg.StopQueue)
+		}
+
+		if err != nil {
+			// TODO: handle err
+			return err
+		}
+
+		if resp != nil {
+			s.resps <- resp
+		}
+	}
+}
+
+// send continually sends stream responses and status updates until the stream closes
+func (s *session) send() {
+	// TODO: read status update messages from broker
+
+	for {
+		select {
+		case <-s.stream.Context().Done():
+			return
+		case resp := <-s.resps:
+			if s, ok := status.FromError(s.stream.Send(resp)); ok {
+				switch s.Code() {
+				case codes.OK:
+					// noop
+				case codes.Canceled, codes.DeadlineExceeded:
+					// client closed
+					return
+				default:
+					// TODO: handle err
+					log.Printf("send err: %v", s.Err())
+				}
+			}
+		}
+	}
+}
+
+// cleanup makes sure closed sessions are reset to an initial state (e.g. queue is stopped)
+func (s *session) cleanup() {
+	// discard irrelevant stop queue response message
+	_, err := s.stopQueue(&emptypb.Empty{})
+	if err != nil {
+		// TODO: handle error
+		log.Printf("cleanup err: %v", err)
+	}
+}
+
+const requestTimeout = 10 * time.Second
+
+func (s *session) getStatus(req *pb.GetStatusRequest) (*pb.StreamResponse, error) {
+	ctx, cancel := context.WithTimeout(s.stream.Context(), requestTimeout)
+	defer cancel()
+
+	lock := s.srv.store.NewMutex(s.id)
+	if err := lock.Lock(ctx); err != nil {
+		return nil, err
+	}
+	defer lock.Unlock(context.Background())
+
+	status, err := getStatusDetails(ctx, s.id, s.srv.store, s.srv.omfc)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.StreamResponse{
+		Message: &pb.StreamResponse_StatusUpdate{
+			StatusUpdate: status,
+		},
+	}, nil
+}
+
+func getStatusDetails(ctx context.Context, id string, store statestore.Service, omfc *omFrontendClient) (*pb.Status, error) {
+	player, err := store.GetPlayer(ctx, id)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return &pb.Status{
@@ -86,18 +176,16 @@ func (s *Service) GetStatus(ctx context.Context, req *pb.GetStatusRequest) (*pb.
 			}, nil
 		}
 
-		// TODO: handle err instead of propagating
 		return nil, err
 	}
-	defer unlock()
 
 	if player.MatchId != nil {
-		match, err := s.store.GetMatch(ctx, *player.MatchId)
+		match, err := store.GetMatch(ctx, *player.MatchId)
 		if err != nil {
 			if status.Code(err) == codes.NotFound {
 				go func() {
 					// TODO: handle error
-					_ = s.store.UntrackMatch(context.Background(), []string{player.PlayerId})
+					_ = store.UntrackMatch(context.Background(), []string{player.PlayerId})
 				}()
 
 				return &pb.Status{
@@ -121,12 +209,12 @@ func (s *Service) GetStatus(ctx context.Context, req *pb.GetStatusRequest) (*pb.
 	}
 
 	if player.TicketId != nil {
-		ticket, err := s.omfc.GetTicket(ctx, *player.TicketId)
+		ticket, err := omfc.GetTicket(ctx, *player.TicketId)
 		if err != nil {
 			if status.Code(err) == codes.NotFound {
 				go func() {
 					// TODO: handle error
-					_ = s.store.UntrackTicket(context.Background(), []string{player.PlayerId})
+					_ = store.UntrackTicket(context.Background(), []string{player.PlayerId})
 				}()
 
 				return &pb.Status{
@@ -143,7 +231,7 @@ func (s *Service) GetStatus(ctx context.Context, req *pb.GetStatusRequest) (*pb.
 		if ticket.GetAssignment().GetConnection() != "" {
 			go func() {
 				// TODO: handle error
-				_ = s.store.UntrackTicket(context.Background(), []string{player.PlayerId})
+				_ = store.UntrackTicket(context.Background(), []string{player.PlayerId})
 			}()
 
 			return &pb.Status{
@@ -176,77 +264,152 @@ func (s *Service) GetStatus(ctx context.Context, req *pb.GetStatusRequest) (*pb.
 	}, nil
 }
 
-// StartQueue starts searching for a match with the given parameters.
-func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*emptypb.Empty, error) {
-	player, unlock, err := getPlayer(ctx, s.store, metautils.ExtractIncoming(ctx).Get("Player-Id"), true)
+func (s *session) startQueue(req *pb.StartQueueRequest) (*pb.StreamResponse, error) {
+	ctx, cancel := context.WithTimeout(s.stream.Context(), requestTimeout)
+	defer cancel()
+
+	lock := s.srv.store.NewMutex(s.id)
+	if err := lock.Lock(ctx); err != nil {
+		return nil, err
+	}
+	defer lock.Unlock(context.Background())
+
+	player, err := s.srv.store.GetPlayer(ctx, s.id)
+	if status.Code(err) == codes.NotFound {
+		player = &ipb.PlayerInternal{
+			PlayerId: s.id,
+		}
+		err = s.srv.store.CreatePlayer(ctx, player)
+	}
+
 	if err != nil {
 		return nil, err
 	}
-	defer unlock()
 
 	gameCfg := req.GetConfig()
 	if gameCfg == nil {
-		return nil, status.Error(codes.InvalidArgument, ".Config is required")
+		return &pb.StreamResponse{
+			Message: &pb.StreamResponse_Error{
+				Error: &rpcStatus.Status{
+					Code:    int32(codes.InvalidArgument),
+					Message: ".Config is required",
+				},
+			},
+		}, nil
 	}
 
-	game, err := s.gc.GameDetails(gameCfg.Gamemode)
+	game, err := s.srv.gc.GameDetails(gameCfg.Gamemode)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	if game == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid gamemode '%s'", gameCfg.Gamemode)
+		return &pb.StreamResponse{
+			Message: &pb.StreamResponse_Error{
+				Error: &rpcStatus.Status{
+					Code:    int32(codes.InvalidArgument),
+					Message: fmt.Sprintf("invalid gamemode: '%s'", gameCfg.Gamemode),
+				},
+			},
+		}, nil
 	}
 
 	if player.MatchId != nil {
-		return nil, status.Error(codes.FailedPrecondition, "player is already in queue")
+		return &pb.StreamResponse{
+			Message: &pb.StreamResponse_Error{
+				Error: &rpcStatus.Status{
+					Code:    int32(codes.FailedPrecondition),
+					Message: "already in game",
+				},
+			},
+		}, nil
 	}
 
 	if player.TicketId != nil {
-		return nil, status.Error(codes.FailedPrecondition, "player is already in game")
+		return &pb.StreamResponse{
+			Message: &pb.StreamResponse_Error{
+				Error: &rpcStatus.Status{
+					Code:    int32(codes.FailedPrecondition),
+					Message: "already in queue",
+				},
+			},
+		}, nil
 	}
 
-	ticket, err := s.omfc.CreateTicket(ctx, &ipb.TicketInternal{
+	ticket, err := s.srv.omfc.CreateTicket(ctx, &ipb.TicketInternal{
 		PlayerId: player.PlayerId,
 		Gamemode: gameCfg.Gamemode,
 	})
 	if err != nil {
-		return nil, err
+		// TODO: handle error, this probably shouldn't be propagated
+		return &pb.StreamResponse{
+			Message: &pb.StreamResponse_Error{
+				Error: &rpcStatus.Status{
+					Code:    int32(status.Code(err)),
+					Message: err.Error(),
+				},
+			},
+		}, nil
 	}
 
 	players := []string{player.PlayerId}
-	err = s.store.TrackTicket(ctx, ticket.Id, players)
+	err = s.srv.store.TrackTicket(ctx, ticket.Id, players)
 	if err != nil {
+		// if tracking failed, delete the ticket ...
+		go func() {
+			// TODO: handle error
+			_ = s.srv.omfc.DeleteTicket(context.Background(), player.PlayerId)
+		}()
+
 		return nil, err
 	}
 
-	go s.publish(&pb.StatusUpdate{
-		Targets: players,
-		Status: &pb.Status{
-			State: pb.State_STATE_SEARCHING,
-		},
-	})
+	// go s.publish(&pb.StatusUpdate{
+	// 	Targets: players,
+	// 	Status: &pb.Status{
+	// 		State: pb.State_STATE_SEARCHING,
+	// 	},
+	// })
 
-	return &emptypb.Empty{}, nil
+	return &pb.StreamResponse{
+		Message: &pb.StreamResponse_StatusUpdate{
+			StatusUpdate: &pb.Status{
+				State: pb.State_STATE_SEARCHING,
+				Details: &pb.Status_Searching{
+					Searching: &pb.QueueDetails{
+						Config:    gameCfg,
+						StartTime: ticket.CreateTime,
+					},
+				},
+			},
+		},
+	}, nil
 }
 
-// StopQueue stops searching for a match. Idempotent.
-func (s *Service) StopQueue(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	player, unlock, err := getPlayer(ctx, s.store, metautils.ExtractIncoming(ctx).Get("Player-Id"), true)
-	if err != nil {
-		if status.Code(err) == codes.NotFound {
-			return &emptypb.Empty{}, nil
-		}
+func (s *session) stopQueue(req *emptypb.Empty) (*pb.StreamResponse, error) {
+	ctx, cancel := context.WithTimeout(s.stream.Context(), requestTimeout)
+	defer cancel()
 
+	lock := s.srv.store.NewMutex(s.id)
+	if err := lock.Lock(ctx); err != nil {
 		return nil, err
 	}
-	defer unlock()
+	defer lock.Unlock(context.Background())
 
-	if player.TicketId == nil {
-		return &emptypb.Empty{}, nil
+	player, err := s.srv.store.GetPlayer(ctx, s.id)
+	if status.Code(err) == codes.NotFound {
+		return nil, nil
 	}
 
-	err = s.omfc.DeleteTicket(ctx, *player.TicketId)
+	if err != nil {
+		return nil, err
+	}
+
+	if player.TicketId == nil {
+		return nil, nil
+	}
+
+	err = s.srv.omfc.DeleteTicket(ctx, *player.TicketId)
 	if err != nil && status.Code(err) != codes.NotFound {
 		return nil, err
 	}
@@ -254,41 +417,33 @@ func (s *Service) StopQueue(ctx context.Context, _ *emptypb.Empty) (*emptypb.Emp
 	// TODO: get relevant players from ticket when multiple players is supported
 	players := []string{player.PlayerId}
 
-	err = s.store.UntrackTicket(ctx, players)
+	err = s.srv.store.UntrackTicket(ctx, players)
 	if err != nil {
 		return nil, err
 	}
 
-	go s.publish(&pb.StatusUpdate{
-		Targets: players,
-		Status: &pb.Status{
-			State: pb.State_STATE_IDLE,
-			Details: &pb.Status_Stopped{
-				Stopped: &pb.QueueStopped{
-					Message: fmt.Sprintf("%s stopped matchmaking", player.PlayerId),
+	// go s.publish(&pb.StatusUpdate{
+	// 	Targets: players,
+	// 	Status: &pb.Status{
+	// 		State: pb.State_STATE_IDLE,
+	// 		Details: &pb.Status_Stopped{
+	// 			Stopped: &pb.QueueStopped{
+	// 				Message: fmt.Sprintf("%s stopped matchmaking", player.PlayerId),
+	// 			},
+	// 		},
+	// 	},
+	// })
+
+	return &pb.StreamResponse{
+		Message: &pb.StreamResponse_StatusUpdate{
+			StatusUpdate: &pb.Status{
+				State: pb.State_STATE_IDLE,
+				Details: &pb.Status_Stopped{
+					Stopped: &pb.QueueStopped{
+						Message: fmt.Sprintf("%s stopped matchmaking", player.PlayerId),
+					},
 				},
 			},
 		},
-	})
-
-	return &emptypb.Empty{}, nil
-}
-
-func (s *Service) publish(msg proto.Message) {
-	var err error
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	switch msg := msg.(type) {
-	default:
-		err = fmt.Errorf("unhandled message type %T", msg)
-	// case *pb.QueueUpdate:
-	// 	err = s.broker.PublishQueueUpdate(ctx, msg)
-	case *pb.StatusUpdate:
-		err = s.broker.PublishStatusUpdate(ctx, msg)
-	}
-
-	if err != nil {
-		logger.Error().Err(err).Msg("Publish failed")
-	}
+	}, nil
 }
