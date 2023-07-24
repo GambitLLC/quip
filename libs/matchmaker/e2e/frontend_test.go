@@ -8,14 +8,16 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/oauth"
 
+	"github.com/GambitLLC/quip/libs/config"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/GambitLLC/quip/libs/rpc"
 )
 
 func TestGetStatus(t *testing.T) {
+	cfg := start(t)
 	ctx := newContext(t)
 
-	client, _ := newFrontendClient(t)
+	client, _ := newFrontendClient(t, cfg)
 	stream, err := client.Stream(ctx)
 	require.NoError(t, err, "client.Stream failed")
 
@@ -35,15 +37,19 @@ func TestGetStatus(t *testing.T) {
 	}
 }
 
-func newFrontendClient(t *testing.T) (pb.FrontendClient, string) {
+func newFrontendClient(t *testing.T, cfg config.View) (pb.FrontendClient, string) {
 	token, id := createDidToken(t)
-	conn, err := rpc.GRPCClientFromConfig(cfg, "matchmaker.frontend", grpc.WithPerRPCCredentials(
-		oauth.TokenSource{
-			TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
-				AccessToken: token,
-			}),
-		},
-	))
+	conn, err := rpc.GRPCClientFromConfig(
+		cfg,
+		"matchmaker.frontend",
+		grpc.WithPerRPCCredentials(
+			oauth.TokenSource{
+				TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
+					AccessToken: token,
+				}),
+			},
+		),
+	)
 	require.NoError(t, err, "GRPCClientFromConfig failed")
 	return pb.NewFrontendClient(conn), id
 }

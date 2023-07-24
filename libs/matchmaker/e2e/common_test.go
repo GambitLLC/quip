@@ -5,51 +5,57 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"os"
-	"runtime"
-	"strings"
+	"net"
 	"testing"
 	"time"
 
-	"github.com/GambitLLC/quip/libs/matchmaker/inmemory"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/magiclabs/magic-admin-go/token"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
+
+	"github.com/GambitLLC/quip/libs/appmain/apptest"
+	"github.com/GambitLLC/quip/libs/config"
+	"github.com/GambitLLC/quip/libs/matchmaker/frontend"
+	statestoreTesting "github.com/GambitLLC/quip/libs/matchmaker/internal/statestore/testing"
+	"github.com/GambitLLC/quip/libs/test/data"
 )
 
-// inmemory package expects working directory to be at root of project ('/quip')
-func init() {
-	_, filename, _, _ := runtime.Caller(0)
-	idx := strings.LastIndex(filename, "quip")
-	if idx == -1 {
-		panic("expected to be in folder named 'quip'")
+// start spins up all matchmaker services in memory for the duration of the test.
+func start(t *testing.T) config.View {
+	cfg := viper.New()
+	_ = statestoreTesting.NewService(t, cfg)
+	cfg.Set("broker.hostname", cfg.Get("matchmaker.redis.hostname"))
+	cfg.Set("broker.port", cfg.Get("matchmaker.redis.port"))
+
+	ln, err := net.Listen("tcp", ":0")
+	require.NoError(t, err, "net.Listen failed")
+
+	_, port, err := net.SplitHostPort(ln.Addr().String())
+	require.NoError(t, err, "net.SplitHostPort failed")
+
+	services := []string{apptest.ServiceName, "matchmaker.frontend"}
+	for _, svc := range services {
+		cfg.Set(svc+".hostname", "localhost")
+		cfg.Set(svc+".port", port)
 	}
 
-	dir := filename[:idx+4]
-	err := os.Chdir(dir)
-	if err != nil {
-		panic(err)
-	}
-}
+	// set tls
+	cfg.Set("api.tls.certificateFile", data.Path("x509/server_cert.pem"))
+	cfg.Set("api.tls.privateKeyFile", data.Path("x509/server_key.pem"))
+	cfg.Set("api.tls.rootCertificateFile", data.Path("x509/ca_cert.pem"))
 
-var cfg *viper.Viper
+	// TODO: add cfg logging.level
 
-func TestMain(m *testing.M) {
-	cfg = viper.New()
-	proc, err := inmemory.Start(cfg)
-	if err != nil {
-		panic(err)
-	}
+	apptest.TestGRPCService(
+		t,
+		cfg,
+		[]net.Listener{ln},
+		frontend.BindService,
+	)
 
-	code := m.Run()
-	proc.Kill()
-	if err := proc.Wait(); err != nil {
-		panic(err)
-	}
-
-	os.Exit(code)
+	return cfg
 }
 
 func newContext(t *testing.T) context.Context {
