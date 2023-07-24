@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
+	"os"
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
+	"github.com/rs/zerolog"
 	rpcStatus "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -19,6 +20,10 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
+
+var logger = zerolog.New(os.Stderr).With().
+	Str("component", "matchmaker.frontend").
+	Logger()
 
 type StreamService struct {
 	store statestore.Service
@@ -125,8 +130,7 @@ func (s *session) send() {
 					// client closed
 					return
 				default:
-					// TODO: handle err
-					log.Printf("send err: %v", s.Err())
+					logger.Err(s.Err()).Msg("stream.Send failed")
 				}
 			}
 		}
@@ -139,7 +143,7 @@ func (s *session) cleanup() {
 	_, err := s.stopQueue(&emptypb.Empty{})
 	if err != nil {
 		// TODO: handle error
-		log.Printf("cleanup err: %v", err)
+		logger.Warn().Err(err).Msg("session cleanup failed")
 	}
 }
 
