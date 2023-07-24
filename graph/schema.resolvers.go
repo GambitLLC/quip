@@ -15,10 +15,6 @@ import (
 	"github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/google/uuid"
 	pkgerr "github.com/pkg/errors"
-	"golang.org/x/oauth2"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/oauth"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // UpdateProfile is the resolver for the updateProfile field.
@@ -29,38 +25,40 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, changes map[string
 
 // StartQueue is the resolver for the startQueue field.
 func (r *mutationResolver) StartQueue(ctx context.Context, gamemode string) (bool, error) {
-	token := auth.TokenFromContext(ctx)
-	_, err := r.frontend.StartQueue(ctx, &matchmaker.StartQueueRequest{
-		Config: &matchmaker.GameConfiguration{
-			Gamemode: gamemode,
-		},
-	}, grpc.PerRPCCredentials(oauth.TokenSource{
-		TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
-			AccessToken: token,
-		}),
-	}))
+	panic("not yet implemented")
+	// token := auth.TokenFromContext(ctx)
+	// _, err := r.frontend.StartQueue(ctx, &matchmaker.StartQueueRequest{
+	// 	Config: &matchmaker.GameConfiguration{
+	// 		Gamemode: gamemode,
+	// 	},
+	// }, grpc.PerRPCCredentials(oauth.TokenSource{
+	// 	TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
+	// 		AccessToken: token,
+	// 	}),
+	// }))
 
-	if err != nil {
-		return false, err
-	}
+	// if err != nil {
+	// 	return false, err
+	// }
 
-	return true, nil
+	// return true, nil
 }
 
 // StopQueue is the resolver for the stopQueue field.
 func (r *mutationResolver) StopQueue(ctx context.Context) (bool, error) {
-	token := auth.TokenFromContext(ctx)
-	_, err := r.frontend.StopQueue(ctx, &emptypb.Empty{}, grpc.PerRPCCredentials(oauth.TokenSource{
-		TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
-			AccessToken: token,
-		}),
-	}))
+	panic("not yet implemented")
+	// token := auth.TokenFromContext(ctx)
+	// _, err := r.frontend.StopQueue(ctx, &emptypb.Empty{}, grpc.PerRPCCredentials(oauth.TokenSource{
+	// 	TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
+	// 		AccessToken: token,
+	// 	}),
+	// }))
 
-	if err != nil {
-		return false, err
-	}
+	// if err != nil {
+	// 	return false, err
+	// }
 
-	return true, nil
+	// return true, nil
 }
 
 // User is the resolver for the user field.
@@ -131,23 +129,24 @@ func (r *subscriptionResolver) Status(ctx context.Context, targets []string) (<-
 
 // Status is the resolver for the status field.
 func (r *userResolver) Status(ctx context.Context, obj *model.User) (*model.Status, error) {
-	token := auth.TokenFromContext(ctx)
-	status, err := r.frontend.GetStatus(ctx, &matchmaker.GetStatusRequest{
-		Target: obj.ID,
-	}, grpc.PerRPCCredentials(oauth.TokenSource{
-		TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
-			AccessToken: token,
-		}),
-	}))
+	panic("not yet implemented")
+	// token := auth.TokenFromContext(ctx)
+	// status, err := r.frontend.GetStatus(ctx, &matchmaker.GetStatusRequest{
+	// 	Target: obj.ID,
+	// }, grpc.PerRPCCredentials(oauth.TokenSource{
+	// 	TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
+	// 		AccessToken: token,
+	// 	}),
+	// }))
 
-	if err != nil {
-		// TODO: wrap/fmt err instead of directly returning
-		return nil, err
-	}
+	// if err != nil {
+	// 	// TODO: wrap/fmt err instead of directly returning
+	// 	return nil, err
+	// }
 
-	return &model.Status{
-		Status: status,
-	}, nil
+	// return &model.Status{
+	// 	Status: status,
+	// }, nil
 }
 
 // Profile is the resolver for the profile field.

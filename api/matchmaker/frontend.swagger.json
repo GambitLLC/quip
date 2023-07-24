@@ -6,9 +6,6 @@
   },
   "tags": [
     {
-      "name": "DeprecatedFrontend"
-    },
-    {
       "name": "Frontend"
     }
   ],

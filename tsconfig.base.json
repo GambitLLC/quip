@@ -16,8 +16,7 @@
     "baseUrl": ".",
     "paths": {
       "@quip/native-ui": ["libs/native-ui/src/index.ts"],
-      "@quip/pb/*": ["libs/pb/*"],
-      "@quip/sockets": ["libs/sockets/src/index.ts"]
+      "@quip/pb/*": ["libs/pb/*"]
     },
     "esModuleInterop": true
   },

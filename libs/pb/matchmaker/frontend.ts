@@ -5,12 +5,9 @@ import {
   Client,
   ClientDuplexStream,
   ClientOptions,
-  ClientUnaryCall,
   handleBidiStreamingCall,
-  handleUnaryCall,
   makeGenericClientConstructor,
   Metadata,
-  ServiceError,
   UntypedServiceImplementation,
 } from "@grpc/grpc-js";
 import _m0 from "protobufjs/minimal";
@@ -291,105 +288,6 @@ export const StreamResponse = {
       : undefined;
     return message;
   },
-};
-
-export type DeprecatedFrontendService = typeof DeprecatedFrontendService;
-export const DeprecatedFrontendService = {
-  /** GetStatus returns the current status of the specified player. */
-  getStatus: {
-    path: "/quip.matchmaker.DeprecatedFrontend/GetStatus",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: GetStatusRequest) => Buffer.from(GetStatusRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer) => GetStatusRequest.decode(value),
-    responseSerialize: (value: Status1) => Buffer.from(Status1.encode(value).finish()),
-    responseDeserialize: (value: Buffer) => Status1.decode(value),
-  },
-  /** StartQueue starts searching for a match with the given parameters. */
-  startQueue: {
-    path: "/quip.matchmaker.DeprecatedFrontend/StartQueue",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: StartQueueRequest) => Buffer.from(StartQueueRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer) => StartQueueRequest.decode(value),
-    responseSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
-    responseDeserialize: (value: Buffer) => Empty.decode(value),
-  },
-  /** StopQueue stops searching for a match. Idempotent. */
-  stopQueue: {
-    path: "/quip.matchmaker.DeprecatedFrontend/StopQueue",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
-    requestDeserialize: (value: Buffer) => Empty.decode(value),
-    responseSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
-    responseDeserialize: (value: Buffer) => Empty.decode(value),
-  },
-} as const;
-
-export interface DeprecatedFrontendServer extends UntypedServiceImplementation {
-  /** GetStatus returns the current status of the specified player. */
-  getStatus: handleUnaryCall<GetStatusRequest, Status1>;
-  /** StartQueue starts searching for a match with the given parameters. */
-  startQueue: handleUnaryCall<StartQueueRequest, Empty>;
-  /** StopQueue stops searching for a match. Idempotent. */
-  stopQueue: handleUnaryCall<Empty, Empty>;
-}
-
-export interface DeprecatedFrontendClient extends Client {
-  /** GetStatus returns the current status of the specified player. */
-  getStatus(
-    request: GetStatusRequest,
-    callback: (error: ServiceError | null, response: Status1) => void,
-  ): ClientUnaryCall;
-  getStatus(
-    request: GetStatusRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: Status1) => void,
-  ): ClientUnaryCall;
-  getStatus(
-    request: GetStatusRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: Status1) => void,
-  ): ClientUnaryCall;
-  /** StartQueue starts searching for a match with the given parameters. */
-  startQueue(
-    request: StartQueueRequest,
-    callback: (error: ServiceError | null, response: Empty) => void,
-  ): ClientUnaryCall;
-  startQueue(
-    request: StartQueueRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: Empty) => void,
-  ): ClientUnaryCall;
-  startQueue(
-    request: StartQueueRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: Empty) => void,
-  ): ClientUnaryCall;
-  /** StopQueue stops searching for a match. Idempotent. */
-  stopQueue(request: Empty, callback: (error: ServiceError | null, response: Empty) => void): ClientUnaryCall;
-  stopQueue(
-    request: Empty,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: Empty) => void,
-  ): ClientUnaryCall;
-  stopQueue(
-    request: Empty,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: Empty) => void,
-  ): ClientUnaryCall;
-}
-
-export const DeprecatedFrontendClient = makeGenericClientConstructor(
-  DeprecatedFrontendService,
-  "quip.matchmaker.DeprecatedFrontend",
-) as unknown as {
-  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): DeprecatedFrontendClient;
-  service: typeof DeprecatedFrontendService;
 };
 
 export type FrontendService = typeof FrontendService;

@@ -14,17 +14,6 @@ message StartQueueRequest {
   GameConfiguration config = 1;
 }
 
-service DeprecatedFrontend {
-  // GetStatus returns the current status of the specified player.
-  rpc GetStatus(GetStatusRequest) returns (Status);
-
-  // StartQueue starts searching for a match with the given parameters.
-  rpc StartQueue(StartQueueRequest) returns (google.protobuf.Empty);
-
-  // StopQueue stops searching for a match. Idempotent.
-  rpc StopQueue(google.protobuf.Empty) returns (google.protobuf.Empty);
-}
-
 // TODO: keepalive?
 message StreamRequest {
   oneof message {
