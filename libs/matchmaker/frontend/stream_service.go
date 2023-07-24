@@ -34,7 +34,7 @@ func NewStreamService(cfg config.View) *StreamService {
 	}
 }
 
-func (s *StreamService) Stream(stream pb.FrontendStream_StreamServer) error {
+func (s *StreamService) Stream(stream pb.Frontend_StreamServer) error {
 	session, err := s.newSession(stream)
 	if err != nil {
 		return err
@@ -52,12 +52,12 @@ func (s *StreamService) Stream(stream pb.FrontendStream_StreamServer) error {
 type session struct {
 	srv    *StreamService
 	id     string
-	stream pb.FrontendStream_StreamServer
+	stream pb.Frontend_StreamServer
 
 	resps chan *pb.StreamResponse
 }
 
-func (s *StreamService) newSession(stream pb.FrontendStream_StreamServer) (*session, error) {
+func (s *StreamService) newSession(stream pb.Frontend_StreamServer) (*session, error) {
 	id := metautils.ExtractIncoming(stream.Context()).Get("Player-Id")
 	if id == "" {
 		return nil, status.Error(codes.Unauthenticated, "Player-Id is unknown")

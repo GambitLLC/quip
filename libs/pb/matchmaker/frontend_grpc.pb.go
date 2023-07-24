@@ -20,21 +20,182 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Frontend_GetStatus_FullMethodName  = "/quip.matchmaker.Frontend/GetStatus"
-	Frontend_StartQueue_FullMethodName = "/quip.matchmaker.Frontend/StartQueue"
-	Frontend_StopQueue_FullMethodName  = "/quip.matchmaker.Frontend/StopQueue"
+	DeprecatedFrontend_GetStatus_FullMethodName  = "/quip.matchmaker.DeprecatedFrontend/GetStatus"
+	DeprecatedFrontend_StartQueue_FullMethodName = "/quip.matchmaker.DeprecatedFrontend/StartQueue"
+	DeprecatedFrontend_StopQueue_FullMethodName  = "/quip.matchmaker.DeprecatedFrontend/StopQueue"
 )
 
-// FrontendClient is the client API for Frontend service.
+// DeprecatedFrontendClient is the client API for DeprecatedFrontend service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type FrontendClient interface {
+type DeprecatedFrontendClient interface {
 	// GetStatus returns the current status of the specified player.
 	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*Status, error)
 	// StartQueue starts searching for a match with the given parameters.
 	StartQueue(ctx context.Context, in *StartQueueRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// StopQueue stops searching for a match. Idempotent.
 	StopQueue(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
+}
+
+type deprecatedFrontendClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewDeprecatedFrontendClient(cc grpc.ClientConnInterface) DeprecatedFrontendClient {
+	return &deprecatedFrontendClient{cc}
+}
+
+func (c *deprecatedFrontendClient) GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*Status, error) {
+	out := new(Status)
+	err := c.cc.Invoke(ctx, DeprecatedFrontend_GetStatus_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *deprecatedFrontendClient) StartQueue(ctx context.Context, in *StartQueueRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, DeprecatedFrontend_StartQueue_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *deprecatedFrontendClient) StopQueue(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, DeprecatedFrontend_StopQueue_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// DeprecatedFrontendServer is the server API for DeprecatedFrontend service.
+// All implementations should embed UnimplementedDeprecatedFrontendServer
+// for forward compatibility
+type DeprecatedFrontendServer interface {
+	// GetStatus returns the current status of the specified player.
+	GetStatus(context.Context, *GetStatusRequest) (*Status, error)
+	// StartQueue starts searching for a match with the given parameters.
+	StartQueue(context.Context, *StartQueueRequest) (*emptypb.Empty, error)
+	// StopQueue stops searching for a match. Idempotent.
+	StopQueue(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+}
+
+// UnimplementedDeprecatedFrontendServer should be embedded to have forward compatible implementations.
+type UnimplementedDeprecatedFrontendServer struct {
+}
+
+func (UnimplementedDeprecatedFrontendServer) GetStatus(context.Context, *GetStatusRequest) (*Status, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStatus not implemented")
+}
+func (UnimplementedDeprecatedFrontendServer) StartQueue(context.Context, *StartQueueRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartQueue not implemented")
+}
+func (UnimplementedDeprecatedFrontendServer) StopQueue(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StopQueue not implemented")
+}
+
+// UnsafeDeprecatedFrontendServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to DeprecatedFrontendServer will
+// result in compilation errors.
+type UnsafeDeprecatedFrontendServer interface {
+	mustEmbedUnimplementedDeprecatedFrontendServer()
+}
+
+func RegisterDeprecatedFrontendServer(s grpc.ServiceRegistrar, srv DeprecatedFrontendServer) {
+	s.RegisterService(&DeprecatedFrontend_ServiceDesc, srv)
+}
+
+func _DeprecatedFrontend_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeprecatedFrontendServer).GetStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DeprecatedFrontend_GetStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeprecatedFrontendServer).GetStatus(ctx, req.(*GetStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DeprecatedFrontend_StartQueue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartQueueRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeprecatedFrontendServer).StartQueue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DeprecatedFrontend_StartQueue_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeprecatedFrontendServer).StartQueue(ctx, req.(*StartQueueRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DeprecatedFrontend_StopQueue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeprecatedFrontendServer).StopQueue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DeprecatedFrontend_StopQueue_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeprecatedFrontendServer).StopQueue(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// DeprecatedFrontend_ServiceDesc is the grpc.ServiceDesc for DeprecatedFrontend service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var DeprecatedFrontend_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "quip.matchmaker.DeprecatedFrontend",
+	HandlerType: (*DeprecatedFrontendServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetStatus",
+			Handler:    _DeprecatedFrontend_GetStatus_Handler,
+		},
+		{
+			MethodName: "StartQueue",
+			Handler:    _DeprecatedFrontend_StartQueue_Handler,
+		},
+		{
+			MethodName: "StopQueue",
+			Handler:    _DeprecatedFrontend_StopQueue_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "matchmaker/frontend.proto",
+}
+
+const (
+	Frontend_Stream_FullMethodName = "/quip.matchmaker.Frontend/Stream"
+)
+
+// FrontendClient is the client API for Frontend service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type FrontendClient interface {
+	Stream(ctx context.Context, opts ...grpc.CallOption) (Frontend_StreamClient, error)
 }
 
 type frontendClient struct {
@@ -45,57 +206,50 @@ func NewFrontendClient(cc grpc.ClientConnInterface) FrontendClient {
 	return &frontendClient{cc}
 }
 
-func (c *frontendClient) GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*Status, error) {
-	out := new(Status)
-	err := c.cc.Invoke(ctx, Frontend_GetStatus_FullMethodName, in, out, opts...)
+func (c *frontendClient) Stream(ctx context.Context, opts ...grpc.CallOption) (Frontend_StreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Frontend_ServiceDesc.Streams[0], Frontend_Stream_FullMethodName, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &frontendStreamClient{stream}
+	return x, nil
 }
 
-func (c *frontendClient) StartQueue(ctx context.Context, in *StartQueueRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Frontend_StartQueue_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
+type Frontend_StreamClient interface {
+	Send(*StreamRequest) error
+	Recv() (*StreamResponse, error)
+	grpc.ClientStream
 }
 
-func (c *frontendClient) StopQueue(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Frontend_StopQueue_FullMethodName, in, out, opts...)
-	if err != nil {
+type frontendStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *frontendStreamClient) Send(m *StreamRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *frontendStreamClient) Recv() (*StreamResponse, error) {
+	m := new(StreamResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	return out, nil
+	return m, nil
 }
 
 // FrontendServer is the server API for Frontend service.
 // All implementations should embed UnimplementedFrontendServer
 // for forward compatibility
 type FrontendServer interface {
-	// GetStatus returns the current status of the specified player.
-	GetStatus(context.Context, *GetStatusRequest) (*Status, error)
-	// StartQueue starts searching for a match with the given parameters.
-	StartQueue(context.Context, *StartQueueRequest) (*emptypb.Empty, error)
-	// StopQueue stops searching for a match. Idempotent.
-	StopQueue(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	Stream(Frontend_StreamServer) error
 }
 
 // UnimplementedFrontendServer should be embedded to have forward compatible implementations.
 type UnimplementedFrontendServer struct {
 }
 
-func (UnimplementedFrontendServer) GetStatus(context.Context, *GetStatusRequest) (*Status, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetStatus not implemented")
-}
-func (UnimplementedFrontendServer) StartQueue(context.Context, *StartQueueRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StartQueue not implemented")
-}
-func (UnimplementedFrontendServer) StopQueue(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StopQueue not implemented")
+func (UnimplementedFrontendServer) Stream(Frontend_StreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method Stream not implemented")
 }
 
 // UnsafeFrontendServer may be embedded to opt out of forward compatibility for this service.
@@ -109,58 +263,30 @@ func RegisterFrontendServer(s grpc.ServiceRegistrar, srv FrontendServer) {
 	s.RegisterService(&Frontend_ServiceDesc, srv)
 }
 
-func _Frontend_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetStatusRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(FrontendServer).GetStatus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Frontend_GetStatus_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FrontendServer).GetStatus(ctx, req.(*GetStatusRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+func _Frontend_Stream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(FrontendServer).Stream(&frontendStreamServer{stream})
 }
 
-func _Frontend_StartQueue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StartQueueRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(FrontendServer).StartQueue(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Frontend_StartQueue_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FrontendServer).StartQueue(ctx, req.(*StartQueueRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+type Frontend_StreamServer interface {
+	Send(*StreamResponse) error
+	Recv() (*StreamRequest, error)
+	grpc.ServerStream
 }
 
-func _Frontend_StopQueue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
+type frontendStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *frontendStreamServer) Send(m *StreamResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *frontendStreamServer) Recv() (*StreamRequest, error) {
+	m := new(StreamRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(FrontendServer).StopQueue(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Frontend_StopQueue_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FrontendServer).StopQueue(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
 // Frontend_ServiceDesc is the grpc.ServiceDesc for Frontend service.
@@ -169,137 +295,11 @@ func _Frontend_StopQueue_Handler(srv interface{}, ctx context.Context, dec func(
 var Frontend_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "quip.matchmaker.Frontend",
 	HandlerType: (*FrontendServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetStatus",
-			Handler:    _Frontend_GetStatus_Handler,
-		},
-		{
-			MethodName: "StartQueue",
-			Handler:    _Frontend_StartQueue_Handler,
-		},
-		{
-			MethodName: "StopQueue",
-			Handler:    _Frontend_StopQueue_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "matchmaker/frontend.proto",
-}
-
-const (
-	FrontendStream_Stream_FullMethodName = "/quip.matchmaker.FrontendStream/Stream"
-)
-
-// FrontendStreamClient is the client API for FrontendStream service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type FrontendStreamClient interface {
-	Stream(ctx context.Context, opts ...grpc.CallOption) (FrontendStream_StreamClient, error)
-}
-
-type frontendStreamClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewFrontendStreamClient(cc grpc.ClientConnInterface) FrontendStreamClient {
-	return &frontendStreamClient{cc}
-}
-
-func (c *frontendStreamClient) Stream(ctx context.Context, opts ...grpc.CallOption) (FrontendStream_StreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &FrontendStream_ServiceDesc.Streams[0], FrontendStream_Stream_FullMethodName, opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &frontendStreamStreamClient{stream}
-	return x, nil
-}
-
-type FrontendStream_StreamClient interface {
-	Send(*StreamRequest) error
-	Recv() (*StreamResponse, error)
-	grpc.ClientStream
-}
-
-type frontendStreamStreamClient struct {
-	grpc.ClientStream
-}
-
-func (x *frontendStreamStreamClient) Send(m *StreamRequest) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *frontendStreamStreamClient) Recv() (*StreamResponse, error) {
-	m := new(StreamResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-// FrontendStreamServer is the server API for FrontendStream service.
-// All implementations should embed UnimplementedFrontendStreamServer
-// for forward compatibility
-type FrontendStreamServer interface {
-	Stream(FrontendStream_StreamServer) error
-}
-
-// UnimplementedFrontendStreamServer should be embedded to have forward compatible implementations.
-type UnimplementedFrontendStreamServer struct {
-}
-
-func (UnimplementedFrontendStreamServer) Stream(FrontendStream_StreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method Stream not implemented")
-}
-
-// UnsafeFrontendStreamServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to FrontendStreamServer will
-// result in compilation errors.
-type UnsafeFrontendStreamServer interface {
-	mustEmbedUnimplementedFrontendStreamServer()
-}
-
-func RegisterFrontendStreamServer(s grpc.ServiceRegistrar, srv FrontendStreamServer) {
-	s.RegisterService(&FrontendStream_ServiceDesc, srv)
-}
-
-func _FrontendStream_Stream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(FrontendStreamServer).Stream(&frontendStreamStreamServer{stream})
-}
-
-type FrontendStream_StreamServer interface {
-	Send(*StreamResponse) error
-	Recv() (*StreamRequest, error)
-	grpc.ServerStream
-}
-
-type frontendStreamStreamServer struct {
-	grpc.ServerStream
-}
-
-func (x *frontendStreamStreamServer) Send(m *StreamResponse) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *frontendStreamStreamServer) Recv() (*StreamRequest, error) {
-	m := new(StreamRequest)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-// FrontendStream_ServiceDesc is the grpc.ServiceDesc for FrontendStream service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var FrontendStream_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "quip.matchmaker.FrontendStream",
-	HandlerType: (*FrontendStreamServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Stream",
-			Handler:       _FrontendStream_Stream_Handler,
+			Handler:       _Frontend_Stream_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

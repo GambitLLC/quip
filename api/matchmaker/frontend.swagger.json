@@ -6,10 +6,10 @@
   },
   "tags": [
     {
-      "name": "Frontend"
+      "name": "DeprecatedFrontend"
     },
     {
-      "name": "FrontendStream"
+      "name": "Frontend"
     }
   ],
   "consumes": [

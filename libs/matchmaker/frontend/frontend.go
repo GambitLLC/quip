@@ -19,7 +19,7 @@ import (
 func BindService(cfg config.View, b *appmain.GRPCBindings) error {
 	service := NewStreamService(cfg)
 	b.AddHandler(func(s *grpc.Server) {
-		pb.RegisterFrontendStreamServer(s, service)
+		pb.RegisterFrontendServer(s, service)
 	})
 	// b.AddCloser(service.broker.Close)
 	b.AddCloser(service.store.Close)

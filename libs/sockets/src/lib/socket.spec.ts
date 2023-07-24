@@ -14,8 +14,8 @@ import { Magic } from '@magic-sdk/admin';
 const magic = new Magic();
 
 import {
-  FrontendService,
-  FrontendServer,
+  DeprecatedFrontendService as FrontendService,
+  DeprecatedFrontendServer as FrontendServer,
   GetStatusRequest,
 } from '@quip/pb/matchmaker/frontend';
 import { Status } from '@quip/pb/matchmaker/messages';

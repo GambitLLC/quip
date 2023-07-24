@@ -17,7 +17,7 @@ type Resolver struct {
 	logger zerolog.Logger
 
 	// TODO: add database connection / rpc clients
-	frontend matchmaker.FrontendClient
+	frontend matchmaker.DeprecatedFrontendClient
 
 	*SubscriptionManager
 }
@@ -37,7 +37,7 @@ func NewResolver(cfg config.View) (*Resolver, error) {
 
 	resolver := &Resolver{
 		logger:              logger,
-		frontend:            matchmaker.NewFrontendClient(frontendConn),
+		frontend:            matchmaker.NewDeprecatedFrontendClient(frontendConn),
 		SubscriptionManager: sm,
 	}
 

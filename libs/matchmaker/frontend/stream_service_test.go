@@ -226,7 +226,7 @@ func newStreamService(t *testing.T) config.Mutable {
 		}),
 	}
 
-	pb.RegisterFrontendStreamServer(s, srv)
+	pb.RegisterFrontendServer(s, srv)
 
 	ln, err := net.Listen("tcp", ":0")
 	require.NoError(t, err, "net.Listen failed")
@@ -246,7 +246,7 @@ func newStreamService(t *testing.T) config.Mutable {
 	return cfg
 }
 
-func newClient(t *testing.T, cfg config.View) (pb.FrontendStreamClient, string) {
+func newClient(t *testing.T, cfg config.View) (pb.FrontendClient, string) {
 	id := uuid.NewString()
 	conn, err := rpc.GRPCClientFromConfig(
 		cfg,
@@ -259,5 +259,5 @@ func newClient(t *testing.T, cfg config.View) (pb.FrontendStreamClient, string) 
 	)
 	require.NoError(t, err, "GRPCClientFromConfig failed")
 
-	return pb.NewFrontendStreamClient(conn), id
+	return pb.NewFrontendClient(conn), id
 }

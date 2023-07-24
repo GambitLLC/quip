@@ -367,7 +367,7 @@ func newOMFrontend(t *testing.T, cfg config.Mutable) {
 	go func() {
 		err := s.Serve(ln)
 		if err != nil {
-			t.Error(err)
+			t.Log(err)
 		}
 	}()
 

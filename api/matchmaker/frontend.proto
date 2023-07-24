@@ -14,7 +14,7 @@ message StartQueueRequest {
   GameConfiguration config = 1;
 }
 
-service Frontend {
+service DeprecatedFrontend {
   // GetStatus returns the current status of the specified player.
   rpc GetStatus(GetStatusRequest) returns (Status);
 
@@ -43,6 +43,6 @@ message StreamResponse {
   }
 }
 
-service FrontendStream {
+service Frontend {
   rpc Stream(stream StreamRequest) returns (stream StreamResponse);
 }

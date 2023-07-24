@@ -35,7 +35,7 @@ func TestGetStatus(t *testing.T) {
 	}
 }
 
-func newFrontendClient(t *testing.T) (pb.FrontendStreamClient, string) {
+func newFrontendClient(t *testing.T) (pb.FrontendClient, string) {
 	token, id := createDidToken(t)
 	conn, err := rpc.GRPCClientFromConfig(cfg, "matchmaker.frontend", grpc.WithPerRPCCredentials(
 		oauth.TokenSource{
@@ -45,5 +45,5 @@ func newFrontendClient(t *testing.T) (pb.FrontendStreamClient, string) {
 		},
 	))
 	require.NoError(t, err, "GRPCClientFromConfig failed")
-	return pb.NewFrontendStreamClient(conn), id
+	return pb.NewFrontendClient(conn), id
 }

@@ -8,7 +8,7 @@ import { Magic } from '@magic-sdk/admin';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 
-import { FrontendClient } from '@quip/pb/matchmaker/frontend';
+import { DeprecatedFrontendClient as FrontendClient } from '@quip/pb/matchmaker/frontend';
 import { Empty } from '@quip/pb/google/protobuf/empty';
 import { ClientToServerEvents, ServerToClientEvents } from './events';
 import { StatusUpdate } from '@quip/pb/matchmaker/messages';

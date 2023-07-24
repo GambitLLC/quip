@@ -293,11 +293,11 @@ export const StreamResponse = {
   },
 };
 
-export type FrontendService = typeof FrontendService;
-export const FrontendService = {
+export type DeprecatedFrontendService = typeof DeprecatedFrontendService;
+export const DeprecatedFrontendService = {
   /** GetStatus returns the current status of the specified player. */
   getStatus: {
-    path: "/quip.matchmaker.Frontend/GetStatus",
+    path: "/quip.matchmaker.DeprecatedFrontend/GetStatus",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: GetStatusRequest) => Buffer.from(GetStatusRequest.encode(value).finish()),
@@ -307,7 +307,7 @@ export const FrontendService = {
   },
   /** StartQueue starts searching for a match with the given parameters. */
   startQueue: {
-    path: "/quip.matchmaker.Frontend/StartQueue",
+    path: "/quip.matchmaker.DeprecatedFrontend/StartQueue",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: StartQueueRequest) => Buffer.from(StartQueueRequest.encode(value).finish()),
@@ -317,7 +317,7 @@ export const FrontendService = {
   },
   /** StopQueue stops searching for a match. Idempotent. */
   stopQueue: {
-    path: "/quip.matchmaker.Frontend/StopQueue",
+    path: "/quip.matchmaker.DeprecatedFrontend/StopQueue",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
@@ -327,7 +327,7 @@ export const FrontendService = {
   },
 } as const;
 
-export interface FrontendServer extends UntypedServiceImplementation {
+export interface DeprecatedFrontendServer extends UntypedServiceImplementation {
   /** GetStatus returns the current status of the specified player. */
   getStatus: handleUnaryCall<GetStatusRequest, Status1>;
   /** StartQueue starts searching for a match with the given parameters. */
@@ -336,7 +336,7 @@ export interface FrontendServer extends UntypedServiceImplementation {
   stopQueue: handleUnaryCall<Empty, Empty>;
 }
 
-export interface FrontendClient extends Client {
+export interface DeprecatedFrontendClient extends Client {
   /** GetStatus returns the current status of the specified player. */
   getStatus(
     request: GetStatusRequest,
@@ -384,15 +384,18 @@ export interface FrontendClient extends Client {
   ): ClientUnaryCall;
 }
 
-export const FrontendClient = makeGenericClientConstructor(FrontendService, "quip.matchmaker.Frontend") as unknown as {
-  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): FrontendClient;
-  service: typeof FrontendService;
+export const DeprecatedFrontendClient = makeGenericClientConstructor(
+  DeprecatedFrontendService,
+  "quip.matchmaker.DeprecatedFrontend",
+) as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): DeprecatedFrontendClient;
+  service: typeof DeprecatedFrontendService;
 };
 
-export type FrontendStreamService = typeof FrontendStreamService;
-export const FrontendStreamService = {
+export type FrontendService = typeof FrontendService;
+export const FrontendService = {
   stream: {
-    path: "/quip.matchmaker.FrontendStream/Stream",
+    path: "/quip.matchmaker.Frontend/Stream",
     requestStream: true,
     responseStream: true,
     requestSerialize: (value: StreamRequest) => Buffer.from(StreamRequest.encode(value).finish()),
@@ -402,22 +405,19 @@ export const FrontendStreamService = {
   },
 } as const;
 
-export interface FrontendStreamServer extends UntypedServiceImplementation {
+export interface FrontendServer extends UntypedServiceImplementation {
   stream: handleBidiStreamingCall<StreamRequest, StreamResponse>;
 }
 
-export interface FrontendStreamClient extends Client {
+export interface FrontendClient extends Client {
   stream(): ClientDuplexStream<StreamRequest, StreamResponse>;
   stream(options: Partial<CallOptions>): ClientDuplexStream<StreamRequest, StreamResponse>;
   stream(metadata: Metadata, options?: Partial<CallOptions>): ClientDuplexStream<StreamRequest, StreamResponse>;
 }
 
-export const FrontendStreamClient = makeGenericClientConstructor(
-  FrontendStreamService,
-  "quip.matchmaker.FrontendStream",
-) as unknown as {
-  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): FrontendStreamClient;
-  service: typeof FrontendStreamService;
+export const FrontendClient = makeGenericClientConstructor(FrontendService, "quip.matchmaker.Frontend") as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): FrontendClient;
+  service: typeof FrontendService;
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
