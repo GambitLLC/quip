@@ -414,7 +414,7 @@ func (s *session) stopQueue(req *emptypb.Empty) (*pb.StreamResponse, error) {
 	}
 
 	err = s.srv.omfc.DeleteTicket(ctx, *player.TicketId)
-	if status.Code(err) != codes.NotFound {
+	if err != nil && status.Code(err) != codes.NotFound {
 		return nil, err
 	}
 

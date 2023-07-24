@@ -25,20 +25,20 @@ const (
 
 type GRPCHandler func(*grpc.Server)
 
-type AuthFunction func(context.Context) (context.Context, error)
+// type AuthFunction func(context.Context) (context.Context, error)
 
 type ServerParams struct {
 	logger   zerolog.Logger
 	ln       net.Listener
 	handlers []GRPCHandler
+	ui       []grpc.UnaryServerInterceptor
+	si       []grpc.StreamServerInterceptor
 
 	// Public certificate in PEM format.
 	// If this field is the same as rootCaPublicCertificateFileData then the certificate is not backed by a CA.
 	publicCertData []byte
 	// Private key in PEM format.
 	privateKeyData []byte
-
-	authenticator AuthFunction
 }
 
 func NewServerParams(cfg config.View, serviceName string, listen func(string, string) (net.Listener, error)) (*ServerParams, error) {
@@ -90,21 +90,25 @@ func (p *ServerParams) AddHandler(h GRPCHandler) {
 	p.handlers = append(p.handlers, h)
 }
 
-func (p *ServerParams) SetAuth(h AuthFunction) {
-	p.authenticator = h
+type WrappedStream struct {
+	grpc.ServerStream
+	Ctx context.Context
+}
+
+func (s *WrappedStream) Context() context.Context {
+	return s.Ctx
+}
+
+func (p *ServerParams) AddUnaryInterceptor(ui grpc.UnaryServerInterceptor) {
+	p.ui = append(p.ui, ui)
+}
+
+func (p *ServerParams) AddStreamInterceptor(si grpc.StreamServerInterceptor) {
+	p.si = append(p.si, si)
 }
 
 type Server struct {
 	srv *grpc.Server
-}
-
-type wrappedStream struct {
-	grpc.ServerStream
-	ctx context.Context
-}
-
-func (s *wrappedStream) Context() context.Context {
-	return s.ctx
 }
 
 func (s *Server) Start(p *ServerParams) error {
@@ -125,29 +129,13 @@ func (s *Server) Start(p *ServerParams) error {
 		opts = append(opts, grpc.Creds(credentials.NewServerTLSFromCert(&cert)))
 	}
 
-	// TODO: chain with other unary interceptors
-	if p.authenticator != nil {
-		opts = append(opts,
-			grpc.UnaryInterceptor(func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-				ctx, err = p.authenticator(ctx)
-				if err != nil {
-					return
-				}
+	// TODO: add unary interceptors too
+	if p.ui != nil {
+		opts = append(opts, grpc.ChainUnaryInterceptor(p.ui...))
+	}
 
-				return handler(ctx, req)
-			}),
-			grpc.StreamInterceptor(func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-				ctx, err := p.authenticator(ss.Context())
-				if err != nil {
-					return err
-				}
-
-				return handler(srv, &wrappedStream{
-					ServerStream: ss,
-					ctx:          ctx,
-				})
-			}),
-		)
+	if p.si != nil {
+		opts = append(opts, grpc.ChainStreamInterceptor(p.si...))
 	}
 
 	s.srv = grpc.NewServer(opts...)

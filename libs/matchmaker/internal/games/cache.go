@@ -11,6 +11,10 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 )
 
+const (
+	gamesFileConfigKey = "matchmaker.gamesFile"
+)
+
 type MatchProfileCache struct {
 	config.Cacher
 }

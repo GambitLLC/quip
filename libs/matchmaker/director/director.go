@@ -20,6 +20,7 @@ import (
 
 var logger = zerolog.New(os.Stderr).With().
 	Str("component", "matchmaker.director").
+	Timestamp().
 	Logger()
 
 type Service struct {
@@ -65,7 +66,7 @@ func (s *Service) Start(ctx context.Context) error {
 				go func(wg *sync.WaitGroup, profile *ompb.MatchProfile) {
 					defer wg.Done()
 
-					ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+					ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 					defer cancel()
 
 					matches, err := s.omBackend.FetchMatches(ctx, &ompb.FetchMatchesRequest{

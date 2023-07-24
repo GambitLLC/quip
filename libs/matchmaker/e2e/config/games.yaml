@@ -1,0 +1,4 @@
+games:
+  test:
+    players: 1
+    teams: 1
