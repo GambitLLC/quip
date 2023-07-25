@@ -128,7 +128,7 @@ func TestStream(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := newStreamService(t)
+			cfg := newService(t)
 			newOMFrontend(t, cfg)
 
 			client, _ := newClient(t, cfg)
@@ -198,7 +198,7 @@ func TestStream(t *testing.T) {
 	}
 }
 
-func newStreamService(t *testing.T) config.Mutable {
+func newService(t *testing.T) config.Mutable {
 	cfg := viper.New()
 	_ = statestoreTesting.NewService(t, cfg)
 	cfg.Set("broker.hostname", cfg.Get("matchmaker.redis.hostname"))
@@ -217,7 +217,7 @@ func newStreamService(t *testing.T) config.Mutable {
 		return handler(srv, ss)
 	}))
 
-	srv := NewStreamService(cfg)
+	srv := NewService(cfg)
 
 	// override game cache for testing
 	srv.gc = &games.GameDetailCache{
