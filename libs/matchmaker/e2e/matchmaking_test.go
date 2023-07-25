@@ -9,9 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/oauth"
-	"google.golang.org/grpc/status"
 
 	"github.com/GambitLLC/quip/libs/config"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
@@ -27,7 +25,6 @@ func TestCompleteMatch(t *testing.T) {
 	client, _ := newFrontendClient(t, cfg)
 	stream, err := client.Stream(ctx)
 	require.NoError(t, err, "client.Stream failed")
-	t.Cleanup(func() { _ = stream.CloseSend() })
 
 	resps, err := recvStream(t, ctx, stream)
 	require.NoError(t, err, "recvStream failed")
@@ -51,7 +48,7 @@ func TestCompleteMatch(t *testing.T) {
 		// expect status searching
 		select {
 		case <-ctx.Done():
-			require.Fail(t, "test timed out")
+			require.Fail(t, "test timed out waiting for queue started")
 		case resp := <-resps:
 			switch msg := resp.Message.(type) {
 			case *pb.StreamResponse_Error:
@@ -66,7 +63,7 @@ func TestCompleteMatch(t *testing.T) {
 		// wait for match found response
 		select {
 		case <-ctx.Done():
-			require.Fail(t, "test timed out")
+			require.Fail(t, "test timed out waiting for match found")
 		case resp := <-resps:
 			switch msg := resp.Message.(type) {
 			case *pb.StreamResponse_Error:
@@ -77,7 +74,33 @@ func TestCompleteMatch(t *testing.T) {
 		}
 	}
 
-	require.Fail(t, "not yet implemented")
+	{
+		// wait for idle again
+		select {
+		case <-ctx.Done():
+			require.Fail(t, "test timed out waiting for idle")
+		case resp := <-resps:
+			switch msg := resp.Message.(type) {
+			case *pb.StreamResponse_Error:
+				require.Fail(t, "recv'd StreamResponse_Error", msg.Error)
+			case *pb.StreamResponse_StatusUpdate:
+				require.Equal(t, pb.State_STATE_IDLE, msg.StatusUpdate.State, "expected state idle")
+			}
+		}
+	}
+
+	{
+		// wait for stream to close
+		err := stream.CloseSend()
+		require.NoError(t, err, "stream.CloseSend failed")
+
+		select {
+		case <-ctx.Done():
+			require.Fail(t, "test timed out waiting for stream to close")
+		case <-stream.Context().Done():
+			// no op
+		}
+	}
 }
 
 func newFrontendClient(t *testing.T, cfg config.View) (pb.FrontendClient, string) {
@@ -102,7 +125,7 @@ func recvStream(t *testing.T, ctx context.Context, stream pb.Frontend_StreamClie
 	go func() {
 		for {
 			msg, err := stream.Recv()
-			if err == io.EOF || status.Code(err) == codes.DeadlineExceeded {
+			if err == io.EOF {
 				return
 			}
 

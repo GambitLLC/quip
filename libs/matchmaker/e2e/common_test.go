@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"os"
 	"sync"
@@ -27,6 +28,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	ompb "open-match.dev/open-match/pkg/pb"
@@ -39,6 +41,8 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/frontend"
 	statestoreTesting "github.com/GambitLLC/quip/libs/matchmaker/internal/statestore/testing"
 	"github.com/GambitLLC/quip/libs/matchmaker/matchfunction"
+	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
+	"github.com/GambitLLC/quip/libs/rpc"
 	"github.com/GambitLLC/quip/libs/test/data"
 )
 
@@ -55,36 +59,6 @@ func start(t *testing.T) config.View {
 	cfg.Set("api.tls.rootCertificateFile", data.Path("x509/ca_cert.pem"))
 
 	// TODO: add cfg logging.level
-
-	// {
-	// 	// spin up matchfunction without tls ...
-	// 	emptyCfg := viper.New()
-
-	// 	ln, err := net.Listen("tcp", ":0")
-	// 	require.NoError(t, err, "net.Listen failed")
-
-	// 	_, port, err := net.SplitHostPort(ln.Addr().String())
-	// 	require.NoError(t, err, "net.SplitHostPort failed")
-
-	// 	services := []string{
-	// 		apptest.ServiceName,
-	// 		"matchmaker.matchfunction",
-	// 	}
-
-	// 	for _, svc := range services {
-	// 		emptyCfg.Set(svc+".hostname", "localhost")
-	// 		emptyCfg.Set(svc+".port", port)
-	// 		cfg.Set(svc+".hostname", "localhost")
-	// 		cfg.Set(svc+".port", port)
-	// 	}
-
-	// 	apptest.TestGRPCService(
-	// 		t,
-	// 		emptyCfg,
-	// 		[]net.Listener{ln},
-	// 		matchfunction.BindService,
-	// 	)
-	// }
 
 	// spin up all services
 	ln, err := net.Listen("tcp", ":0")
@@ -162,7 +136,9 @@ func createDidToken(t *testing.T) (string, string) {
 }
 
 func bindAgonesService(cfg config.View, b *appmain.GRPCBindings) error {
-	svc := &agonesService{}
+	svc := &agonesService{
+		cfg: cfg,
+	}
 
 	b.AddHandler(func(s *grpc.Server) {
 		agones.RegisterAllocationServiceServer(s, svc)
@@ -193,10 +169,30 @@ func newGRPCClient(cfg config.View, addr string, opts ...grpc.DialOption) (*grpc
 }
 
 type agonesService struct {
+	cfg config.View
 	agones.UnimplementedAllocationServiceServer
 }
 
 func (s *agonesService) Allocate(ctx context.Context, req *agones.AllocationRequest) (*agones.AllocationResponse, error) {
+	annotations := req.GetMetadata().GetAnnotations()
+	if annotations == nil {
+		return nil, errors.New(".Metadata.Annotations is required")
+	}
+
+	bs, ok := annotations["match_details"]
+	if !ok {
+		return nil, errors.New(".Metadata.Annotations[\"match_details\"] is required")
+	}
+
+	details := &pb.AllocateMatchRequest{}
+	if err := protojson.Unmarshal([]byte(bs), details); err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal match_details from annotations")
+	}
+
+	if err := createServer(s.cfg, details); err != nil {
+		return nil, err
+	}
+
 	return &agones.AllocationResponse{
 		Address: "localhost",
 		Ports: []*agones.AllocationResponse_GameServerStatusPort{
@@ -206,6 +202,26 @@ func (s *agonesService) Allocate(ctx context.Context, req *agones.AllocationRequ
 			},
 		},
 	}, nil
+}
+
+func createServer(cfg config.View, details *pb.AllocateMatchRequest) error {
+	conn, err := rpc.GRPCClientFromConfig(cfg, "matchmaker.backend")
+	if err != nil {
+		return errors.Wrap(err, "create grpc client failed")
+	}
+
+	go func() {
+		<-time.After(3 * time.Second)
+		client := pb.NewBackendClient(conn)
+		_, err := client.FinishMatch(context.Background(), &pb.FinishMatchRequest{
+			MatchId: details.MatchId,
+		})
+		if err != nil {
+			log.Printf("failed to finish match: %v", err)
+		}
+	}()
+
+	return nil
 }
 
 func bindOpenMatchService(cfg config.View, b *appmain.GRPCBindings) error {

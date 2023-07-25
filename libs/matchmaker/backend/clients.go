@@ -2,10 +2,11 @@ package backend
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	agones "agones.dev/agones/pkg/allocation/go"
+	"github.com/pkg/errors"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/GambitLLC/quip/libs/config"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
@@ -42,7 +43,22 @@ func (ac *agonesAllocationClient) Allocate(ctx context.Context, req *pb.Allocate
 		return "", err
 	}
 
-	resp, err := client.(agones.AllocationServiceClient).Allocate(ctx, &agones.AllocationRequest{})
+	bs, err := protojson.Marshal(req)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to marshal req")
+	}
+
+	resp, err := client.(agones.AllocationServiceClient).Allocate(
+		ctx,
+		&agones.AllocationRequest{
+			Metadata: &agones.MetaPatch{
+				Annotations: map[string]string{
+					"match_details": string(bs),
+				},
+			},
+			GameServerSelectors: []*agones.GameServerSelector{},
+		},
+	)
 	if err != nil {
 		return "", err
 	}
