@@ -22,7 +22,8 @@ type session struct {
 	id     string
 	stream pb.Frontend_StreamServer
 
-	resps chan *pb.StreamResponse
+	statusUpdates <-chan *pb.Status
+	resps         chan *pb.StreamResponse
 }
 
 func (s *Service) newSession(stream pb.Frontend_StreamServer) (*session, error) {
@@ -31,11 +32,17 @@ func (s *Service) newSession(stream pb.Frontend_StreamServer) (*session, error) 
 		return nil, status.Error(codes.Unauthenticated, "Player-Id is unknown")
 	}
 
+	ch, err := s.subscribe(id)
+	if err != nil {
+		return nil, err
+	}
+
 	return &session{
-		srv:    s,
-		id:     id,
-		stream: stream,
-		resps:  make(chan *pb.StreamResponse, 1),
+		srv:           s,
+		id:            id,
+		stream:        stream,
+		statusUpdates: ch,
+		resps:         make(chan *pb.StreamResponse, 1),
 	}, nil
 }
 
@@ -84,24 +91,36 @@ func (s *session) send() {
 		select {
 		case <-s.stream.Context().Done():
 			return
+		case update := <-s.statusUpdates:
+			s.sendResp(&pb.StreamResponse{
+				Message: &pb.StreamResponse_StatusUpdate{
+					StatusUpdate: update,
+				},
+			})
 		case resp := <-s.resps:
-			if s, ok := status.FromError(s.stream.Send(resp)); ok {
-				switch s.Code() {
-				case codes.OK:
-					// noop
-				case codes.Canceled, codes.DeadlineExceeded:
-					// client closed
-					return
-				default:
-					logger.Err(s.Err()).Msg("stream.Send failed")
-				}
-			}
+			s.sendResp(resp)
+		}
+	}
+}
+
+func (s *session) sendResp(resp *pb.StreamResponse) {
+	if s, ok := status.FromError(s.stream.Send(resp)); ok {
+		switch s.Code() {
+		case codes.OK:
+			// noop
+		case codes.Canceled, codes.DeadlineExceeded:
+			// client closed
+			return
+		default:
+			logger.Err(s.Err()).Msg("stream.Send failed")
 		}
 	}
 }
 
 // cleanup makes sure closed sessions are reset to an initial state (e.g. queue is stopped)
 func (s *session) cleanup() {
+	s.srv.unsubscribe(s.statusUpdates)
+
 	// discard irrelevant stop queue response message
 	_, err := s.stopQueue(&emptypb.Empty{})
 	if err != nil {
