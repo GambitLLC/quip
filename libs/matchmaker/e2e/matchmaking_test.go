@@ -70,6 +70,8 @@ func TestCompleteMatch(t *testing.T) {
 				require.Fail(t, "recv'd StreamResponse_Error", msg.Error)
 			case *pb.StreamResponse_StatusUpdate:
 				require.Equal(t, pb.State_STATE_PLAYING, msg.StatusUpdate.State, "expected state playing")
+				details := msg.StatusUpdate.GetMatched()
+				require.NotNil(t, details, "expected match details")
 			}
 		}
 	}
