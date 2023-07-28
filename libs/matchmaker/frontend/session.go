@@ -13,6 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
@@ -225,8 +226,7 @@ func getStatusDetails(ctx context.Context, id string, store statestore.Service, 
 			}, nil
 		}
 
-		details := &ipb.TicketInternal{}
-		err = ticket.Extensions["details"].UnmarshalTo(details)
+		details, err := protoext.GetTicketDetails(ticket)
 		if err != nil {
 			// TODO: handle err instead of propagating
 			return nil, err

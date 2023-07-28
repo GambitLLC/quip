@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/protobuf/types/known/anypb"
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	"github.com/GambitLLC/quip/libs/rpc"
 )
 
@@ -44,18 +44,14 @@ func (fc *omFrontendClient) CreateTicket(ctx context.Context, req *ipb.TicketInt
 		return nil, err
 	}
 
-	detailsAny, err := anypb.New(req)
-	if err != nil {
-		return nil, err
-	}
-
 	ticket := &ompb.Ticket{
 		SearchFields: &ompb.SearchFields{
 			Tags: []string{fmt.Sprintf("mode.%s", req.Gamemode)},
 		},
-		Extensions: map[string]*anypb.Any{
-			"details": detailsAny,
-		},
+	}
+
+	if err := protoext.AddTicketDetails(ticket, req); err != nil {
+		return nil, err
 	}
 
 	ticket, err = client.(ompb.FrontendServiceClient).CreateTicket(

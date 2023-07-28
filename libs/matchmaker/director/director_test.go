@@ -17,6 +17,7 @@ import (
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	statestoreTesting "github.com/GambitLLC/quip/libs/matchmaker/internal/statestore/testing"
 	"github.com/GambitLLC/quip/libs/matchmaker/matchfunction"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
@@ -115,22 +116,20 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 	tickets := make([]*ompb.Ticket, 2)
 
 	for i := range tickets {
-		ticketInternal := &ipb.TicketInternal{
+		ticket := &ompb.Ticket{
+			Id: xid.New().String(),
+		}
+
+		details := &ipb.TicketInternal{
 			PlayerId: xid.New().String(),
 			Gamemode: "test",
 		}
 
-		detailsAny, err := anypb.New(ticketInternal)
-		if err != nil {
+		if err := protoext.AddTicketDetails(ticket, details); err != nil {
 			return err
 		}
 
-		tickets[i] = &ompb.Ticket{
-			Id: xid.New().String(),
-			Extensions: map[string]*anypb.Any{
-				"details": detailsAny,
-			},
-		}
+		tickets[i] = ticket
 	}
 
 	gameCfg := &pb.GameConfiguration{
