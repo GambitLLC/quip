@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 )
 
 const (
@@ -21,24 +21,14 @@ type MatchProfileCache struct {
 
 func NewMatchProfileCache() *MatchProfileCache {
 	newInstance := func(cfg config.View) (interface{}, func(), error) {
-
 		details, err := parseGameDetails(cfg)
 		if err != nil {
 			return nil, nil, err
 		}
-		// games, ok := cfg.Get("games").(map[string]interface{})
-		// if !ok {
-		// 	return nil, nil, errors.New("failed to read 'games' from config")
-		// }
 
 		profiles := make([]*ompb.MatchProfile, 0, len(details))
 		for name, details := range details {
-			detailsAny, err := anypb.New(details)
-			if err != nil {
-				return nil, nil, errors.WithMessagef(err, "failed to marshal game details for 'games.%s'", name)
-			}
-
-			profiles = append(profiles, &ompb.MatchProfile{
+			profile := &ompb.MatchProfile{
 				Name: fmt.Sprintf("profile-%s", name),
 				Pools: []*ompb.Pool{
 					{
@@ -48,10 +38,12 @@ func NewMatchProfileCache() *MatchProfileCache {
 						},
 					},
 				},
-				Extensions: map[string]*anypb.Any{
-					"details": detailsAny,
-				},
-			})
+			}
+			if err := protoext.SetOpenMatchProfileDetails(profile, details); err != nil {
+				return nil, nil, err
+			}
+
+			profiles = append(profiles, profile)
 		}
 
 		return profiles, nil, nil

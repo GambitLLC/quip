@@ -125,7 +125,7 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 			Gamemode: "test",
 		}
 
-		if err := protoext.AddTicketDetails(ticket, details); err != nil {
+		if err := protoext.SetOpenMatchTicketDetails(ticket, details); err != nil {
 			return err
 		}
 

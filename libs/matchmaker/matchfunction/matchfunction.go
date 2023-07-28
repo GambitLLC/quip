@@ -16,7 +16,6 @@ import (
 
 	"github.com/GambitLLC/quip/libs/appmain"
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
@@ -74,9 +73,9 @@ func (s *Service) Run(req *ompb.RunRequest, stream ompb.MatchFunction_RunServer)
 }
 
 func makeMatches(p *ompb.MatchProfile, poolTickets map[string][]*ompb.Ticket) ([]*ompb.Match, error) {
-	gameDetails := &ipb.GameDetails{}
-	if err := p.Extensions["details"].UnmarshalTo(gameDetails); err != nil {
-		return nil, errors.WithMessagef(err, "failed to unmarshal game details from MatchProfile")
+	gameDetails, err := protoext.OpenMatchProfileDetails(p)
+	if err != nil {
+		return nil, err
 	}
 
 	// TODO: tickets are currently assumed to be 1 per player, deal with multi-player tickets
@@ -137,7 +136,7 @@ func CreateMatchRoster(tickets []*ompb.Ticket) (*pb.MatchRoster, error) {
 	// teams := make([]*pb.MatchDetails_Team, len(tickets))
 	players := make([]string, len(tickets))
 	for _, ticket := range tickets {
-		details, err := protoext.GetTicketDetails(ticket)
+		details, err := protoext.OpenMatchTicketDetails(ticket)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "failed to read details on ticket '%s", ticket.Id)
 		}

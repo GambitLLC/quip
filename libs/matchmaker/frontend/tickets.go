@@ -50,7 +50,7 @@ func (fc *omFrontendClient) CreateTicket(ctx context.Context, req *ipb.TicketInt
 		},
 	}
 
-	if err := protoext.AddTicketDetails(ticket, req); err != nil {
+	if err := protoext.SetOpenMatchTicketDetails(ticket, req); err != nil {
 		return nil, err
 	}
 

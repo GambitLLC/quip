@@ -226,7 +226,7 @@ func getStatusDetails(ctx context.Context, id string, store statestore.Service, 
 			}, nil
 		}
 
-		details, err := protoext.GetTicketDetails(ticket)
+		details, err := protoext.OpenMatchTicketDetails(ticket)
 		if err != nil {
 			// TODO: handle err instead of propagating
 			return nil, err
