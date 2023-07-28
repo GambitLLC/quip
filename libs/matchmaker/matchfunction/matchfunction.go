@@ -17,6 +17,7 @@ import (
 	"github.com/GambitLLC/quip/libs/appmain"
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
@@ -136,8 +137,7 @@ func CreateMatchRoster(tickets []*ompb.Ticket) (*pb.MatchRoster, error) {
 	// teams := make([]*pb.MatchDetails_Team, len(tickets))
 	players := make([]string, len(tickets))
 	for _, ticket := range tickets {
-		details := &ipb.TicketInternal{}
-		err := ticket.Extensions["details"].UnmarshalTo(details)
+		details, err := protoext.GetTicketDetails(ticket)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "failed to read details on ticket '%s", ticket.Id)
 		}
