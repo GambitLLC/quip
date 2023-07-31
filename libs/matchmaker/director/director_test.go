@@ -6,12 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rs/xid"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/anypb"
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
@@ -132,34 +130,30 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 		tickets[i] = ticket
 	}
 
-	gameCfg := &pb.GameConfiguration{
-		Gamemode: "test",
-	}
-	gameCfgAny, err := anypb.New(gameCfg)
-	if err != nil {
-		return errors.WithMessage(err, "failed to create anypb from game config")
-	}
-
 	roster, err := matchfunction.CreateMatchRoster(tickets)
 	if err != nil {
 		return err
 	}
-	rosterAny, err := anypb.New(roster)
+
+	match := &ompb.Match{
+		MatchId:       xid.New().String(),
+		MatchProfile:  req.Profile.Name,
+		MatchFunction: "static match generator",
+		Tickets:       tickets,
+	}
+	err = protoext.SetOpenMatchMatchDetails(match, &ipb.MatchDetails{
+		MatchId: match.MatchId,
+		Roster:  roster,
+		Config: &ipb.MatchDetails_GameConfiguration{
+			Gamemode: "test",
+		},
+	})
 	if err != nil {
 		return err
 	}
 
 	srv.Send(&ompb.FetchMatchesResponse{
-		Match: &ompb.Match{
-			MatchId:       xid.New().String(),
-			MatchProfile:  req.Profile.Name,
-			MatchFunction: "static match generator",
-			Tickets:       tickets,
-			Extensions: map[string]*anypb.Any{
-				"game_config": gameCfgAny,
-				"roster":      rosterAny,
-			},
-		},
+		Match: match,
 	})
 	return nil
 }

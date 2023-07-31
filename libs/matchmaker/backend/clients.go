@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/GambitLLC/quip/libs/config"
-	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/rpc"
 )
 
@@ -37,7 +37,7 @@ func newAgonesAllocationClient(cfg config.View) *agonesAllocationClient {
 	}
 }
 
-func (ac *agonesAllocationClient) Allocate(ctx context.Context, req *pb.AllocateMatchRequest) (string, error) {
+func (ac *agonesAllocationClient) Allocate(ctx context.Context, req *ipb.MatchDetails) (string, error) {
 	client, err := ac.cacher.Get()
 	if err != nil {
 		return "", err
@@ -53,7 +53,7 @@ func (ac *agonesAllocationClient) Allocate(ctx context.Context, req *pb.Allocate
 		&agones.AllocationRequest{
 			Metadata: &agones.MetaPatch{
 				Annotations: map[string]string{
-					"match_details": string(bs),
+					"details": string(bs),
 				},
 			},
 			GameServerSelectors: []*agones.GameServerSelector{},

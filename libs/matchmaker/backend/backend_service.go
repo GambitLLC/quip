@@ -70,17 +70,24 @@ func (s *Service) AllocateMatch(ctx context.Context, req *pb.AllocateMatchReques
 		}
 	}()
 
-	ip, err := s.agones.Allocate(ctx, req)
+	details := &ipb.MatchDetails{
+		MatchId: req.MatchId,
+		Roster: &ipb.MatchDetails_Roster{
+			Players: players,
+		},
+		Config: &ipb.MatchDetails_GameConfiguration{
+			Gamemode: gameCfg.Gamemode,
+		},
+	}
+
+	ip, err := s.agones.Allocate(ctx, details)
 	if err != nil {
 		// TODO: check err, don't just propagate
 		return nil, err
 	}
 
-	err = s.store.CreateMatch(ctx, &ipb.MatchDetails{
-		MatchId:    req.MatchId,
-		Connection: ip,
-		Players:    players,
-	})
+	details.Connection = ip
+	err = s.store.CreateMatch(ctx, details)
 	if err != nil {
 		return nil, err
 	}
@@ -98,13 +105,15 @@ func (s *Service) FinishMatch(ctx context.Context, req *pb.FinishMatchRequest) (
 		return nil, err
 	}
 
-	err = s.store.UntrackMatch(ctx, match.Players)
+	players := match.GetRoster().Players
+
+	err = s.store.UntrackMatch(ctx, players)
 	if err != nil {
 		return nil, err
 	}
 
 	go s.broker.PublishStatusUpdate(context.Background(), &pb.StatusUpdate{
-		Targets: match.Players,
+		Targets: players,
 		Status: &pb.Status{
 			State: pb.State_STATE_IDLE,
 			Details: &pb.Status_Stopped{

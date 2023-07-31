@@ -39,6 +39,7 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/backend"
 	"github.com/GambitLLC/quip/libs/matchmaker/director"
 	"github.com/GambitLLC/quip/libs/matchmaker/frontend"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	statestoreTesting "github.com/GambitLLC/quip/libs/matchmaker/internal/statestore/testing"
 	"github.com/GambitLLC/quip/libs/matchmaker/matchfunction"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
@@ -179,14 +180,14 @@ func (s *agonesService) Allocate(ctx context.Context, req *agones.AllocationRequ
 		return nil, errors.New(".Metadata.Annotations is required")
 	}
 
-	bs, ok := annotations["match_details"]
+	bs, ok := annotations["details"]
 	if !ok {
-		return nil, errors.New(".Metadata.Annotations[\"match_details\"] is required")
+		return nil, errors.New(".Metadata.Annotations[\"details\"] is required")
 	}
 
-	details := &pb.AllocateMatchRequest{}
+	details := &ipb.MatchDetails{}
 	if err := protojson.Unmarshal([]byte(bs), details); err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal match_details from annotations")
+		return nil, errors.Wrap(err, "failed to unmarshal details from annotations")
 	}
 
 	if err := createServer(s.cfg, details); err != nil {
@@ -204,7 +205,7 @@ func (s *agonesService) Allocate(ctx context.Context, req *agones.AllocationRequ
 	}, nil
 }
 
-func createServer(cfg config.View, details *pb.AllocateMatchRequest) error {
+func createServer(cfg config.View, details *ipb.MatchDetails) error {
 	conn, err := rpc.GRPCClientFromConfig(cfg, "matchmaker.backend")
 	if err != nil {
 		return errors.Wrap(err, "create grpc client failed")

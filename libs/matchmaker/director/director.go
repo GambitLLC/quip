@@ -14,6 +14,7 @@ import (
 	"github.com/GambitLLC/quip/libs/broker"
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
@@ -99,22 +100,19 @@ func (s *Service) Start(ctx context.Context) error {
 }
 
 func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
-	gameCfg := &pb.GameConfiguration{}
-	err := match.Extensions["game_config"].UnmarshalTo(gameCfg)
+	details, err := protoext.OpenMatchMatchDetails(match)
 	if err != nil {
-		return errors.WithMessage(err, "failed to parse game config")
-	}
-
-	roster := &pb.MatchRoster{}
-	err = match.Extensions["roster"].UnmarshalTo(roster)
-	if err != nil {
-		return errors.WithMessage(err, "failed to parse match details")
+		return err
 	}
 
 	resp, err := s.backend.AllocateMatch(ctx, &pb.AllocateMatchRequest{
-		MatchId:    match.MatchId,
-		GameConfig: gameCfg,
-		Roster:     roster,
+		MatchId: match.MatchId,
+		GameConfig: &pb.GameConfiguration{
+			Gamemode: details.GetConfig().Gamemode,
+		},
+		Roster: &pb.MatchRoster{
+			Players: details.GetRoster().Players,
+		},
 	})
 
 	if err != nil {
@@ -128,7 +126,7 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 	}
 
 	go s.broker.PublishStatusUpdate(context.Background(), &pb.StatusUpdate{
-		Targets: roster.Players,
+		Targets: details.GetRoster().Players,
 		Status: &pb.Status{
 			State: pb.State_STATE_PLAYING,
 			Details: &pb.Status_Matched{

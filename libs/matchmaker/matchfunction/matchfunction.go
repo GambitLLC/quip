@@ -10,14 +10,13 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/anypb"
 	"open-match.dev/open-match/pkg/matchfunction"
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/appmain"
 	"github.com/GambitLLC/quip/libs/config"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
-	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
 var logger = zerolog.New(os.Stderr).With().
@@ -90,12 +89,8 @@ func makeMatches(p *ompb.MatchProfile, poolTickets map[string][]*ompb.Ticket) ([
 		return nil, errors.Errorf("missing required pool named 'all'")
 	}
 
-	gameCfg := &pb.GameConfiguration{
+	gameCfg := &ipb.MatchDetails_GameConfiguration{
 		Gamemode: gameDetails.Gamemode,
-	}
-	gameCfgAny, err := anypb.New(gameCfg)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create anypb from game config: %s", err.Error())
 	}
 
 	matches := []*ompb.Match{}
@@ -112,27 +107,29 @@ func makeMatches(p *ompb.MatchProfile, poolTickets map[string][]*ompb.Ticket) ([
 			return nil, err
 		}
 
-		matchRosterAny, err := anypb.New(matchRoster)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to create anypb from match details: %s", err.Error())
-		}
-
-		matches = append(matches, &ompb.Match{
+		match := &ompb.Match{
 			MatchId:       fmt.Sprintf("profile-%v-%s", p.GetName(), xid.New().String()),
 			MatchProfile:  p.GetName(),
 			MatchFunction: "basic-matchfunction",
 			Tickets:       matchTickets,
-			Extensions: map[string]*anypb.Any{
-				"game_config": gameCfgAny,
-				"roster":      matchRosterAny,
-			},
+		}
+
+		err = protoext.SetOpenMatchMatchDetails(match, &ipb.MatchDetails{
+			MatchId: match.MatchId,
+			Roster:  matchRoster,
+			Config:  gameCfg,
 		})
+		if err != nil {
+			return nil, err
+		}
+
+		matches = append(matches, match)
 	}
 
 	return matches, nil
 }
 
-func CreateMatchRoster(tickets []*ompb.Ticket) (*pb.MatchRoster, error) {
+func CreateMatchRoster(tickets []*ompb.Ticket) (*ipb.MatchDetails_Roster, error) {
 	// teams := make([]*pb.MatchDetails_Team, len(tickets))
 	players := make([]string, len(tickets))
 	for _, ticket := range tickets {
@@ -144,7 +141,7 @@ func CreateMatchRoster(tickets []*ompb.Ticket) (*pb.MatchRoster, error) {
 		players = append(players, details.PlayerId)
 	}
 
-	return &pb.MatchRoster{
+	return &ipb.MatchDetails_Roster{
 		Players: players,
 	}, nil
 }
