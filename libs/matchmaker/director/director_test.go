@@ -120,7 +120,7 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 			Id: xid.New().String(),
 		}
 
-		details := &ipb.TicketInternal{
+		details := &ipb.TicketDetails{
 			PlayerId: xid.New().String(),
 			Gamemode: "test",
 		}

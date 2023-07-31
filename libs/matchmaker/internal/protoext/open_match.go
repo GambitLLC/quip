@@ -11,7 +11,7 @@ import (
 const extensionTicketDetailsKey string = "details"
 
 // SetOpenMatchTicketDetails puts details into the extensions on an Open Match ticket.
-func SetOpenMatchTicketDetails(dst *ompb.Ticket, details *ipb.TicketInternal) error {
+func SetOpenMatchTicketDetails(dst *ompb.Ticket, details *ipb.TicketDetails) error {
 	any, err := anypb.New(details)
 	if err != nil {
 		return err
@@ -28,7 +28,7 @@ func SetOpenMatchTicketDetails(dst *ompb.Ticket, details *ipb.TicketInternal) er
 }
 
 // OpenMatchTicketDetails gets details from extensions on an Open Match ticket.
-func OpenMatchTicketDetails(src *ompb.Ticket) (*ipb.TicketInternal, error) {
+func OpenMatchTicketDetails(src *ompb.Ticket) (*ipb.TicketDetails, error) {
 	ext := src.GetExtensions()
 	if ext == nil {
 		return nil, errors.New(".Extensions is nil")
@@ -39,7 +39,7 @@ func OpenMatchTicketDetails(src *ompb.Ticket) (*ipb.TicketInternal, error) {
 		return nil, errors.Errorf(".Extensions is missing expected key: '%s'", extensionTicketDetailsKey)
 	}
 
-	details := &ipb.TicketInternal{}
+	details := &ipb.TicketDetails{}
 	if err := any.UnmarshalTo(details); err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func OpenMatchTicketDetails(src *ompb.Ticket) (*ipb.TicketInternal, error) {
 const extensionProfileDetailsKey string = "details"
 
 // SetOpenMatchProfileDetails puts details into the extensions on an Open Match MatchProfile.
-func SetOpenMatchProfileDetails(dst *ompb.MatchProfile, details *ipb.GameDetails) error {
+func SetOpenMatchProfileDetails(dst *ompb.MatchProfile, details *ipb.ProfileDetails) error {
 	any, err := anypb.New(details)
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func SetOpenMatchProfileDetails(dst *ompb.MatchProfile, details *ipb.GameDetails
 }
 
 // OpenMatchProfileDetails gets details from extensions on an Open Match MatchProfile.
-func OpenMatchProfileDetails(src *ompb.MatchProfile) (*ipb.GameDetails, error) {
+func OpenMatchProfileDetails(src *ompb.MatchProfile) (*ipb.ProfileDetails, error) {
 	ext := src.GetExtensions()
 	if ext == nil {
 		return nil, errors.New(".Extensions is nil")
@@ -78,7 +78,7 @@ func OpenMatchProfileDetails(src *ompb.MatchProfile) (*ipb.GameDetails, error) {
 		return nil, errors.Errorf(".Extensions is missing expected key: '%s'", extensionProfileDetailsKey)
 	}
 
-	details := &ipb.GameDetails{}
+	details := &ipb.ProfileDetails{}
 	if err := any.UnmarshalTo(details); err != nil {
 		return nil, err
 	}

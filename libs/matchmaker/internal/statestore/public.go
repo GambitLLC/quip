@@ -19,9 +19,9 @@ type Service interface {
 
 	// Player
 
-	CreatePlayer(ctx context.Context, player *ipb.PlayerInternal) error
+	CreatePlayer(ctx context.Context, player *ipb.PlayerDetails) error
 
-	GetPlayer(ctx context.Context, id string) (*ipb.PlayerInternal, error)
+	GetPlayer(ctx context.Context, id string) (*ipb.PlayerDetails, error)
 
 	TrackTicket(ctx context.Context, id string, playerIds []string) error
 
@@ -33,9 +33,9 @@ type Service interface {
 
 	// Matches
 
-	CreateMatch(ctx context.Context, match *ipb.MatchInternal) error
+	CreateMatch(ctx context.Context, match *ipb.MatchDetails) error
 
-	GetMatch(ctx context.Context, id string) (*ipb.MatchInternal, error)
+	GetMatch(ctx context.Context, id string) (*ipb.MatchDetails, error)
 
 	DeleteMatch(ctx context.Context, id string) error
 }

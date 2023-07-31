@@ -94,19 +94,24 @@ export const GameConfiguration = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): GameConfiguration {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGameConfiguration();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.gamemode = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -117,7 +122,9 @@ export const GameConfiguration = {
 
   toJSON(message: GameConfiguration): unknown {
     const obj: any = {};
-    message.gamemode !== undefined && (obj.gamemode = message.gamemode);
+    if (message.gamemode !== "") {
+      obj.gamemode = message.gamemode;
+    }
     return obj;
   },
 
@@ -148,22 +155,31 @@ export const QueueDetails = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): QueueDetails {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseQueueDetails();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.config = GameConfiguration.decode(reader, reader.uint32());
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.startTime = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -177,9 +193,12 @@ export const QueueDetails = {
 
   toJSON(message: QueueDetails): unknown {
     const obj: any = {};
-    message.config !== undefined &&
-      (obj.config = message.config ? GameConfiguration.toJSON(message.config) : undefined);
-    message.startTime !== undefined && (obj.startTime = message.startTime.toISOString());
+    if (message.config !== undefined) {
+      obj.config = GameConfiguration.toJSON(message.config);
+    }
+    if (message.startTime !== undefined) {
+      obj.startTime = message.startTime.toISOString();
+    }
     return obj;
   },
 
@@ -210,19 +229,24 @@ export const QueueStopped = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): QueueStopped {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseQueueStopped();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.message = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -233,7 +257,9 @@ export const QueueStopped = {
 
   toJSON(message: QueueStopped): unknown {
     const obj: any = {};
-    message.message !== undefined && (obj.message = message.message);
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
     return obj;
   },
 
@@ -264,22 +290,31 @@ export const MatchDetails = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): MatchDetails {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseMatchDetails();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.matchId = reader.string();
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.connection = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -293,8 +328,12 @@ export const MatchDetails = {
 
   toJSON(message: MatchDetails): unknown {
     const obj: any = {};
-    message.matchId !== undefined && (obj.matchId = message.matchId);
-    message.connection !== undefined && (obj.connection = message.connection);
+    if (message.matchId !== "") {
+      obj.matchId = message.matchId;
+    }
+    if (message.connection !== "") {
+      obj.connection = message.connection;
+    }
     return obj;
   },
 
@@ -332,28 +371,45 @@ export const Status = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): Status {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseStatus();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 8) {
+            break;
+          }
+
           message.state = reader.int32() as any;
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.searching = QueueDetails.decode(reader, reader.uint32());
-          break;
+          continue;
         case 3:
+          if (tag !== 26) {
+            break;
+          }
+
           message.stopped = QueueStopped.decode(reader, reader.uint32());
-          break;
+          continue;
         case 4:
+          if (tag !== 34) {
+            break;
+          }
+
           message.matched = MatchDetails.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -369,11 +425,18 @@ export const Status = {
 
   toJSON(message: Status): unknown {
     const obj: any = {};
-    message.state !== undefined && (obj.state = stateToJSON(message.state));
-    message.searching !== undefined &&
-      (obj.searching = message.searching ? QueueDetails.toJSON(message.searching) : undefined);
-    message.stopped !== undefined && (obj.stopped = message.stopped ? QueueStopped.toJSON(message.stopped) : undefined);
-    message.matched !== undefined && (obj.matched = message.matched ? MatchDetails.toJSON(message.matched) : undefined);
+    if (message.state !== 0) {
+      obj.state = stateToJSON(message.state);
+    }
+    if (message.searching !== undefined) {
+      obj.searching = QueueDetails.toJSON(message.searching);
+    }
+    if (message.stopped !== undefined) {
+      obj.stopped = QueueStopped.toJSON(message.stopped);
+    }
+    if (message.matched !== undefined) {
+      obj.matched = MatchDetails.toJSON(message.matched);
+    }
     return obj;
   },
 
@@ -413,22 +476,31 @@ export const StatusUpdate = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): StatusUpdate {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseStatusUpdate();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.targets.push(reader.string());
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.status = Status.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -442,12 +514,12 @@ export const StatusUpdate = {
 
   toJSON(message: StatusUpdate): unknown {
     const obj: any = {};
-    if (message.targets) {
-      obj.targets = message.targets.map((e) => e);
-    } else {
-      obj.targets = [];
+    if (message.targets?.length) {
+      obj.targets = message.targets;
     }
-    message.status !== undefined && (obj.status = message.status ? Status.toJSON(message.status) : undefined);
+    if (message.status !== undefined) {
+      obj.status = Status.toJSON(message.status);
+    }
     return obj;
   },
 
@@ -465,10 +537,10 @@ export const StatusUpdate = {
   },
 };
 
-declare var self: any | undefined;
-declare var window: any | undefined;
-declare var global: any | undefined;
-var tsProtoGlobalThis: any = (() => {
+declare const self: any | undefined;
+declare const window: any | undefined;
+declare const global: any | undefined;
+const tsProtoGlobalThis: any = (() => {
   if (typeof globalThis !== "undefined") {
     return globalThis;
   }
@@ -502,8 +574,8 @@ function toTimestamp(date: Date): Timestamp {
 }
 
 function fromTimestamp(t: Timestamp): Date {
-  let millis = t.seconds * 1_000;
-  millis += t.nanos / 1_000_000;
+  let millis = (t.seconds || 0) * 1_000;
+  millis += (t.nanos || 0) / 1_000_000;
   return new Date(millis);
 }
 

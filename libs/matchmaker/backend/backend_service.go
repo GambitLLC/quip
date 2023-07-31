@@ -76,7 +76,7 @@ func (s *Service) AllocateMatch(ctx context.Context, req *pb.AllocateMatchReques
 		return nil, err
 	}
 
-	err = s.store.CreateMatch(ctx, &ipb.MatchInternal{
+	err = s.store.CreateMatch(ctx, &ipb.MatchDetails{
 		MatchId:    req.MatchId,
 		Connection: ip,
 		Players:    players,

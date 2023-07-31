@@ -14,7 +14,7 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 )
 
-func (rb *redisBackend) CreateMatch(ctx context.Context, match *ipb.MatchInternal) error {
+func (rb *redisBackend) CreateMatch(ctx context.Context, match *ipb.MatchDetails) error {
 	bs, err := proto.Marshal(match)
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to marshal match: %s", err.Error())
@@ -33,7 +33,7 @@ func (rb *redisBackend) CreateMatch(ctx context.Context, match *ipb.MatchInterna
 	return nil
 }
 
-func (rb *redisBackend) GetMatch(ctx context.Context, id string) (*ipb.MatchInternal, error) {
+func (rb *redisBackend) GetMatch(ctx context.Context, id string) (*ipb.MatchDetails, error) {
 	value, err := rb.redisClient.Get(ctx, id).Bytes()
 	if err != nil {
 		if err == redis.Nil {
@@ -48,7 +48,7 @@ func (rb *redisBackend) GetMatch(ctx context.Context, id string) (*ipb.MatchInte
 		return nil, status.Errorf(codes.NotFound, "match %s not found", id)
 	}
 
-	match := &ipb.MatchInternal{}
+	match := &ipb.MatchDetails{}
 	err = proto.Unmarshal(value, match)
 	if err != nil {
 		err = errors.Wrap(err, "failed to unmarshal match proto")

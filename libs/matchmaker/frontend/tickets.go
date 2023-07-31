@@ -38,7 +38,7 @@ func newOmFrontendClient(cfg config.View) *omFrontendClient {
 }
 
 // CreateTicket sends a CreateTicketRequest to Open Match and returns the updated ticket.
-func (fc *omFrontendClient) CreateTicket(ctx context.Context, req *ipb.TicketInternal) (*ompb.Ticket, error) {
+func (fc *omFrontendClient) CreateTicket(ctx context.Context, req *ipb.TicketDetails) (*ompb.Ticket, error) {
 	client, err := fc.cacher.Get()
 	if err != nil {
 		return nil, err

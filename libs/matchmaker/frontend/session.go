@@ -262,7 +262,7 @@ func (s *session) startQueue(req *pb.StartQueueRequest) (*pb.StreamResponse, err
 
 	player, err := s.srv.store.GetPlayer(ctx, s.id)
 	if status.Code(err) == codes.NotFound {
-		player = &ipb.PlayerInternal{
+		player = &ipb.PlayerDetails{
 			PlayerId: s.id,
 		}
 		err = s.srv.store.CreatePlayer(ctx, player)
@@ -322,7 +322,7 @@ func (s *session) startQueue(req *pb.StartQueueRequest) (*pb.StreamResponse, err
 		}, nil
 	}
 
-	ticket, err := s.srv.omfc.CreateTicket(ctx, &ipb.TicketInternal{
+	ticket, err := s.srv.omfc.CreateTicket(ctx, &ipb.TicketDetails{
 		PlayerId: player.PlayerId,
 		Gamemode: gameCfg.Gamemode,
 	})

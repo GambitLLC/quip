@@ -222,7 +222,7 @@ func newService(t *testing.T) config.Mutable {
 	// override game cache for testing
 	srv.gc = &games.GameDetailCache{
 		Cacher: config.NewViewCacher(cfg, func(cfg config.View) (interface{}, func(), error) {
-			return map[string]*ipb.GameDetails{
+			return map[string]*ipb.ProfileDetails{
 				"test": {
 					Players: 1,
 					Teams:   1,

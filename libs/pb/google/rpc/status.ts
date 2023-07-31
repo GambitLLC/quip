@@ -52,25 +52,38 @@ export const Status = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): Status {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseStatus();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 8) {
+            break;
+          }
+
           message.code = reader.int32();
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.message = reader.string();
-          break;
+          continue;
         case 3:
+          if (tag !== 26) {
+            break;
+          }
+
           message.details.push(Any.decode(reader, reader.uint32()));
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -85,12 +98,14 @@ export const Status = {
 
   toJSON(message: Status): unknown {
     const obj: any = {};
-    message.code !== undefined && (obj.code = Math.round(message.code));
-    message.message !== undefined && (obj.message = message.message);
-    if (message.details) {
-      obj.details = message.details.map((e) => e ? Any.toJSON(e) : undefined);
-    } else {
-      obj.details = [];
+    if (message.code !== 0) {
+      obj.code = Math.round(message.code);
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    if (message.details?.length) {
+      obj.details = message.details.map((e) => Any.toJSON(e));
     }
     return obj;
   },

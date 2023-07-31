@@ -78,22 +78,22 @@ func NewGameDetailCache() *GameDetailCache {
 	}
 }
 
-func (c *GameDetailCache) GameDetails(name string) (*ipb.GameDetails, error) {
+func (c *GameDetailCache) GameDetails(name string) (*ipb.ProfileDetails, error) {
 	games, err := c.Cacher.Get()
 	if err != nil {
 		return nil, err
 	}
 
-	return games.(map[string]*ipb.GameDetails)[name], nil
+	return games.(map[string]*ipb.ProfileDetails)[name], nil
 }
 
-func parseGameDetails(cfg config.View) (map[string]*ipb.GameDetails, error) {
+func parseGameDetails(cfg config.View) (map[string]*ipb.ProfileDetails, error) {
 	games, ok := cfg.Get("games").(map[string]interface{})
 	if !ok {
 		return nil, errors.New("failed to read 'games' from config")
 	}
 
-	gameDetails := make(map[string]*ipb.GameDetails, len(games))
+	gameDetails := make(map[string]*ipb.ProfileDetails, len(games))
 
 	for name, details := range games {
 		detailMap, ok := details.(map[string]interface{})
@@ -111,7 +111,7 @@ func parseGameDetails(cfg config.View) (map[string]*ipb.GameDetails, error) {
 			return nil, errors.Errorf("'games.%s' is missing valid players value: should be int >= 0", name)
 		}
 
-		gameDetails[name] = &ipb.GameDetails{
+		gameDetails[name] = &ipb.ProfileDetails{
 			Gamemode: name,
 			Teams:    uint32(teams),
 			Players:  uint32(players),

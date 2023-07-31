@@ -92,19 +92,24 @@ export const MatchRoster = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): MatchRoster {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseMatchRoster();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.players.push(reader.string());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -115,10 +120,8 @@ export const MatchRoster = {
 
   toJSON(message: MatchRoster): unknown {
     const obj: any = {};
-    if (message.players) {
-      obj.players = message.players.map((e) => e);
-    } else {
-      obj.players = [];
+    if (message.players?.length) {
+      obj.players = message.players;
     }
     return obj;
   },
@@ -153,25 +156,38 @@ export const AllocateMatchRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): AllocateMatchRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseAllocateMatchRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.matchId = reader.string();
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.gameConfig = GameConfiguration.decode(reader, reader.uint32());
-          break;
+          continue;
         case 3:
+          if (tag !== 26) {
+            break;
+          }
+
           message.roster = MatchRoster.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -186,10 +202,15 @@ export const AllocateMatchRequest = {
 
   toJSON(message: AllocateMatchRequest): unknown {
     const obj: any = {};
-    message.matchId !== undefined && (obj.matchId = message.matchId);
-    message.gameConfig !== undefined &&
-      (obj.gameConfig = message.gameConfig ? GameConfiguration.toJSON(message.gameConfig) : undefined);
-    message.roster !== undefined && (obj.roster = message.roster ? MatchRoster.toJSON(message.roster) : undefined);
+    if (message.matchId !== "") {
+      obj.matchId = message.matchId;
+    }
+    if (message.gameConfig !== undefined) {
+      obj.gameConfig = GameConfiguration.toJSON(message.gameConfig);
+    }
+    if (message.roster !== undefined) {
+      obj.roster = MatchRoster.toJSON(message.roster);
+    }
     return obj;
   },
 
@@ -223,19 +244,24 @@ export const FinishMatchRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): FinishMatchRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseFinishMatchRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.matchId = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -246,7 +272,9 @@ export const FinishMatchRequest = {
 
   toJSON(message: FinishMatchRequest): unknown {
     const obj: any = {};
-    message.matchId !== undefined && (obj.matchId = message.matchId);
+    if (message.matchId !== "") {
+      obj.matchId = message.matchId;
+    }
     return obj;
   },
 
@@ -332,10 +360,10 @@ export const BackendClient = makeGenericClientConstructor(BackendService, "quip.
   service: typeof BackendService;
 };
 
-declare var self: any | undefined;
-declare var window: any | undefined;
-declare var global: any | undefined;
-var tsProtoGlobalThis: any = (() => {
+declare const self: any | undefined;
+declare const window: any | undefined;
+declare const global: any | undefined;
+const tsProtoGlobalThis: any = (() => {
   if (typeof globalThis !== "undefined") {
     return globalThis;
   }

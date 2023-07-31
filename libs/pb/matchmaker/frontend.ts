@@ -35,7 +35,7 @@ export interface StreamRequest {
 export interface StreamResponse {
   /** error is sent whenever some stream request failed */
   error?: Status | undefined;
-  statusUpdate?: Status1 | undefined;
+  statusUpdate?: Status | undefined;
 }
 
 function createBaseGetStatusRequest(): GetStatusRequest {
@@ -51,19 +51,24 @@ export const GetStatusRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): GetStatusRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGetStatusRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.target = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -74,7 +79,9 @@ export const GetStatusRequest = {
 
   toJSON(message: GetStatusRequest): unknown {
     const obj: any = {};
-    message.target !== undefined && (obj.target = message.target);
+    if (message.target !== "") {
+      obj.target = message.target;
+    }
     return obj;
   },
 
@@ -102,19 +109,24 @@ export const StartQueueRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): StartQueueRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseStartQueueRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.config = GameConfiguration.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -125,8 +137,9 @@ export const StartQueueRequest = {
 
   toJSON(message: StartQueueRequest): unknown {
     const obj: any = {};
-    message.config !== undefined &&
-      (obj.config = message.config ? GameConfiguration.toJSON(message.config) : undefined);
+    if (message.config !== undefined) {
+      obj.config = GameConfiguration.toJSON(message.config);
+    }
     return obj;
   },
 
@@ -162,25 +175,38 @@ export const StreamRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): StreamRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseStreamRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.getStatus = GetStatusRequest.decode(reader, reader.uint32());
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.startQueue = StartQueueRequest.decode(reader, reader.uint32());
-          break;
+          continue;
         case 3:
+          if (tag !== 26) {
+            break;
+          }
+
           message.stopQueue = Empty.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -195,12 +221,15 @@ export const StreamRequest = {
 
   toJSON(message: StreamRequest): unknown {
     const obj: any = {};
-    message.getStatus !== undefined &&
-      (obj.getStatus = message.getStatus ? GetStatusRequest.toJSON(message.getStatus) : undefined);
-    message.startQueue !== undefined &&
-      (obj.startQueue = message.startQueue ? StartQueueRequest.toJSON(message.startQueue) : undefined);
-    message.stopQueue !== undefined &&
-      (obj.stopQueue = message.stopQueue ? Empty.toJSON(message.stopQueue) : undefined);
+    if (message.getStatus !== undefined) {
+      obj.getStatus = GetStatusRequest.toJSON(message.getStatus);
+    }
+    if (message.startQueue !== undefined) {
+      obj.startQueue = StartQueueRequest.toJSON(message.startQueue);
+    }
+    if (message.stopQueue !== undefined) {
+      obj.stopQueue = Empty.toJSON(message.stopQueue);
+    }
     return obj;
   },
 
@@ -239,22 +268,31 @@ export const StreamResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): StreamResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseStreamResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.error = Status.decode(reader, reader.uint32());
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.statusUpdate = Status1.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -268,9 +306,12 @@ export const StreamResponse = {
 
   toJSON(message: StreamResponse): unknown {
     const obj: any = {};
-    message.error !== undefined && (obj.error = message.error ? Status.toJSON(message.error) : undefined);
-    message.statusUpdate !== undefined &&
-      (obj.statusUpdate = message.statusUpdate ? Status1.toJSON(message.statusUpdate) : undefined);
+    if (message.error !== undefined) {
+      obj.error = Status.toJSON(message.error);
+    }
+    if (message.statusUpdate !== undefined) {
+      obj.statusUpdate = Status1.toJSON(message.statusUpdate);
+    }
     return obj;
   },
 

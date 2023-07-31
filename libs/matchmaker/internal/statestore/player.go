@@ -12,7 +12,7 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 )
 
-func (rb *redisBackend) CreatePlayer(ctx context.Context, player *ipb.PlayerInternal) error {
+func (rb *redisBackend) CreatePlayer(ctx context.Context, player *ipb.PlayerDetails) error {
 	value, err := proto.Marshal(player)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to marshal player proto, id %s", player.GetPlayerId())
@@ -32,7 +32,7 @@ func (rb *redisBackend) CreatePlayer(ctx context.Context, player *ipb.PlayerInte
 	return nil
 }
 
-func (rb *redisBackend) GetPlayer(ctx context.Context, id string) (*ipb.PlayerInternal, error) {
+func (rb *redisBackend) GetPlayer(ctx context.Context, id string) (*ipb.PlayerDetails, error) {
 	value, err := rb.redisClient.Get(ctx, id).Bytes()
 	if err != nil {
 		if err == redis.Nil {
@@ -47,7 +47,7 @@ func (rb *redisBackend) GetPlayer(ctx context.Context, id string) (*ipb.PlayerIn
 		return nil, status.Errorf(codes.NotFound, "player %s not found", id)
 	}
 
-	player := &ipb.PlayerInternal{}
+	player := &ipb.PlayerDetails{}
 	err = proto.Unmarshal(value, player)
 	if err != nil {
 		err = errors.Wrap(err, "failed to unmarshal player proto")
@@ -58,37 +58,37 @@ func (rb *redisBackend) GetPlayer(ctx context.Context, id string) (*ipb.PlayerIn
 }
 
 func (rb *redisBackend) TrackTicket(ctx context.Context, id string, playerIds []string) error {
-	return rb.modifyPlayers(ctx, playerIds, func(player *ipb.PlayerInternal) {
+	return rb.modifyPlayers(ctx, playerIds, func(player *ipb.PlayerDetails) {
 		player.TicketId = &id
 	})
 }
 
 func (rb *redisBackend) UntrackTicket(ctx context.Context, playerIds []string) error {
-	return rb.modifyPlayers(ctx, playerIds, func(player *ipb.PlayerInternal) {
+	return rb.modifyPlayers(ctx, playerIds, func(player *ipb.PlayerDetails) {
 		player.TicketId = nil
 	})
 }
 
 func (rb *redisBackend) TrackMatch(ctx context.Context, matchId string, playerIds []string) error {
-	return rb.modifyPlayers(ctx, playerIds, func(player *ipb.PlayerInternal) {
+	return rb.modifyPlayers(ctx, playerIds, func(player *ipb.PlayerDetails) {
 		player.MatchId = &matchId
 	})
 }
 
 func (rb *redisBackend) UntrackMatch(ctx context.Context, playerIds []string) error {
-	return rb.modifyPlayers(ctx, playerIds, func(player *ipb.PlayerInternal) {
+	return rb.modifyPlayers(ctx, playerIds, func(player *ipb.PlayerDetails) {
 		player.MatchId = nil
 	})
 }
 
-func (rb *redisBackend) modifyPlayers(ctx context.Context, playerIds []string, modify func(*ipb.PlayerInternal)) error {
+func (rb *redisBackend) modifyPlayers(ctx context.Context, playerIds []string, modify func(*ipb.PlayerDetails)) error {
 	res, err := rb.redisClient.MGet(ctx, playerIds...).Result()
 	if err != nil {
 		err = errors.Wrap(err, "failed to get players")
 		return status.Error(codes.Internal, err.Error())
 	}
 
-	players := make([]*ipb.PlayerInternal, 0, len(res))
+	players := make([]*ipb.PlayerDetails, 0, len(res))
 	for _, val := range res {
 		if val == nil {
 			// TODO: just create empty PlayerInternal struct for players that were not found
@@ -100,7 +100,7 @@ func (rb *redisBackend) modifyPlayers(ctx context.Context, playerIds []string, m
 			return status.Errorf(codes.Internal, "player value is not type []byte, is %T", val)
 		}
 
-		player := &ipb.PlayerInternal{}
+		player := &ipb.PlayerDetails{}
 		err = proto.Unmarshal([]byte(sval), player)
 		if err != nil {
 			err = errors.Wrap(err, "failed to unmarshal player proto")
