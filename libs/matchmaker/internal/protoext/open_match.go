@@ -32,6 +32,24 @@ func SetExtensionDetails(dst extendable, src proto.Message) error {
 	return nil
 }
 
+// details, err := protoext.GetExtensionDetails[*ompb.Ticket, *ipb.TicketDetails](ticket)
+// TODO: benchmark if generic is faster? better? maybe not because it's unclear
+// get internal message type maps to each OpenMatch message
+// func GetExtensionDetails[E extendable, M proto.Message](src E) (details M, err error) {
+// 	ext := src.GetExtensions()
+// 	if ext == nil {
+// 		return details, errors.New(".Extensions is nil")
+// 	}
+
+// 	any, ok := ext[extensionDetailsKey]
+// 	if !ok {
+// 		return details, errors.Errorf(".Extensions is missing expected key: '%s'", extensionDetailsKey)
+// 	}
+
+// 	err = any.UnmarshalTo(details)
+// 	return
+// }
+
 // OpenMatchTicketDetails gets details from extensions on an Open Match ticket.
 func OpenMatchTicketDetails(src *ompb.Ticket) (*ipb.TicketDetails, error) {
 	ext := src.GetExtensions()
