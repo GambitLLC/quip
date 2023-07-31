@@ -33,6 +33,8 @@ message ProfileDetails {
   uint32 players = 3;
 }
 
+// Internal message for holding details about an ongoing match.
+// Placed in statestore.
 message MatchDetails {
   string match_id = 1;
   string connection = 2;

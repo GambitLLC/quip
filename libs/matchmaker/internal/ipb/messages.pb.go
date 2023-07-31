@@ -210,6 +210,8 @@ func (x *ProfileDetails) GetPlayers() uint32 {
 	return 0
 }
 
+// Internal message for holding details about an ongoing match.
+// Placed in statestore.
 type MatchDetails struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
