@@ -2,6 +2,7 @@ package protoext
 
 import (
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 	ompb "open-match.dev/open-match/pkg/pb"
 
@@ -10,20 +11,24 @@ import (
 
 const extensionDetailsKey string = "details"
 
-// SetOpenMatchTicketDetails puts details into the extensions on an Open Match ticket.
-func SetOpenMatchTicketDetails(dst *ompb.Ticket, details *ipb.TicketDetails) error {
-	any, err := anypb.New(details)
+type extendable interface {
+	GetExtensions() map[string]*anypb.Any
+}
+
+// SetExtensionDetails puts src into dst.Extensions.
+// NOTE: Requires Extensions to NOT be nil on dst.
+func SetExtensionDetails(dst extendable, src proto.Message) error {
+	any, err := anypb.New(src)
 	if err != nil {
 		return err
 	}
 
 	ext := dst.GetExtensions()
 	if ext == nil {
-		ext = make(map[string]*anypb.Any)
+		return errors.New(".Extensions is nil")
 	}
 	ext[extensionDetailsKey] = any
 
-	dst.Extensions = ext
 	return nil
 }
 
@@ -47,23 +52,6 @@ func OpenMatchTicketDetails(src *ompb.Ticket) (*ipb.TicketDetails, error) {
 	return details, nil
 }
 
-// SetOpenMatchProfileDetails puts details into the extensions on an Open Match MatchProfile.
-func SetOpenMatchProfileDetails(dst *ompb.MatchProfile, details *ipb.ProfileDetails) error {
-	any, err := anypb.New(details)
-	if err != nil {
-		return err
-	}
-
-	ext := dst.GetExtensions()
-	if ext == nil {
-		ext = make(map[string]*anypb.Any)
-	}
-	ext[extensionDetailsKey] = any
-
-	dst.Extensions = ext
-	return nil
-}
-
 // OpenMatchProfileDetails gets details from extensions on an Open Match MatchProfile.
 func OpenMatchProfileDetails(src *ompb.MatchProfile) (*ipb.ProfileDetails, error) {
 	ext := src.GetExtensions()
@@ -82,22 +70,6 @@ func OpenMatchProfileDetails(src *ompb.MatchProfile) (*ipb.ProfileDetails, error
 	}
 
 	return details, nil
-}
-
-func SetOpenMatchMatchDetails(dst *ompb.Match, details *ipb.MatchDetails) error {
-	any, err := anypb.New(details)
-	if err != nil {
-		return err
-	}
-
-	ext := dst.GetExtensions()
-	if ext == nil {
-		ext = make(map[string]*anypb.Any)
-	}
-	ext[extensionDetailsKey] = any
-
-	dst.Extensions = ext
-	return nil
 }
 
 func OpenMatchMatchDetails(src *ompb.Match) (*ipb.MatchDetails, error) {

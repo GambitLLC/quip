@@ -4,15 +4,12 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/anypb"
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
-)
-
-const (
-	gamesFileConfigKey = "matchmaker.gamesFile"
 )
 
 type MatchProfileCache struct {
@@ -38,8 +35,9 @@ func NewMatchProfileCache() *MatchProfileCache {
 						},
 					},
 				},
+				Extensions: make(map[string]*anypb.Any),
 			}
-			if err := protoext.SetOpenMatchProfileDetails(profile, details); err != nil {
+			if err := protoext.SetExtensionDetails(profile, details); err != nil {
 				return nil, nil, err
 			}
 

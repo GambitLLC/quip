@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 	"open-match.dev/open-match/pkg/matchfunction"
 	ompb "open-match.dev/open-match/pkg/pb"
 
@@ -112,9 +113,10 @@ func makeMatches(p *ompb.MatchProfile, poolTickets map[string][]*ompb.Ticket) ([
 			MatchProfile:  p.GetName(),
 			MatchFunction: "basic-matchfunction",
 			Tickets:       matchTickets,
+			Extensions:    make(map[string]*anypb.Any),
 		}
 
-		err = protoext.SetOpenMatchMatchDetails(match, &ipb.MatchDetails{
+		err = protoext.SetExtensionDetails(match, &ipb.MatchDetails{
 			MatchId: match.MatchId,
 			Roster:  matchRoster,
 			Config:  gameCfg,

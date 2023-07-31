@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/anypb"
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
@@ -115,7 +116,8 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 
 	for i := range tickets {
 		ticket := &ompb.Ticket{
-			Id: xid.New().String(),
+			Id:         xid.New().String(),
+			Extensions: make(map[string]*anypb.Any),
 		}
 
 		details := &ipb.TicketDetails{
@@ -123,7 +125,7 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 			Gamemode: "test",
 		}
 
-		if err := protoext.SetOpenMatchTicketDetails(ticket, details); err != nil {
+		if err := protoext.SetExtensionDetails(ticket, details); err != nil {
 			return err
 		}
 
@@ -140,8 +142,9 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 		MatchProfile:  req.Profile.Name,
 		MatchFunction: "static match generator",
 		Tickets:       tickets,
+		Extensions:    make(map[string]*anypb.Any),
 	}
-	err = protoext.SetOpenMatchMatchDetails(match, &ipb.MatchDetails{
+	err = protoext.SetExtensionDetails(match, &ipb.MatchDetails{
 		MatchId: match.MatchId,
 		Roster:  roster,
 		Config: &ipb.MatchDetails_GameConfiguration{

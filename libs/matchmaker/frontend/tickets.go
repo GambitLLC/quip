@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/protobuf/types/known/anypb"
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
@@ -48,9 +49,10 @@ func (fc *omFrontendClient) CreateTicket(ctx context.Context, req *ipb.TicketDet
 		SearchFields: &ompb.SearchFields{
 			Tags: []string{fmt.Sprintf("mode.%s", req.Gamemode)},
 		},
+		Extensions: make(map[string]*anypb.Any),
 	}
 
-	if err := protoext.SetOpenMatchTicketDetails(ticket, req); err != nil {
+	if err := protoext.SetExtensionDetails(ticket, req); err != nil {
 		return nil, err
 	}
 
