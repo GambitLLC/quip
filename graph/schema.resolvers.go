@@ -12,9 +12,6 @@ import (
 
 	"github.com/GambitLLC/quip/graph/model"
 	"github.com/GambitLLC/quip/libs/auth"
-	"github.com/GambitLLC/quip/libs/pb/matchmaker"
-	"github.com/google/uuid"
-	pkgerr "github.com/pkg/errors"
 )
 
 // UpdateProfile is the resolver for the updateProfile field.
@@ -23,46 +20,8 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, changes map[string
 	return true, nil
 }
 
-// StartQueue is the resolver for the startQueue field.
-func (r *mutationResolver) StartQueue(ctx context.Context, gamemode string) (bool, error) {
-	panic("not yet implemented")
-	// token := auth.TokenFromContext(ctx)
-	// _, err := r.frontend.StartQueue(ctx, &matchmaker.StartQueueRequest{
-	// 	Config: &matchmaker.GameConfiguration{
-	// 		Gamemode: gamemode,
-	// 	},
-	// }, grpc.PerRPCCredentials(oauth.TokenSource{
-	// 	TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
-	// 		AccessToken: token,
-	// 	}),
-	// }))
-
-	// if err != nil {
-	// 	return false, err
-	// }
-
-	// return true, nil
-}
-
-// StopQueue is the resolver for the stopQueue field.
-func (r *mutationResolver) StopQueue(ctx context.Context) (bool, error) {
-	panic("not yet implemented")
-	// token := auth.TokenFromContext(ctx)
-	// _, err := r.frontend.StopQueue(ctx, &emptypb.Empty{}, grpc.PerRPCCredentials(oauth.TokenSource{
-	// 	TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
-	// 		AccessToken: token,
-	// 	}),
-	// }))
-
-	// if err != nil {
-	// 	return false, err
-	// }
-
-	// return true, nil
-}
-
 // User is the resolver for the user field.
-func (r *queryResolver) User(ctx context.Context, id *string) (*model.User, error) {
+func (r *queryResolver) User(ctx context.Context, id *string, name *string) (*model.User, error) {
 	if id == nil {
 		userId := auth.UserFromContext(ctx)
 		id = &userId
@@ -73,88 +32,16 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*model.User, erro
 	}, nil
 }
 
-// Gamemode is the resolver for the gamemode field.
-func (r *queueSearchingResolver) Gamemode(ctx context.Context, obj *model.QueueSearching) (string, error) {
-	panic(fmt.Errorf("not implemented: Gamemode - gamemode"))
-}
-
-// Reason is the resolver for the reason field.
-func (r *queueStoppedResolver) Reason(ctx context.Context, obj *model.QueueStopped) (*string, error) {
-	panic(fmt.Errorf("not implemented: Reason - reason"))
-}
-
-// State is the resolver for the state field.
-func (r *statusResolver) State(ctx context.Context, obj *model.Status) (model.State, error) {
-	return model.State(obj.State), nil
-}
-
-// Details is the resolver for the details field.
-func (r *statusResolver) Details(ctx context.Context, obj *model.Status) (model.StatusDetails, error) {
-	// NOTE: gqlgen generate erroneously removes pkg/errors and replaces with stdlib errors
-	// name import github.com/pkg/errors as a workaround
-	// https://github.com/99designs/gqlgen/issues/1171
-	switch details := obj.Details.(type) {
-	default:
-		return nil, pkgerr.Errorf("invalid status detail type: %T", details)
-	case *matchmaker.Status_Matched:
-		return &model.MatchFound{MatchDetails: details.Matched}, nil
-	case *matchmaker.Status_Searching:
-		return &model.QueueSearching{QueueDetails: details.Searching}, nil
-	case *matchmaker.Status_Stopped:
-		return &model.QueueStopped{QueueStopped: details.Stopped}, nil
-
-	}
-}
-
-// Status is the resolver for the status field.
-func (r *statusUpdateResolver) Status(ctx context.Context, obj *model.StatusUpdate) (*model.Status, error) {
-	return &model.Status{Status: obj.Status}, nil
-}
-
-// Status is the resolver for the status field.
-func (r *subscriptionResolver) Status(ctx context.Context, targets []string) (<-chan *model.StatusUpdate, error) {
-	userId := auth.UserFromContext(ctx)
-	if userId == "" {
-		return nil, pkgerr.New("unauthenticated")
-	}
-
-	id := uuid.New().String()
-	go func() {
-		<-ctx.Done()
-		r.Unsubscribe(id)
-	}()
-
-	return r.Subscribe(id, append(targets, userId))
-}
-
-// Status is the resolver for the status field.
-func (r *userResolver) Status(ctx context.Context, obj *model.User) (*model.Status, error) {
-	panic("not yet implemented")
-	// token := auth.TokenFromContext(ctx)
-	// status, err := r.frontend.GetStatus(ctx, &matchmaker.GetStatusRequest{
-	// 	Target: obj.ID,
-	// }, grpc.PerRPCCredentials(oauth.TokenSource{
-	// 	TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
-	// 		AccessToken: token,
-	// 	}),
-	// }))
-
-	// if err != nil {
-	// 	// TODO: wrap/fmt err instead of directly returning
-	// 	return nil, err
-	// }
-
-	// return &model.Status{
-	// 	Status: status,
-	// }, nil
+// Name is the resolver for the name field.
+func (r *userResolver) Name(ctx context.Context, obj *model.User) (string, error) {
+	panic(fmt.Errorf("not implemented: Name - name"))
 }
 
 // Profile is the resolver for the profile field.
 func (r *userResolver) Profile(ctx context.Context, obj *model.User) (*model.Profile, error) {
 	date := time.Now()
 	return &model.Profile{
-		Username: fmt.Sprintf("user: %s", obj.ID),
-		Dob:      &date,
+		Dob: &date,
 	}, nil
 }
 
@@ -164,29 +51,9 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-// QueueSearching returns QueueSearchingResolver implementation.
-func (r *Resolver) QueueSearching() QueueSearchingResolver { return &queueSearchingResolver{r} }
-
-// QueueStopped returns QueueStoppedResolver implementation.
-func (r *Resolver) QueueStopped() QueueStoppedResolver { return &queueStoppedResolver{r} }
-
-// Status returns StatusResolver implementation.
-func (r *Resolver) Status() StatusResolver { return &statusResolver{r} }
-
-// StatusUpdate returns StatusUpdateResolver implementation.
-func (r *Resolver) StatusUpdate() StatusUpdateResolver { return &statusUpdateResolver{r} }
-
-// Subscription returns SubscriptionResolver implementation.
-func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
-
 // User returns UserResolver implementation.
 func (r *Resolver) User() UserResolver { return &userResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type queueSearchingResolver struct{ *Resolver }
-type queueStoppedResolver struct{ *Resolver }
-type statusResolver struct{ *Resolver }
-type statusUpdateResolver struct{ *Resolver }
-type subscriptionResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
