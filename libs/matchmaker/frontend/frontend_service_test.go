@@ -2,11 +2,17 @@ package frontend
 
 import (
 	"context"
+	"io"
 	"net"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/rs/xid"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -18,328 +24,205 @@ import (
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	statestoreTesting "github.com/GambitLLC/quip/libs/matchmaker/internal/statestore/testing"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
-	"github.com/rs/xid"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/require"
+	"github.com/GambitLLC/quip/libs/rpc"
 )
 
-func TestService(t *testing.T) {
-	t.Run("expect Player-Id metadata to be required on certain methods", func(t *testing.T) {
-		s := &Service{}
-		ctx := context.Background()
-
-		_, err := s.StartQueue(ctx, nil)
-		require.Error(t, err, "StartQueue should return error")
-
-		_, err = s.StopQueue(ctx, nil)
-		require.Error(t, err, "StopQueue should return error")
-	})
-}
-
-func TestGetStatus(t *testing.T) {
-	playerId := xid.New().String()
-
-	tests := []struct {
-		name  string
-		setup func(context.Context, *testing.T, *Service)
-		check func(*testing.T, *pb.Status, error)
-	}{
-		{
-			name:  "expect IDLE status",
-			setup: nil,
-			check: func(t *testing.T, sr *pb.Status, err error) {
-				require.NoError(t, err)
-				require.Equal(t, pb.State_STATE_IDLE, sr.GetState(), "expected status to be IDLE")
-			},
-		},
-		{
-			name: "expect SEARCHING status with queue information",
-			setup: func(ctx context.Context, t *testing.T, s *Service) {
-				// CreateTicket in open match so it can be found
-				ticket, err := s.omfc.CreateTicket(ctx, &ipb.TicketInternal{
-					PlayerId: playerId,
-					Gamemode: "test",
-				})
-				require.NoError(t, err, "omfc.CreateTicket failed")
-
-				// set ticket id in statestore
-				err = s.store.CreatePlayer(ctx, &ipb.PlayerInternal{
-					PlayerId: playerId,
-					TicketId: &ticket.Id,
-				})
-				require.NoError(t, err, "store.CreatePlayer failed")
-
-			},
-			check: func(t *testing.T, sr *pb.Status, err error) {
-				require.NoError(t, err)
-				require.Equal(t, pb.State_STATE_SEARCHING, sr.GetState(), "expected status to be SEARCHING")
-				require.NotNil(t, sr.GetSearching(), "expected queue details")
-				require.Equal(t, "test", sr.GetSearching().GetConfig().Gamemode, "expected gamemode to be set")
-			},
-		},
-		{
-			name: "expect PLAYING status",
-			setup: func(ctx context.Context, t *testing.T, s *Service) {
-				randomId := xid.New().String()
-				err := s.store.CreateMatch(ctx, &ipb.MatchInternal{
-					MatchId:    randomId,
-					Connection: "some connection",
-				})
-				require.NoError(t, err, "store.CreateMatch failed")
-
-				err = s.store.CreatePlayer(ctx, &ipb.PlayerInternal{
-					PlayerId: playerId,
-					MatchId:  &randomId,
-				})
-				require.NoError(t, err, "store.CreatePlayer failed")
-			},
-			check: func(t *testing.T, sr *pb.Status, err error) {
-				require.NoError(t, err)
-				require.Equal(t, pb.State_STATE_PLAYING, sr.GetState(), "expected status to be PLAYING")
-			},
-		},
+func TestStream(t *testing.T) {
+	type StreamAction struct {
+		request *pb.StreamRequest
+		wantErr bool // if wantErr is false, any StreamResponse_Errors fail the test case
+		wait    func(*pb.StreamResponse) bool
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := newService(t)
-
-			ctx, cancel := context.WithTimeout(newContextWithPlayer(t, playerId), 5*time.Second)
-			defer cancel()
-
-			if tt.setup != nil {
-				tt.setup(ctx, t, s)
-			}
-
-			got, err := s.GetStatus(ctx, &pb.GetStatusRequest{
-				Target: playerId,
-			})
-			tt.check(t, got, err)
-		})
-	}
-
-	t.Run("expect error if no target is provided", func(t *testing.T) {
-		s := newService(t)
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		_, err := s.GetStatus(ctx, &pb.GetStatusRequest{})
-		require.Error(t, err, "expected error")
-	})
-}
-
-func TestStartQueueStatestore(t *testing.T) {
-	playerId := xid.New().String()
-	ctx := newContextWithPlayer(t, playerId)
-
-	type args struct {
-		ctx context.Context
-		req *pb.StartQueueRequest
-	}
 	tests := []struct {
 		name    string
-		setup   func(*testing.T, statestore.Service)
-		args    args
-		wantErr bool
-		check   func(*testing.T, context.Context, statestore.Service)
+		actions []StreamAction
 	}{
 		{
-			name:  "expect ticket id to be set",
-			setup: nil,
-			args: args{
-				ctx: ctx,
-				req: &pb.StartQueueRequest{
-					Config: &pb.GameConfiguration{
-						Gamemode: "test",
+			name: "get status returns idle",
+			actions: []StreamAction{
+				{
+					request: &pb.StreamRequest{
+						Message: &pb.StreamRequest_GetStatus{},
+					},
+					wait: func(sr *pb.StreamResponse) bool {
+						switch msg := sr.Message.(type) {
+						case *pb.StreamResponse_StatusUpdate:
+							return msg.StatusUpdate.State == pb.State_STATE_IDLE
+						default:
+							return false
+						}
 					},
 				},
 			},
-			check: func(t *testing.T, ctx context.Context, s statestore.Service) {
-				player, err := s.GetPlayer(ctx, playerId)
-				require.NoError(t, err, "GetPlayer failed")
-				require.NotEmpty(t, player.TicketId, "player TicketId is not set")
+		},
+		{
+			name: "start and stop queue get status updates",
+			actions: []StreamAction{
+				{
+					request: &pb.StreamRequest{
+						Message: &pb.StreamRequest_StartQueue{
+							StartQueue: &pb.StartQueueRequest{
+								Config: &pb.GameConfiguration{
+									Gamemode: "test",
+								},
+							},
+						},
+					},
+					wait: func(sr *pb.StreamResponse) bool {
+						switch msg := sr.Message.(type) {
+						case *pb.StreamResponse_StatusUpdate:
+							return msg.StatusUpdate.State == pb.State_STATE_SEARCHING
+						default:
+							return false
+						}
+					},
+				},
+				{
+					request: &pb.StreamRequest{
+						Message: &pb.StreamRequest_StopQueue{},
+					},
+					wait: func(sr *pb.StreamResponse) bool {
+						switch msg := sr.Message.(type) {
+						case *pb.StreamResponse_StatusUpdate:
+							return msg.StatusUpdate.State == pb.State_STATE_IDLE
+						default:
+							return false
+						}
+					},
+				},
+			},
+		},
+		{
+			name: "starting queue twice errors",
+			actions: []StreamAction{
+				{
+					request: &pb.StreamRequest{
+						Message: &pb.StreamRequest_StartQueue{
+							StartQueue: &pb.StartQueueRequest{
+								Config: &pb.GameConfiguration{
+									Gamemode: "test",
+								},
+							},
+						},
+					},
+				},
+				{
+					request: &pb.StreamRequest{
+						Message: &pb.StreamRequest_StartQueue{
+							StartQueue: &pb.StartQueueRequest{
+								Config: &pb.GameConfiguration{
+									Gamemode: "test",
+								},
+							},
+						},
+					},
+					wantErr: true,
+				},
 			},
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := newService(t)
+	for _, tc := range tests {
+		tc := tc // capture range variable
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newService(t)
+			newOMFrontend(t, cfg)
 
-			if tt.setup != nil {
-				tt.setup(t, s.store)
+			client, _ := newClient(t, cfg)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			stream, err := client.Stream(ctx)
+			require.NoError(t, err, "client.Stream failed")
+
+			msgs := make(chan *pb.StreamResponse, 1)
+
+			eg := &errgroup.Group{}
+			eg.Go(func() error {
+				for {
+					msg, err := stream.Recv()
+					if err == io.EOF {
+						return nil
+					}
+
+					if err != nil {
+						return err
+					}
+
+					msgs <- msg
+				}
+			})
+
+			for _, action := range tc.actions {
+				if action.request != nil {
+					err := stream.Send(action.request)
+					require.NoError(t, err, "stream.Send failed")
+				}
+
+				if action.wantErr || action.wait != nil {
+					found := false
+					for !found {
+						select {
+						case <-ctx.Done():
+							require.Fail(t, "test timed out")
+						case <-stream.Context().Done():
+							require.Fail(t, "stream closed")
+						case msg := <-msgs:
+							if action.wantErr {
+								found = msg.GetError() != nil
+								break
+							}
+
+							if err := msg.GetError(); err != nil {
+								require.Fail(t, "got StreamResponse_Error", err)
+							}
+
+							found = action.wait(msg)
+
+						}
+					}
+
+				}
 			}
 
-			_, err := s.StartQueue(tt.args.ctx, tt.args.req)
-			if tt.wantErr {
-				require.Error(t, err, "wantErr = true, StartQueue returned nil")
-			} else {
-				require.NoError(t, err, "wantErr = false, StartQueue failed")
-			}
+			err = stream.CloseSend()
+			require.NoError(t, err, "stream.CloseSend failed")
 
-			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-			t.Cleanup(cancel)
-
-			tt.check(t, ctx, s.store)
+			err = eg.Wait()
+			require.NoError(t, err, "eg.Wait returned error")
 		})
 	}
 }
 
-func TestStartQueueBehaviour(t *testing.T) {
-	playerId := xid.New().String()
-	ctx := newContextWithPlayer(t, playerId)
-	randomId := xid.New().String()
-
-	type args struct {
-		ctx context.Context
-		req *pb.StartQueueRequest
-	}
-	tests := []struct {
-		name  string
-		setup func(*testing.T, statestore.Service)
-		args  args
-		check func(*testing.T, error)
-	}{
-		{
-			name:  "expect success with normal input",
-			setup: nil,
-			args: args{
-				ctx: ctx,
-				req: &pb.StartQueueRequest{
-					Config: &pb.GameConfiguration{
-						Gamemode: "test",
-					},
-				},
-			},
-			check: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
-		},
-		{
-			name:  "expect error with invalid gamemode",
-			setup: nil,
-			args: args{
-				ctx: ctx,
-				req: &pb.StartQueueRequest{
-					Config: &pb.GameConfiguration{
-						Gamemode: "invalid gamemode",
-					},
-				},
-			},
-			check: func(t *testing.T, err error) {
-				require.Error(t, err)
-			},
-		},
-		{
-			name: "expect error if already queued",
-			setup: func(t *testing.T, s statestore.Service) {
-				s.CreatePlayer(ctx, &ipb.PlayerInternal{
-					PlayerId: playerId,
-					TicketId: &randomId,
-				})
-			},
-			args: args{
-				ctx: ctx,
-				req: &pb.StartQueueRequest{
-					Config: &pb.GameConfiguration{
-						Gamemode: "test",
-					},
-				},
-			},
-			check: func(t *testing.T, err error) {
-				require.Error(t, err)
-			},
-		},
-		{
-			name: "expect error if already in game",
-			setup: func(t *testing.T, s statestore.Service) {
-				s.CreatePlayer(ctx, &ipb.PlayerInternal{
-					PlayerId: playerId,
-					MatchId:  &randomId,
-				})
-			},
-			args: args{
-				ctx: ctx,
-				req: &pb.StartQueueRequest{
-					Config: &pb.GameConfiguration{
-						Gamemode: "test",
-					},
-				},
-			},
-			check: func(t *testing.T, err error) {
-				require.Error(t, err)
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := newService(t)
-
-			if tt.setup != nil {
-				tt.setup(t, s.store)
-			}
-
-			_, err := s.StartQueue(tt.args.ctx, tt.args.req)
-			tt.check(t, err)
-		})
-	}
-}
-
-func TestStopQueue(t *testing.T) {
-	tests := []struct {
-		name  string
-		setup func(*testing.T, statestore.Service)
-		ctx   context.Context
-		check func(*testing.T, error)
-	}{
-		{
-			name:  "expect success when not in queue",
-			setup: nil,
-			ctx:   newContextWithPlayer(t, xid.New().String()),
-			check: func(t *testing.T, err error) {
-				require.NoError(t, err)
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := newService(t)
-
-			if tt.setup != nil {
-				tt.setup(t, s.store)
-			}
-
-			_, err := s.StopQueue(tt.ctx, &emptypb.Empty{})
-			tt.check(t, err)
-		})
-	}
-}
-
-type contextTestKey string
-
-func newContextWithPlayer(t *testing.T, playerId string) context.Context {
-	ctx := context.WithValue(context.Background(), contextTestKey("testing.T"), t)
-	return metadata.NewIncomingContext(ctx, metadata.Pairs("Player-Id", playerId))
-}
-
-func newService(t *testing.T) *Service {
+func newService(t *testing.T) config.Mutable {
 	cfg := viper.New()
 	_ = statestoreTesting.NewService(t, cfg)
 	cfg.Set("broker.hostname", cfg.Get("matchmaker.redis.hostname"))
 	cfg.Set("broker.port", cfg.Get("matchmaker.redis.port"))
 
-	newOMFrontend(t, cfg)
+	s := grpc.NewServer(grpc.StreamInterceptor(func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		md, ok := metadata.FromIncomingContext(ss.Context())
+		if !ok {
+			return status.Error(codes.InvalidArgument, "missing metadata")
+		}
 
-	srv := New(cfg)
+		if len(md.Get("Player-Id")) == 0 {
+			return status.Error(codes.Unauthenticated, "missing player-id")
+		}
+
+		return handler(srv, ss)
+	}))
+
+	srv := NewService(cfg)
 
 	// override game cache for testing
 	srv.gc = &games.GameDetailCache{
 		Cacher: config.NewViewCacher(cfg, func(cfg config.View) (interface{}, func(), error) {
-			return map[string]*ipb.GameDetails{
+			return map[string]*ipb.ProfileDetails{
 				"test": {
 					Players: 1,
 					Teams:   1,
@@ -348,7 +231,40 @@ func newService(t *testing.T) *Service {
 		}),
 	}
 
-	return srv
+	pb.RegisterFrontendServer(s, srv)
+
+	ln, err := net.Listen("tcp", ":0")
+	require.NoError(t, err, "net.Listen failed")
+
+	_, port, err := net.SplitHostPort(ln.Addr().String())
+	require.NoError(t, err, "net.SplitHostPort failed")
+
+	cfg.Set("matchmaker.frontend.hostname", "localhost")
+	cfg.Set("matchmaker.frontend.port", port)
+
+	go func() {
+		err := s.Serve(ln)
+		require.NoError(t, err, "Serve failed")
+	}()
+	t.Cleanup(s.Stop)
+
+	return cfg
+}
+
+func newClient(t *testing.T, cfg config.View) (pb.FrontendClient, string) {
+	id := uuid.NewString()
+	conn, err := rpc.GRPCClientFromConfig(
+		cfg,
+		"matchmaker.frontend",
+		grpc.WithStreamInterceptor(
+			func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+				return streamer(metadata.AppendToOutgoingContext(ctx, "Player-Id", id), desc, cc, method, opts...)
+			},
+		),
+	)
+	require.NoError(t, err, "GRPCClientFromConfig failed")
+
+	return pb.NewFrontendClient(conn), id
 }
 
 func newOMFrontend(t *testing.T, cfg config.Mutable) {
@@ -367,7 +283,7 @@ func newOMFrontend(t *testing.T, cfg config.Mutable) {
 	go func() {
 		err := s.Serve(ln)
 		if err != nil {
-			t.Error(err)
+			t.Log(err)
 		}
 	}()
 

@@ -1,78 +1,50 @@
+" Bind graphQL type to a specific Go struct "
 directive @goModel(
   model: String
   models: [String!]
 ) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
 
-directive @goField(
-  forceResolver: Boolean
-  name: String
-  omittable: Boolean
-) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+# " Bind type fields to a specific Go struct field "
+# directive @goField(
+#   forceResolver: Boolean
+#   name: String
+#   omittable: Boolean
+# ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
+" Represents an instant in time. Gqlgen binds model to time.Time. "
 scalar Time
 
+" User model. "
 type User {
+  " User ID respresented as Solana public key "
   id: ID!
-  status: Status!
-  profile: Profile!
+  " Unique display name "
+  name: String!
+  profile: Profile
 }
 
-# Status
-type Status {
-  state: State!
-  details: StatusDetails
-}
-
-enum State {
-  OFFLINE
-  IDLE
-  SEARCHING
-  PLAYING
-}
-
-union StatusDetails = QueueSearching | QueueStopped | MatchFound
-
-type QueueSearching {
-  gamemode: String!
-}
-
-type QueueStopped {
-  reason: String
-}
-
-type MatchFound {
-  id: String! @goField(name: "matchId")
-}
-
-# User customizable profile
+" Customizable User profile. "
 type Profile {
-  username: String!
   dob: Time
 }
 
+# eslint-disable-next-line @graphql-eslint/require-description
 type Query {
-  # Query for the specified User or currently logged in user if not specified.
-  user(id: String): User
+  " Query for specific user by either id or name. "
+  user(
+    " Filter by User ID (public key) "
+    id: String
+    " Filter by name "
+    name: String
+  ): User
 }
 
+" Changeset for mutating a user's profile. "
 input ProfileChanges @goModel(model: "map[string]interface{}") {
-  username: String
   dob: Time
 }
 
+# eslint-disable-next-line @graphql-eslint/require-description
 type Mutation {
-  # TODO: figure out how users are created -- should have username required
-
   updateProfile(changes: ProfileChanges!): Boolean!
-  startQueue(gamemode: String!): Boolean!
-  stopQueue: Boolean!
-}
-
-type StatusUpdate {
-  targets: [String!]!
-  status: Status!
-}
-
-type Subscription {
-  status(targets: [String!]): StatusUpdate!
 }

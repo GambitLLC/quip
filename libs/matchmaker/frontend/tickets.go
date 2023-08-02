@@ -9,6 +9,7 @@ import (
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	"github.com/GambitLLC/quip/libs/rpc"
 )
 
@@ -38,13 +39,8 @@ func newOmFrontendClient(cfg config.View) *omFrontendClient {
 }
 
 // CreateTicket sends a CreateTicketRequest to Open Match and returns the updated ticket.
-func (fc *omFrontendClient) CreateTicket(ctx context.Context, req *ipb.TicketInternal) (*ompb.Ticket, error) {
+func (fc *omFrontendClient) CreateTicket(ctx context.Context, req *ipb.TicketDetails) (*ompb.Ticket, error) {
 	client, err := fc.cacher.Get()
-	if err != nil {
-		return nil, err
-	}
-
-	detailsAny, err := anypb.New(req)
 	if err != nil {
 		return nil, err
 	}
@@ -53,9 +49,11 @@ func (fc *omFrontendClient) CreateTicket(ctx context.Context, req *ipb.TicketInt
 		SearchFields: &ompb.SearchFields{
 			Tags: []string{fmt.Sprintf("mode.%s", req.Gamemode)},
 		},
-		Extensions: map[string]*anypb.Any{
-			"details": detailsAny,
-		},
+		Extensions: make(map[string]*anypb.Any),
+	}
+
+	if err := protoext.SetExtensionDetails(ticket, req); err != nil {
+		return nil, err
 	}
 
 	ticket, err = client.(ompb.FrontendServiceClient).CreateTicket(

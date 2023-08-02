@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rs/xid"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
@@ -17,6 +16,7 @@ import (
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	statestoreTesting "github.com/GambitLLC/quip/libs/matchmaker/internal/statestore/testing"
 	"github.com/GambitLLC/quip/libs/matchmaker/matchfunction"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
@@ -115,52 +115,48 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 	tickets := make([]*ompb.Ticket, 2)
 
 	for i := range tickets {
-		ticketInternal := &ipb.TicketInternal{
+		ticket := &ompb.Ticket{
+			Id:         xid.New().String(),
+			Extensions: make(map[string]*anypb.Any),
+		}
+
+		details := &ipb.TicketDetails{
 			PlayerId: xid.New().String(),
 			Gamemode: "test",
 		}
 
-		detailsAny, err := anypb.New(ticketInternal)
-		if err != nil {
+		if err := protoext.SetExtensionDetails(ticket, details); err != nil {
 			return err
 		}
 
-		tickets[i] = &ompb.Ticket{
-			Id: xid.New().String(),
-			Extensions: map[string]*anypb.Any{
-				"details": detailsAny,
-			},
-		}
-	}
-
-	gameCfg := &pb.GameConfiguration{
-		Gamemode: "test",
-	}
-	gameCfgAny, err := anypb.New(gameCfg)
-	if err != nil {
-		return errors.WithMessage(err, "failed to create anypb from game config")
+		tickets[i] = ticket
 	}
 
 	roster, err := matchfunction.CreateMatchRoster(tickets)
 	if err != nil {
 		return err
 	}
-	rosterAny, err := anypb.New(roster)
+
+	match := &ompb.Match{
+		MatchId:       xid.New().String(),
+		MatchProfile:  req.Profile.Name,
+		MatchFunction: "static match generator",
+		Tickets:       tickets,
+		Extensions:    make(map[string]*anypb.Any),
+	}
+	err = protoext.SetExtensionDetails(match, &ipb.MatchDetails{
+		MatchId: match.MatchId,
+		Roster:  roster,
+		Config: &ipb.MatchDetails_GameConfiguration{
+			Gamemode: "test",
+		},
+	})
 	if err != nil {
 		return err
 	}
 
 	srv.Send(&ompb.FetchMatchesResponse{
-		Match: &ompb.Match{
-			MatchId:       xid.New().String(),
-			MatchProfile:  req.Profile.Name,
-			MatchFunction: "static match generator",
-			Tickets:       tickets,
-			Extensions: map[string]*anypb.Any{
-				"game_config": gameCfgAny,
-				"roster":      rosterAny,
-			},
-		},
+		Match: match,
 	})
 	return nil
 }

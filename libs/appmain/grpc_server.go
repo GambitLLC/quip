@@ -7,7 +7,6 @@ import (
 	"syscall"
 
 	"github.com/rs/zerolog/log"
-	"google.golang.org/grpc"
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/rpc"
@@ -40,20 +39,12 @@ func RunGRPCService(serviceName string, bind BindGRPC) {
 type BindGRPC func(config.View, *GRPCBindings) error
 
 type GRPCBindings struct {
-	s  *Service
-	sp *rpc.ServerParams
-}
-
-func (b *GRPCBindings) AddHandler(h rpc.GRPCHandler) {
-	b.sp.AddHandler(h)
+	s *Service
+	*rpc.ServerParams
 }
 
 func (b *GRPCBindings) AddCloser(closer func() error) {
 	b.s.closers = append(b.s.closers, closer)
-}
-
-func (b *GRPCBindings) SetAuth(h grpc.UnaryServerInterceptor) {
-	b.sp.SetAuth(h)
 }
 
 // NewGRPCService is used internally and only exposed for testing and development purposes.
@@ -67,8 +58,8 @@ func NewGRPCService(serviceName string, cfg config.View, bind BindGRPC, listen f
 	s := &Service{}
 
 	bindings := &GRPCBindings{
-		s:  s,
-		sp: sp,
+		s:            s,
+		ServerParams: sp,
 	}
 
 	err = bind(cfg, bindings)

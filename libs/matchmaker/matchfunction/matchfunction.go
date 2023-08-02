@@ -17,7 +17,7 @@ import (
 	"github.com/GambitLLC/quip/libs/appmain"
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
-	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 )
 
 var logger = zerolog.New(os.Stderr).With().
@@ -73,9 +73,9 @@ func (s *Service) Run(req *ompb.RunRequest, stream ompb.MatchFunction_RunServer)
 }
 
 func makeMatches(p *ompb.MatchProfile, poolTickets map[string][]*ompb.Ticket) ([]*ompb.Match, error) {
-	gameDetails := &ipb.GameDetails{}
-	if err := p.Extensions["details"].UnmarshalTo(gameDetails); err != nil {
-		return nil, errors.WithMessagef(err, "failed to unmarshal game details from MatchProfile")
+	gameDetails, err := protoext.OpenMatchProfileDetails(p)
+	if err != nil {
+		return nil, err
 	}
 
 	// TODO: tickets are currently assumed to be 1 per player, deal with multi-player tickets
@@ -90,12 +90,8 @@ func makeMatches(p *ompb.MatchProfile, poolTickets map[string][]*ompb.Ticket) ([
 		return nil, errors.Errorf("missing required pool named 'all'")
 	}
 
-	gameCfg := &pb.GameConfiguration{
+	gameCfg := &ipb.MatchDetails_GameConfiguration{
 		Gamemode: gameDetails.Gamemode,
-	}
-	gameCfgAny, err := anypb.New(gameCfg)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create anypb from game config: %s", err.Error())
 	}
 
 	matches := []*ompb.Match{}
@@ -112,32 +108,34 @@ func makeMatches(p *ompb.MatchProfile, poolTickets map[string][]*ompb.Ticket) ([
 			return nil, err
 		}
 
-		matchRosterAny, err := anypb.New(matchRoster)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to create anypb from match details: %s", err.Error())
-		}
-
-		matches = append(matches, &ompb.Match{
+		match := &ompb.Match{
 			MatchId:       fmt.Sprintf("profile-%v-%s", p.GetName(), xid.New().String()),
 			MatchProfile:  p.GetName(),
 			MatchFunction: "basic-matchfunction",
 			Tickets:       matchTickets,
-			Extensions: map[string]*anypb.Any{
-				"game_config": gameCfgAny,
-				"roster":      matchRosterAny,
-			},
+			Extensions:    make(map[string]*anypb.Any),
+		}
+
+		err = protoext.SetExtensionDetails(match, &ipb.MatchDetails{
+			MatchId: match.MatchId,
+			Roster:  matchRoster,
+			Config:  gameCfg,
 		})
+		if err != nil {
+			return nil, err
+		}
+
+		matches = append(matches, match)
 	}
 
 	return matches, nil
 }
 
-func CreateMatchRoster(tickets []*ompb.Ticket) (*pb.MatchRoster, error) {
+func CreateMatchRoster(tickets []*ompb.Ticket) (*ipb.MatchDetails_Roster, error) {
 	// teams := make([]*pb.MatchDetails_Team, len(tickets))
 	players := make([]string, len(tickets))
 	for _, ticket := range tickets {
-		details := &ipb.TicketInternal{}
-		err := ticket.Extensions["details"].UnmarshalTo(details)
+		details, err := protoext.OpenMatchTicketDetails(ticket)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "failed to read details on ticket '%s", ticket.Id)
 		}
@@ -145,7 +143,7 @@ func CreateMatchRoster(tickets []*ompb.Ticket) (*pb.MatchRoster, error) {
 		players = append(players, details.PlayerId)
 	}
 
-	return &pb.MatchRoster{
+	return &ipb.MatchDetails_Roster{
 		Players: players,
 	}, nil
 }

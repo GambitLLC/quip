@@ -2,21 +2,15 @@ package frontend
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/GambitLLC/quip/libs/broker"
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
@@ -26,269 +20,114 @@ var logger = zerolog.New(os.Stderr).With().
 	Logger()
 
 type Service struct {
-	store  statestore.Service
+	store statestore.Service
+	omfc  *omFrontendClient
+	gc    *games.GameDetailCache
+
 	broker broker.Client
-	omfc   *omFrontendClient
-	gc     *games.GameDetailCache
+
+	// use channel as semaphore to synchronize access
+	managerSemaphore chan *manager
 }
 
-func New(cfg config.View) *Service {
+func NewService(cfg config.View) *Service {
+	mc := make(chan *manager, 1)
+	mc <- &manager{
+		idToChan: make(map[string][]chan *pb.Status),
+		chanToId: make(map[<-chan *pb.Status]string),
+	}
+
 	return &Service{
-		store:  statestore.New(cfg),
-		broker: broker.NewRedis(cfg),
-		omfc:   newOmFrontendClient(cfg),
-		gc:     games.NewGameDetailCache(),
+		store:            statestore.New(cfg),
+		omfc:             newOmFrontendClient(cfg),
+		gc:               games.NewGameDetailCache(),
+		broker:           broker.NewRedis(cfg),
+		managerSemaphore: mc,
 	}
 }
 
-// getPlayer retrieves the specified player from the statestore.
-// Locks the player mutex and returns an unlock function.
-func getPlayer(ctx context.Context, store statestore.Service, id string, create bool) (player *ipb.PlayerInternal, unlock func(), err error) {
-	if id == "" {
-		err = status.Error(codes.InvalidArgument, "id is required")
-		return
-	}
-
-	lock := store.NewMutex(fmt.Sprintf("player:%s", id))
-	if err = lock.Lock(ctx); err != nil {
-		err = status.Error(codes.Unavailable, err.Error())
-		return
-	}
-
-	unlock = func() {
-		// TODO: determine if unlock error needs to be handled
-		_, _ = lock.Unlock(context.Background())
-	}
-
-	player, err = store.GetPlayer(ctx, id)
+func (s *Service) Stream(stream pb.Frontend_StreamServer) error {
+	session, err := s.newSession(stream)
 	if err != nil {
-		if status.Code(err) != codes.NotFound || !create {
-			unlock()
-			return
-		}
-
-		player = &ipb.PlayerInternal{
-			PlayerId: id,
-		}
-		err = store.CreatePlayer(ctx, player)
+		return err
 	}
 
-	return
+	defer session.cleanup()
+
+	go session.send()
+
+	// recv returns when the client disconnects or closes the send direction of the stream
+	// consider Stream finished in both cases
+	return session.recv()
 }
 
-// GetStatus returns the current status of the specified player.
-func (s *Service) GetStatus(ctx context.Context, req *pb.GetStatusRequest) (*pb.Status, error) {
-	player, unlock, err := getPlayer(ctx, s.store, req.Target, false)
-	if err != nil {
-		if status.Code(err) == codes.NotFound {
-			return &pb.Status{
-				State: pb.State_STATE_IDLE,
-			}, nil
-		}
+type manager struct {
+	idToChan map[string][]chan *pb.Status
+	chanToId map[<-chan *pb.Status]string
 
-		// TODO: handle err instead of propagating
-		return nil, err
-	}
-	defer unlock()
-
-	if player.MatchId != nil {
-		match, err := s.store.GetMatch(ctx, *player.MatchId)
-		if err != nil {
-			if status.Code(err) == codes.NotFound {
-				go func() {
-					// TODO: handle error
-					_ = s.store.UntrackMatch(context.Background(), []string{player.PlayerId})
-				}()
-
-				return &pb.Status{
-					State: pb.State_STATE_IDLE,
-				}, nil
-			}
-
-			// TODO: handle err instead of propagating
-			return nil, err
-		}
-
-		return &pb.Status{
-			State: pb.State_STATE_PLAYING,
-			Details: &pb.Status_Matched{
-				Matched: &pb.MatchDetails{
-					MatchId:    match.MatchId,
-					Connection: match.Connection,
-				},
-			},
-		}, nil
-	}
-
-	if player.TicketId != nil {
-		ticket, err := s.omfc.GetTicket(ctx, *player.TicketId)
-		if err != nil {
-			if status.Code(err) == codes.NotFound {
-				go func() {
-					// TODO: handle error
-					_ = s.store.UntrackTicket(context.Background(), []string{player.PlayerId})
-				}()
-
-				return &pb.Status{
-					State: pb.State_STATE_IDLE,
-				}, nil
-			}
-
-			// TODO: handle err instead of propagating
-			return nil, err
-		}
-
-		// if ticket has been assigned, untrack it and assume player is idle
-		// OpenMatch should have expired the ticket by this time
-		if ticket.GetAssignment().GetConnection() != "" {
-			go func() {
-				// TODO: handle error
-				_ = s.store.UntrackTicket(context.Background(), []string{player.PlayerId})
-			}()
-
-			return &pb.Status{
-				State: pb.State_STATE_IDLE,
-			}, nil
-		}
-
-		details := &ipb.TicketInternal{}
-		err = ticket.Extensions["details"].UnmarshalTo(details)
-		if err != nil {
-			// TODO: handle err instead of propagating
-			return nil, err
-		}
-
-		return &pb.Status{
-			State: pb.State_STATE_SEARCHING,
-			Details: &pb.Status_Searching{
-				Searching: &pb.QueueDetails{
-					Config: &pb.GameConfiguration{
-						Gamemode: details.Gamemode,
-					},
-					StartTime: ticket.CreateTime,
-				},
-			},
-		}, nil
-	}
-
-	return &pb.Status{
-		State: pb.State_STATE_IDLE,
-	}, nil
+	close func() error
 }
 
-// StartQueue starts searching for a match with the given parameters.
-func (s *Service) StartQueue(ctx context.Context, req *pb.StartQueueRequest) (*emptypb.Empty, error) {
-	player, unlock, err := getPlayer(ctx, s.store, metautils.ExtractIncoming(ctx).Get("Player-Id"), true)
-	if err != nil {
-		return nil, err
-	}
-	defer unlock()
-
-	gameCfg := req.GetConfig()
-	if gameCfg == nil {
-		return nil, status.Error(codes.InvalidArgument, ".Config is required")
-	}
-
-	game, err := s.gc.GameDetails(gameCfg.Gamemode)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	if game == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid gamemode '%s'", gameCfg.Gamemode)
-	}
-
-	if player.MatchId != nil {
-		return nil, status.Error(codes.FailedPrecondition, "player is already in queue")
-	}
-
-	if player.TicketId != nil {
-		return nil, status.Error(codes.FailedPrecondition, "player is already in game")
-	}
-
-	ticket, err := s.omfc.CreateTicket(ctx, &ipb.TicketInternal{
-		PlayerId: player.PlayerId,
-		Gamemode: gameCfg.Gamemode,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	players := []string{player.PlayerId}
-	err = s.store.TrackTicket(ctx, ticket.Id, players)
-	if err != nil {
-		return nil, err
-	}
-
-	go s.publish(&pb.StatusUpdate{
-		Targets: players,
-		Status: &pb.Status{
-			State: pb.State_STATE_SEARCHING,
-		},
-	})
-
-	return &emptypb.Empty{}, nil
-}
-
-// StopQueue stops searching for a match. Idempotent.
-func (s *Service) StopQueue(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	player, unlock, err := getPlayer(ctx, s.store, metautils.ExtractIncoming(ctx).Get("Player-Id"), true)
-	if err != nil {
-		if status.Code(err) == codes.NotFound {
-			return &emptypb.Empty{}, nil
-		}
-
-		return nil, err
-	}
-	defer unlock()
-
-	if player.TicketId == nil {
-		return &emptypb.Empty{}, nil
-	}
-
-	err = s.omfc.DeleteTicket(ctx, *player.TicketId)
-	if err != nil && status.Code(err) != codes.NotFound {
-		return nil, err
-	}
-
-	// TODO: get relevant players from ticket when multiple players is supported
-	players := []string{player.PlayerId}
-
-	err = s.store.UntrackTicket(ctx, players)
-	if err != nil {
-		return nil, err
-	}
-
-	go s.publish(&pb.StatusUpdate{
-		Targets: players,
-		Status: &pb.Status{
-			State: pb.State_STATE_IDLE,
-			Details: &pb.Status_Stopped{
-				Stopped: &pb.QueueStopped{
-					Message: fmt.Sprintf("%s stopped matchmaking", player.PlayerId),
-				},
-			},
-		},
-	})
-
-	return &emptypb.Empty{}, nil
-}
-
-func (s *Service) publish(msg proto.Message) {
-	var err error
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+func (s *Service) subscribe(id string) (<-chan *pb.Status, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	switch msg := msg.(type) {
-	default:
-		err = fmt.Errorf("unhandled message type %T", msg)
-	// case *pb.QueueUpdate:
-	// 	err = s.broker.PublishQueueUpdate(ctx, msg)
-	case *pb.StatusUpdate:
-		err = s.broker.PublishStatusUpdate(ctx, msg)
+	manager := <-s.managerSemaphore
+	if manager.close == nil {
+		updates, close, err := s.broker.ConsumeStatusUpdate(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to consume status updates")
+		}
+
+		go func() {
+			for update := range updates {
+				manager := <-s.managerSemaphore
+				for _, target := range update.Targets {
+					for _, ch := range manager.idToChan[target] {
+						select {
+						case ch <- update.Status:
+							// noop
+						default:
+							// channel blocked
+							logger.Warn().Str("id", target).Msg("sending status update to channel was blocked")
+						}
+					}
+				}
+				s.managerSemaphore <- manager
+			}
+
+		}()
+
+		manager.close = close
 	}
 
-	if err != nil {
-		logger.Error().Err(err).Msg("Publish failed")
+	ch := make(chan *pb.Status, 1)
+	manager.chanToId[ch] = id
+	manager.idToChan[id] = append(manager.idToChan[id], ch)
+
+	s.managerSemaphore <- manager
+	return ch, nil
+}
+
+func (s *Service) unsubscribe(ch <-chan *pb.Status) {
+	manager := <-s.managerSemaphore
+	id, ok := manager.chanToId[ch]
+	if !ok {
+		s.managerSemaphore <- manager
+		return
 	}
+
+	filter := manager.idToChan[id][:0]
+	for _, other := range manager.idToChan[id] {
+		if other != ch {
+			filter = append(filter, other)
+		}
+	}
+
+	// garbage collect
+	for i := len(filter); i < len(manager.idToChan[id]); i++ {
+		manager.idToChan[id] = nil
+	}
+
+	s.managerSemaphore <- manager
 }

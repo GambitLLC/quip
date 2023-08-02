@@ -4,6 +4,7 @@ option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
 
 import "matchmaker/messages.proto";
 import "google/protobuf/empty.proto";
+import "google/rpc/status.proto";
 
 message GetStatusRequest {
   string target = 1;
@@ -13,13 +14,24 @@ message StartQueueRequest {
   GameConfiguration config = 1;
 }
 
+// TODO: keepalive?
+message StreamRequest {
+  oneof message {
+    GetStatusRequest get_status = 1;
+    StartQueueRequest start_queue = 2;
+    google.protobuf.Empty stop_queue = 3;
+  }
+}
+
+message StreamResponse {
+  oneof message {
+    // error is sent whenever some stream request failed
+    google.rpc.Status error = 1;
+
+    Status status_update = 2;
+  }
+}
+
 service Frontend {
-  // GetStatus returns the current status of the specified player.
-  rpc GetStatus(GetStatusRequest) returns (Status);
-
-  // StartQueue starts searching for a match with the given parameters.
-  rpc StartQueue(StartQueueRequest) returns (google.protobuf.Empty);
-
-  // StopQueue stops searching for a match. Idempotent.
-  rpc StopQueue(google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc Stream(stream StreamRequest) returns (stream StreamResponse);
 }

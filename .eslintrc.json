@@ -1,7 +1,6 @@
 {
   "root": true,
-  "ignorePatterns": ["**/*"],
-  "plugins": ["@nx"],
+  "plugins": ["@nx", "@graphql-eslint"],
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
@@ -30,6 +29,18 @@
       "files": ["*.js", "*.jsx"],
       "extends": ["plugin:@nx/javascript"],
       "rules": {}
+    },
+    {
+      "files": ["*.graphqls"],
+      "extends": ["plugin:@graphql-eslint/schema-recommended"],
+      "rules": {
+        "@graphql-eslint/known-type-names": "error",
+        "@graphql-eslint/description-style": ["error", { "style": "inline" }],
+        "@graphql-eslint/strict-id-in-types": "off"
+      },
+      "parserOptions": {
+        "schema": "./graph/schema.graphqls"
+      }
     }
   ]
 }

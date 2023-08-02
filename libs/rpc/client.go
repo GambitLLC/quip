@@ -19,6 +19,7 @@ const (
 
 var clientLogger = zerolog.New(os.Stderr).With().
 	Str("component", "rpc.client").
+	Timestamp().
 	Logger()
 
 func GRPCClientFromConfig(cfg config.View, prefix string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {

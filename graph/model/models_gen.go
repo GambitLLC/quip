@@ -6,11 +6,7 @@ import (
 	"time"
 )
 
-type StatusDetails interface {
-	IsStatusDetails()
-}
-
+// Customizable User profile.
 type Profile struct {
-	Username string     `json:"username"`
-	Dob      *time.Time `json:"dob,omitempty"`
+	Dob *time.Time `json:"dob,omitempty"`
 }

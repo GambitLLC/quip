@@ -9,6 +9,7 @@ import (
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 )
 
 type MatchProfileCache struct {
@@ -17,24 +18,14 @@ type MatchProfileCache struct {
 
 func NewMatchProfileCache() *MatchProfileCache {
 	newInstance := func(cfg config.View) (interface{}, func(), error) {
-
 		details, err := parseGameDetails(cfg)
 		if err != nil {
 			return nil, nil, err
 		}
-		// games, ok := cfg.Get("games").(map[string]interface{})
-		// if !ok {
-		// 	return nil, nil, errors.New("failed to read 'games' from config")
-		// }
 
 		profiles := make([]*ompb.MatchProfile, 0, len(details))
 		for name, details := range details {
-			detailsAny, err := anypb.New(details)
-			if err != nil {
-				return nil, nil, errors.WithMessagef(err, "failed to marshal game details for 'games.%s'", name)
-			}
-
-			profiles = append(profiles, &ompb.MatchProfile{
+			profile := &ompb.MatchProfile{
 				Name: fmt.Sprintf("profile-%s", name),
 				Pools: []*ompb.Pool{
 					{
@@ -44,10 +35,13 @@ func NewMatchProfileCache() *MatchProfileCache {
 						},
 					},
 				},
-				Extensions: map[string]*anypb.Any{
-					"details": detailsAny,
-				},
-			})
+				Extensions: make(map[string]*anypb.Any),
+			}
+			if err := protoext.SetExtensionDetails(profile, details); err != nil {
+				return nil, nil, err
+			}
+
+			profiles = append(profiles, profile)
 		}
 
 		return profiles, nil, nil
@@ -82,22 +76,22 @@ func NewGameDetailCache() *GameDetailCache {
 	}
 }
 
-func (c *GameDetailCache) GameDetails(name string) (*ipb.GameDetails, error) {
+func (c *GameDetailCache) GameDetails(name string) (*ipb.ProfileDetails, error) {
 	games, err := c.Cacher.Get()
 	if err != nil {
 		return nil, err
 	}
 
-	return games.(map[string]*ipb.GameDetails)[name], nil
+	return games.(map[string]*ipb.ProfileDetails)[name], nil
 }
 
-func parseGameDetails(cfg config.View) (map[string]*ipb.GameDetails, error) {
+func parseGameDetails(cfg config.View) (map[string]*ipb.ProfileDetails, error) {
 	games, ok := cfg.Get("games").(map[string]interface{})
 	if !ok {
 		return nil, errors.New("failed to read 'games' from config")
 	}
 
-	gameDetails := make(map[string]*ipb.GameDetails, len(games))
+	gameDetails := make(map[string]*ipb.ProfileDetails, len(games))
 
 	for name, details := range games {
 		detailMap, ok := details.(map[string]interface{})
@@ -115,7 +109,7 @@ func parseGameDetails(cfg config.View) (map[string]*ipb.GameDetails, error) {
 			return nil, errors.Errorf("'games.%s' is missing valid players value: should be int >= 0", name)
 		}
 
-		gameDetails[name] = &ipb.GameDetails{
+		gameDetails[name] = &ipb.ProfileDetails{
 			Gamemode: name,
 			Teams:    uint32(teams),
 			Players:  uint32(players),

@@ -3,7 +3,8 @@ package quip.matchmaker.internal;
 option go_package="github.com/GambitLLC/quip/libs/matchmaker/internal/ipb";
 
 // Internal message for holding relevant player information.
-message PlayerInternal {
+// Placed in statestore.
+message PlayerDetails {
   string player_id = 1;
 
   optional string ticket_id = 2;
@@ -12,14 +13,16 @@ message PlayerInternal {
 }
 
 // Internal message for holding relevant ticket information.
-message TicketInternal {
+// Placed under Extensions on Open Match tickets.
+message TicketDetails {
   string player_id = 1;
 
   string gamemode = 2;
 }
 
-// Internal message for holding relevant game information.
-message GameDetails {
+// Internal message for holding relevant match profile information.
+// Placed under Extensions on Open Match tickets.
+message ProfileDetails {
   // Name of the current gamemode.
   string gamemode = 1;
 
@@ -30,9 +33,23 @@ message GameDetails {
   uint32 players = 3;
 }
 
-message MatchInternal {
+// Internal message for holding details about an ongoing match.
+// Placed in statestore and under Metadata on Agones Allocations.
+message MatchDetails {
   string match_id = 1;
   string connection = 2;
 
-  repeated string players = 3;
+  message Roster {
+    // TODO: Change message type to support teams.
+    repeated string players = 1;
+  }
+
+  Roster roster = 3;
+
+  // Information about the match being played, including gamemode and settings (e.g. wagers).
+  message GameConfiguration {
+    string gamemode = 1;
+  }
+
+  GameConfiguration config = 4;
 }
