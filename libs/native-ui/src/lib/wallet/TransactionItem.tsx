@@ -5,15 +5,32 @@ import { Text } from "../text/Text"
 import { IconButton } from "react-native-paper";
 import theme from "../../theme";
 import { TransactionItem } from "../store/TransactionStore";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 interface TransactionItemProps {
   transaction: TransactionItem
 }
 
 export function TransactionItemView(props: TransactionItemProps) {
+  const icon = props.transaction.amount >= 0 ? 'arrow-downward' : 'arrow-upward';
+
   return (
     <View style={[p('y', 6), p('x', 4), styles.transaction]}>
-      <IconButton icon="camera" mode="contained"/>
+      <View style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 56,
+      }}>
+        <MaterialIcons name={icon} size={24} color={props.transaction.amount >= 0 ? theme.colors.p2 : theme.colors.t2}/>
+        <Text style={{
+          fontSize: 12,
+          color: theme.colors.s4,
+        }}>
+          {props.transaction.amount >= 0 ? "Received" : 'Sent'}
+        </Text>
+      </View>
       <View style={[styles.dataCol1]}>
         <Text style={styles.mainText}>{shortAddress(props.transaction.address)}</Text>
         <Text style={styles.subtext}>

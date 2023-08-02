@@ -49,7 +49,9 @@
     "@react-navigation/native-stack": "*",
     "@react-spring/native": "*",
     "expo-status-bar": "*",
-    "expo-sensors": "~12.1.1"
+    "expo-sensors": "~12.1.1",
+    "@expo/vector-icons": "*",
+    "@magic-sdk/provider": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/quip-app && cp package-lock.json apps/quip-app",
