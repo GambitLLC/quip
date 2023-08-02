@@ -34,7 +34,7 @@ export const theme = {
     s5: '#ECEBFF',
     s6: '#EEFFEF',
     t1: '#4097A0',
-    t3: '#DC3C2D',
+    t2: '#DC3C2D',
     splash: '#E1DFFF',
   }
 }

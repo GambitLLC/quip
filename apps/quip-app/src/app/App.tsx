@@ -22,7 +22,7 @@ export const App = () => {
     <PaperProvider theme={theme}>
       <CryptoProvider>
         <NavigationContainer>
-          <Stack.Navigator initialRouteName="game" screenOptions={{headerShown: false}}>
+          <Stack.Navigator initialRouteName="gameHome" screenOptions={{headerShown: false}}>
             <Stack.Screen name="game" component={GameScreen} />
             <Stack.Screen name="splash" component={Splash}/>
             <Stack.Screen name="auth" component={Auth} />
