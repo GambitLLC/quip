@@ -6,6 +6,7 @@ export * from './util/TextUtil'
 
 //store
 export * from './lib/store/GameStore'
+export * from './lib/store/TransactionStore'
 
 //styles
 export * from './lib/styles/Spacing'
@@ -39,3 +40,6 @@ export * from './lib/achievement/AchievementBadge'
 export * from './lib/wallet/TopWalletInfo'
 export * from './lib/wallet/TransactionHistory'
 export * from './lib/context/CryptoContext'
+export * from './lib/wallet/CryptoNumpadInput'
+export * from './lib/wallet/TransactionDayInfoRow'
+

@@ -1,5 +1,7 @@
 import { View, StyleSheet } from "react-native";
-import { p, shortAddress, Text } from "@quip/native-ui";
+import { p } from "../styles/Spacing";
+import { shortAddress } from "../../util/TextUtil";
+import { Text } from "../text/Text"
 import { IconButton } from "react-native-paper";
 import theme from "../../theme";
 import { TransactionItem } from "../store/TransactionStore";

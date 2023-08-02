@@ -1,5 +1,6 @@
 import { View, StyleSheet } from "react-native";
-import { m, Text } from "@quip/native-ui";
+import { m } from "../styles/Spacing";
+import { Text } from "../text/Text"
 import { TransactionDay } from "../store/TransactionStore";
 import theme from "../../theme";
 
