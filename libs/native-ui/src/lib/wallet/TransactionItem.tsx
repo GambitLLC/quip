@@ -1,8 +1,7 @@
 import { View, StyleSheet } from "react-native";
-import { p } from "../styles/Spacing";
+import {m, p} from "../styles/Spacing";
 import { shortAddress } from "../../util/TextUtil";
 import { Text } from "../text/Text"
-import { IconButton } from "react-native-paper";
 import theme from "../../theme";
 import { TransactionItem } from "../store/TransactionStore";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -21,13 +20,10 @@ export function TransactionItemView(props: TransactionItemProps) {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        width: 56,
+        width: 64,
       }}>
         <MaterialIcons name={icon} size={24} color={props.transaction.amount >= 0 ? theme.colors.p2 : theme.colors.t2}/>
-        <Text style={{
-          fontSize: 12,
-          color: theme.colors.s4,
-        }}>
+        <Text style={[styles.subtext, m('b', 1)]}>
           {props.transaction.amount >= 0 ? "Received" : 'Sent'}
         </Text>
       </View>

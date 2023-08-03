@@ -1,64 +1,100 @@
-import {View, StyleSheet, Pressable} from "react-native";
-import {m, p, Screen, spacing, Text, theme, typography} from "@quip/native-ui";
-import { CryptoNumpadInput } from "@quip/native-ui";
-import {FontAwesome} from "@expo/vector-icons";
+import { View, StyleSheet } from "react-native";
+import {p, Screen, spacing, theme, Text, m, border, shortAddress} from "@quip/native-ui";
+
+import QRCodeStyled from 'react-native-qrcode-styled';
 import {IconButton, TouchableRipple} from "react-native-paper";
-import {useNavigation} from "@react-navigation/native";
+import {MaterialIcons} from "@expo/vector-icons";
+import * as Clipboard from 'expo-clipboard';
 
 interface DepositProps {
 
 }
 
 export function Deposit(props: DepositProps) {
-  const navigation = useNavigation();
+  const address = "HJ7MqeXQL1MLfVEh4qZeUzExKg8RUS9Pxiu98oXruG6j";
+
+  const copyToClipboard = async () => {
+    await Clipboard.setStringAsync(address);
+  };
+
   return (
     <Screen style={[spacing.fill]}>
-      <View style={[spacing.fill, p('a', 4)]}>
-        <Text>
-          Deposit
-        </Text>
+      <View style={[styles.deposit, p('a', 6)]}>
+        <View style={[{width: "100%"}, m('b', 4)]}>
+          <Text style={styles.subtext}>
+            QR Code
+          </Text>
+        </View>
+        <View style={[m('b', 8)]}>
+          <QRCodeStyled
+            data={'HJ7MqeXQL1MLfVEh4qZeUzExKg8RUS9Pxiu98oXruG6j'}
+            style={{backgroundColor: 'white'}}
+            color={theme.colors.p1}
+            padding={0}
+            isPiecesGlued={true}
+            pieceBorderRadius={2}
+            pieceSize={6}
+          />
+        </View>
+        <View style={[{width: "100%"}, m('b', 4)]}>
+          <Text style={styles.subtext}>
+            Wallet Address
+          </Text>
+        </View>
+        <TouchableRipple
+          borderless
+          onPress={copyToClipboard}
+          style={[
+            border.quip,
+            styles.address,
+            p('x', 6),
+            p('y', 2),
+          ]}
+        >
+          <View style={styles.addressView}>
+            <Text style={styles.addressText}>
+              {address}
+            </Text>
+            <View style={[p('l', 2)]}>
+              <MaterialIcons name="content-copy" size={24} color={theme.colors.p1}/>
+            </View>
+          </View>
+        </TouchableRipple>
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  depositHeader: {
-    backgroundColor: theme.colors.s5,
-    borderRadius: 16,
-  },
-
-  depositHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  depositButton: {
-    backgroundColor: theme.colors.background,
-    borderRadius: 16,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 56,
-    height: 56,
-  },
-
-  maxText: {
-    fontSize: 14,
-    color: theme.colors.p1,
+  deposit: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    width: "100%",
   },
 
   subtext: {
-    fontSize: 14,
     color: theme.colors.s4,
+    fontSize: 14,
   },
 
-  info: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
+  address: {
+    borderRadius: 24,
+    width: "100%"
+  },
+
+  addressView: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%"
+  },
+
+  addressText: {
+    color: theme.colors.s4,
+    fontSize: 14,
+    flexShrink: 1
   }
 });
 

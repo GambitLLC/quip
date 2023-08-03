@@ -27,7 +27,7 @@ export function TopWalletInfo(props: TopWalletInfoProps) {
         <WalletNavIcon title="Deposit" icon="arrow-downward" route="depositWallet"/>
         <WalletNavIcon title="Withdraw" icon="arrow-upward" route="withdrawWallet"/>
         <WalletNavIcon title="Buy" icon="credit-card" route="buyWallet"/>
-        <WalletNavIcon title="QR Code" icon="qr-code-scanner" route="qrCodeWallet"/>
+        <WalletNavIcon title="QR Code" icon="qr-code-scanner" route="depositWallet"/>
       </View>
     </View>
   );
