@@ -39,7 +39,7 @@
         "@graphql-eslint/strict-id-in-types": "off"
       },
       "parserOptions": {
-        "schema": "./graph/schema.graphqls"
+        "schema": "./graph/*.graphqls"
       }
     }
   ]

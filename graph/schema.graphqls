@@ -20,12 +20,53 @@ type User {
   id: ID!
   " Unique display name "
   name: String!
+
+  level: Int
+  levelProgress: Int
+  levelRequirement: Int
+
   profile: Profile
+  settings: Settings
+
+  friends: [User!] # TODO: pagination
+  matches: [Match!]
+  achievements: [Achievement!]
 }
 
-" Customizable User profile. "
+" Customizable public User profile. "
 type Profile {
+  placeholder: String
+}
+
+" Customizable personal User settings. "
+type Settings {
   dob: Time
+  email: String
+}
+
+" Match model. "
+type Match {
+  id: ID!
+  gamemode: String!
+  players: [User!]! # TODO: support teams
+}
+
+" Achievement model. "
+type Achievement {
+  name: String!
+  description: String!
+
+  " Current achieved level. "
+  level: Int!
+
+  " Current progress to the next level. "
+  progress: Int
+
+  " Total required progress for the next level of the achievement. "
+  required: Int
+
+  " Boolean representing completion of all achievement levels. "
+  completed: Boolean
 }
 
 # eslint-disable-next-line @graphql-eslint/require-description
@@ -37,14 +78,36 @@ type Query {
     " Filter by name "
     name: String
   ): User
+
+  " Query for specific match by id."
+  match(id: String!): Match
 }
 
 " Changeset for mutating a user's profile. "
-input ProfileChanges @goModel(model: "map[string]interface{}") {
+input ChangeProfileInput @goModel(model: "map[string]interface{}") {
+  placeholder: String
+}
+
+" Changeset for mutating a user's settings. "
+input ChangeSettingsInput @goModel(model: "map[string]interface{}") {
   dob: Time
+  email: String
 }
 
 # eslint-disable-next-line @graphql-eslint/require-description
 type Mutation {
-  updateProfile(changes: ProfileChanges!): Boolean!
+  changeProfile(changes: ChangeProfileInput!): ChangeSetResponse!
+  changeSettings(changes: ChangeSettingsInput!): ChangeSetResponse!
+}
+
+" Response type for mutations which take changesets. "
+type ChangeSetResponse {
+  success: Boolean!
+  failed: [ChangeSetFailedField!]
+}
+
+" Represents a field in a changeset that was unable to be updated. Used in ChangeSetResponse. "
+type ChangeSetFailedField {
+  field: String!
+  reason: String
 }
