@@ -11,21 +11,20 @@ interface NotificationBarProps {
 }
 
 export default function NotificationBar(props: NotificationBarProps) {
-  const {notifications} = useNotificationStore()
+  const {notifications, remove} = useNotificationStore()
 
   let height = 0
-  const transitions = useTransition(
-    notifications.map(d => ({...d, y: (height += d.height) - d.height })), {
+  const transitions = useTransition(notifications, {
     keys: (item: any) => item.id,
     from: {opacity: 0, maxHeight: 0},
     enter: item => async (next: any) => {
-      await next({opacity: 1, maxHeight: item.height})
+      await next({opacity: 1, maxHeight: 72})
     },
     leave: item => async (next: any) => {
-      await next({opacity: 0, maxHeight: 0})
+      await next({opacity: 1, maxHeight: 0})
     },
     update: item => async (next: any) => {
-      await next({opacity: 1, maxHeight: item.height})
+      await next({opacity: 1, maxHeight: 72})
     },
     config: {duration: 300, easing: easings.easeOutCubic},
   })

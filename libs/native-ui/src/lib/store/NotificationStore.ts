@@ -5,7 +5,6 @@ interface INotification {
   message: string,
   type: "success" | "error" | "warning" | "info",
   timeout?: number,
-  height: number,
 }
 
 interface NotificationStore {

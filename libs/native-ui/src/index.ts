@@ -13,6 +13,7 @@ export * from './lib/store/NotificationStore'
 export * from './lib/styles/Spacing'
 export * from './lib/styles/Typography'
 export * from './lib/styles/Border'
+export * from './lib/styles/Flex'
 
 //components
 export * from './lib/logoText/LogoText'

@@ -98,7 +98,6 @@ function GameHome({navigation}: NativeStackScreenProps<ParamListBase, "games">) 
                 })(),
                 message: "Coming Soon!",
                 timeout: 3000,
-                height: 72,
               })
             }} buttonColor={(item.color as string)} labelStyle={typography.button1} contentStyle={styles.playButton} mode="contained">
               Play Now

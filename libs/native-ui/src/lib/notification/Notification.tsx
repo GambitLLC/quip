@@ -8,7 +8,8 @@ import LinearProgress from "../progress/LinearProgress";
 import React, {useMemo} from "react";
 import {INotification, useNotificationStore} from "../store/NotificationStore";
 import {easings, animated} from '@react-spring/native'
-
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { flex } from "../styles/Flex"
 interface NotificationProps {
   notification: INotification,
   style?: any,
@@ -18,13 +19,25 @@ export default function Notification(props: NotificationProps) {
   const {notification} = props
   const {remove} = useNotificationStore()
 
+  const name = (() => {
+    switch (props.notification.type) {
+      case "success":
+        return "check"
+      case "warning":
+        return "warning"
+      case "error":
+        return "warning"
+      case "info":
+        return "info"
+    }
+  })()
+
   return (
     <animated.View
       pointerEvents="auto"
       style={[
         props.style,
         styles.notification,
-        p('a', 4),
         m('y', 1),
         {
           backgroundColor: ((() => {
@@ -43,34 +56,39 @@ export default function Notification(props: NotificationProps) {
           })()),
         },
       ]}>
-      <View style={styles.notificationContent}>
-        <Text style={[styles.notificationText]}>{notification.message}</Text>
-        <TouchableRipple borderless style={[styles.closeBtn]} onPress={() => {
-          remove(notification)
-        }}>
-          <View>
-            <FontAwesome name={"times"} size={16} color={theme.colors.white} />
+      <View style={[p('a', 4)]}>
+        <View style={styles.notificationContent}>
+          <View style={[flex.row, flex.alignCenter]}>
+            <FontAwesome size={16} color={theme.colors.white} name={name}/>
+            <Text style={[m('l', 3), styles.notificationText]}>{notification.message}</Text>
           </View>
-        </TouchableRipple>
-      </View>
-      <LinearProgress
-        percentage={100}
-        height={4}
-        color={theme.colors.white}
-        backgroundColor={"rgba(255, 255, 255, 0.2)"}
-        borderRadius={2}
-        spring={{
-          from: {width: "100%"},
-          to: {width: "0%"},
-          onRest: () => {
+          <TouchableRipple borderless style={[styles.closeBtn]} onPress={() => {
             remove(notification)
-          },
-          config: {
-            duration: notification.timeout ?? 3000,
-            easing: easings.linear,
-          }
-        }}
-      />
+          }}>
+            <View>
+              <FontAwesome name={"times"} size={16} color={theme.colors.white} />
+            </View>
+          </TouchableRipple>
+        </View>
+        <LinearProgress
+          percentage={100}
+          height={4}
+          color={theme.colors.white}
+          backgroundColor={"rgba(255, 255, 255, 0.2)"}
+          borderRadius={2}
+          spring={{
+            from: {width: "100%"},
+            to: {width: "0%"},
+            onRest: () => {
+              remove(notification)
+            },
+            config: {
+              duration: notification.timeout ?? 3000,
+              easing: easings.linear,
+            }
+          }}
+        />
+      </View>
     </animated.View>
   )
 }
