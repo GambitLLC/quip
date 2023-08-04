@@ -36,6 +36,10 @@ export const theme = {
     t1: '#4097A0',
     t2: '#DC3C2D',
     splash: '#E1DFFF',
+    success: '#43c756',
+    warning: '#eabe0c',
+    error: '#fc6969',
+    info: '#2196f3',
   }
 }
 

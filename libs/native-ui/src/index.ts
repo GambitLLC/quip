@@ -7,6 +7,7 @@ export * from './util/TextUtil'
 //store
 export * from './lib/store/GameStore'
 export * from './lib/store/TransactionStore'
+export * from './lib/store/NotificationStore'
 
 //styles
 export * from './lib/styles/Spacing'
@@ -42,4 +43,5 @@ export * from './lib/wallet/TransactionHistory'
 export * from './lib/context/CryptoContext'
 export * from './lib/wallet/CryptoNumpadInput'
 export * from './lib/wallet/TransactionDayInfoRow'
+export * from './lib/notification/NotificationBar'
 

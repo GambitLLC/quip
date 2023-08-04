@@ -11,7 +11,8 @@ import {
   theme,
   typography,
   Text, createQuipNavigator, capitalize,
-  useGameStore
+  useGameStore,
+  useNotificationStore
 } from "@quip/native-ui";
 import { StyleSheet, View } from "react-native";
 import { Button } from "react-native-paper";
@@ -26,6 +27,7 @@ const Quip = createQuipNavigator();
 
 function GameHome({navigation}: NativeStackScreenProps<ParamListBase, "games">) {
   const {quip} = useGameStore()
+  const {add} = useNotificationStore()
 
   const transitions = useTransition(quip, {
     key: quip.name,
@@ -85,7 +87,13 @@ function GameHome({navigation}: NativeStackScreenProps<ParamListBase, "games">) 
       {
         transitions((style, item) => (
           <animated.View style={[p('x', 6), style]}>
-            <Button buttonColor={(item.color as string)} labelStyle={typography.button1} contentStyle={styles.playButton} mode="contained">
+            <Button onPress={() => {
+              add({
+                type: "info",
+                message: "Coming Soon!",
+                timeout: 5000
+              })
+            }} buttonColor={(item.color as string)} labelStyle={typography.button1} contentStyle={styles.playButton} mode="contained">
               Play Now
             </Button>
           </animated.View>
