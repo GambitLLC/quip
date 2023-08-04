@@ -1,7 +1,7 @@
 import { StyleSheet, TouchableWithoutFeedback, TouchableWithoutFeedbackProps, View, ViewProps } from "react-native";
 import { useState } from "react";
 import theme from "../../theme";
-import { IconButton } from "react-native-paper";
+import {IconButton, TouchableRipple} from "react-native-paper";
 import { typography } from "../styles/Typography";
 import { capitalize } from "../../util/TextUtil";
 import { animated, useSpring, easings } from "@react-spring/native";
@@ -64,7 +64,7 @@ export function NavItem(props: ViewProps & NavItemProps & TouchableWithoutFeedba
   }, [props.active])
 
   return (
-    <TouchableWithoutFeedback onPressIn={() => setIsPressedIn(true)} onPressOut={() => setIsPressedIn(false)} {...props as TouchableWithoutFeedbackProps}>
+    <TouchableRipple borderless style={{borderRadius: 9999}} onPressIn={() => setIsPressedIn(true)} onPressOut={() => setIsPressedIn(false)} {...props as TouchableWithoutFeedbackProps}>
       <animated.View style={[springProps, styles.navItem]} key={props.label} {...props}>
         {/*<animated.View style={[rippleProps, styles.rippleEffect]}/>*/}
         <AnimatedIconButton icon={props.icon} iconColor={props.active ? theme.colors.primary : theme.colors.s4}/>
@@ -72,7 +72,7 @@ export function NavItem(props: ViewProps & NavItemProps & TouchableWithoutFeedba
           {capitalize(props.label)}
         </animated.Text>
       </animated.View>
-    </TouchableWithoutFeedback>
+    </TouchableRipple>
   )
 }
 
