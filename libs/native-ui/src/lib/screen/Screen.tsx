@@ -4,17 +4,19 @@ import { p, spacing } from "../styles/Spacing";
 import theme from "../../theme";
 import React from "react";
 
-export function Screen({ children, style, screenStyle, hasSafeArea=true, backgroundColor=theme.colors.background}: {
+export function Screen({ children, style, screenStyle, containerStyle, pointerEvents, hasSafeArea=true, backgroundColor=theme.colors.background}: {
   children: React.ReactNode,
   style?: StyleProp<ViewStyle>,
   screenStyle?: StyleProp<ViewStyle>,
+  containerStyle?: StyleProp<ViewStyle>,
+  pointerEvents?: "box-none" | "none" | "box-only" | "auto",
   hasSafeArea?: boolean,
   backgroundColor?: ColorValue
 }) {
   return (
-    <View style={[spacing.fill, {position: "relative", backgroundColor}]}>
+    <View pointerEvents={pointerEvents} style={[spacing.fill, containerStyle, {position: "relative", backgroundColor}]}>
       <StatusBar style="dark"/>
-      <View style={[style ?? spacing.fill, screenStyle, hasSafeArea ? p('t', 12) : p('t', 0)]}>
+      <View pointerEvents={pointerEvents} style={[style ?? spacing.fill, screenStyle, hasSafeArea ? p('t', 12) : p('t', 0)]}>
         {children}
       </View>
     </View>

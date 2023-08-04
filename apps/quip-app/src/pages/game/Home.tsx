@@ -1,27 +1,28 @@
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import {NativeStackScreenProps} from "@react-navigation/native-stack";
 import {
   AvatarXp,
   Balance,
+  capitalize,
+  createQuipNavigator,
   LogoText,
   m,
   p,
   Screen,
   Slider,
   spacing,
+  Text,
   theme,
   typography,
-  Text, createQuipNavigator, capitalize,
   useGameStore,
   useNotificationStore
 } from "@quip/native-ui";
-import { StyleSheet, View } from "react-native";
-import { Button } from "react-native-paper";
-import { CommonActions, ParamListBase } from "@react-navigation/native";
+import {StyleSheet, View} from "react-native";
+import {Button} from "react-native-paper";
+import {CommonActions, ParamListBase} from "@react-navigation/native";
 import Wallet from "../wallet/Wallet";
 import Settings from "../settings/Settings";
 import React from "react";
-import { useTransition, animated } from "@react-spring/native"
-import Profile from "../profile/Profile";
+import {animated, useTransition} from "@react-spring/native"
 
 const Quip = createQuipNavigator();
 
@@ -89,9 +90,15 @@ function GameHome({navigation}: NativeStackScreenProps<ParamListBase, "games">) 
           <animated.View style={[p('x', 6), style]}>
             <Button onPress={() => {
               add({
-                type: "info",
+                id: performance.now().toString(),
+                type: (() => {
+                  //return a random type
+                  const types = ["success", "error", "warning", "info"] as const
+                  return types[Math.floor(Math.random() * types.length)]
+                })(),
                 message: "Coming Soon!",
-                timeout: 5000
+                timeout: 3000,
+                height: 72,
               })
             }} buttonColor={(item.color as string)} labelStyle={typography.button1} contentStyle={styles.playButton} mode="contained">
               Play Now

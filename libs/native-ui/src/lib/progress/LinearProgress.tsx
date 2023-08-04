@@ -1,39 +1,38 @@
-import { StyleSheet, View, ViewProps } from "react-native";
+import { View } from "react-native";
 import theme from "../../theme";
-import { useSpring, animated } from "@react-spring/native";
+import {useSpring, animated, UseSpringProps} from "@react-spring/native";
 
 interface LinearProgressProps {
-  percentage: number
+  percentage: number,
+  color?: string,
+  backgroundColor?: string,
+  height?: number,
+  borderRadius?: number,
+  spring?: UseSpringProps,
 }
 
 export function LinearProgress(props: LinearProgressProps) {
-  const [style, api] = useSpring(() => ({
+  const [style, api] = useSpring(() => (props.spring ?? {
     width: `${props.percentage}%`,
   }), [props.percentage])
 
   return (
-    <View style={styles.container}>
-      <animated.View style={[styles.bar, style]}/>
+    <View style={{
+      position: "relative",
+      width: "100%",
+      height: props.height ?? 12,
+      backgroundColor: props.backgroundColor ?? theme.colors.s5,
+      borderRadius: props.borderRadius ?? 9999,
+      overflow: "hidden",
+    }}>
+      <animated.View style={[{
+        position: "absolute",
+        height: "100%",
+        backgroundColor: props.color ?? theme.colors.primary,
+        borderRadius: props.borderRadius ?? 9999,
+      }, style]}/>
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    position: "relative",
-    width: "100%",
-    height: 12,
-    backgroundColor: theme.colors.s5,
-    borderRadius: 9999,
-    overflow: "hidden",
-  },
-
-  bar: {
-    position: "absolute",
-    height: "100%",
-    backgroundColor: theme.colors.primary,
-    borderRadius: 9999,
-  }
-})
 
 export default LinearProgress

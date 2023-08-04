@@ -1,37 +1,31 @@
 import { create } from "zustand";
 
-interface Notification {
+interface INotification {
+  id: string,
   message: string,
   type: "success" | "error" | "warning" | "info",
   timeout?: number,
+  height: number,
 }
 
 interface NotificationStore {
-  notifications: Notification[],
-  add: (notification: Notification) => void,
+  notifications: INotification[],
+  add: (notification: INotification) => void,
+  remove: (notification: INotification) => void,
 }
 
 const useNotificationStore = create<NotificationStore>((set) => ({
   notifications: [],
-  remove: (notification: Notification) => set((state) => ({
-    notifications: state.notifications.filter((n) => n !== notification)
+  remove: (notification: INotification) => set((state) => ({
+    notifications: state.notifications.filter((n) => n.id !== notification.id)
   })),
-  add: (notification: Notification) => set((state) => {
-    setTimeout(() => {
-      set((state) => ({
-        notifications: state.notifications.filter((n) => n !== notification)
-      }))
-    }, notification.timeout || 3000)
-
-    return {
-      notifications: [...state.notifications, notification]
-    }
-  })
-
+  add: (notification: INotification) => set((state) => ({
+    notifications: [...state.notifications, notification]
+  }))
 }))
 
 export {
-  Notification,
+  INotification,
   NotificationStore,
   useNotificationStore
 }
