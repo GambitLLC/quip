@@ -85,6 +85,7 @@ const styles = StyleSheet.create({
       height: 2,
     },
     shadowOpacity: 0.5,
+    position: "relative",
   },
 
   notificationContent: {
