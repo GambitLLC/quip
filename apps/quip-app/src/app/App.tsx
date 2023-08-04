@@ -30,13 +30,13 @@ export const App = () => {
                 <Stack.Screen name="gameHome" component={Home}/>
                 <Stack.Screen name="gameInfo" component={Info}/>
                 <Stack.Screen name="profile" component={Profile} />
-                <Stack.Screen name="withdrawWallet" component={Withdraw}/>
-                <Stack.Screen name="buyWallet" component={Buy}/>
               </Stack.Group>
               <Stack.Group screenOptions={{
                 presentation: 'modal',
               }}>
                 <Stack.Screen name="depositWallet" component={Deposit}/>
+                <Stack.Screen name="withdrawWallet" component={Withdraw}/>
+                <Stack.Screen name="buyWallet" component={Buy}/>
               </Stack.Group>
             </Stack.Navigator>
           </NotificationBar>

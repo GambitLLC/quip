@@ -64,6 +64,14 @@ export const flex = StyleSheet.create({
     width: "100%"
   },
 
+  shrink: {
+    flexShrink: 1
+  },
+
+  grow: {
+    flexGrow: 1
+  },
+
   //primitives
   col: {
     display: "flex",
@@ -73,4 +81,5 @@ export const flex = StyleSheet.create({
     display: "flex",
     flexDirection: "row"
   },
+
 })

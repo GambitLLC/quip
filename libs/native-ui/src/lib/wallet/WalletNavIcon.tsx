@@ -4,6 +4,7 @@ import { Text } from "../text/Text";
 import { m } from "../styles/Spacing"
 import MaterialIcons from "@expo/vector-icons/MaterialIcons"
 import { CommonActions, useNavigation } from "@react-navigation/native";
+import {TouchableRipple} from "react-native-paper";
 
 interface WalletNavIconProps {
   title: string,
@@ -16,15 +17,13 @@ export function WalletNavIcon(props: WalletNavIconProps) {
 
   return (
     <View>
-      <Pressable onPress={() => {
+      <TouchableRipple borderless onPress={() => {
         navigation.dispatch({
           ...CommonActions.navigate(props.route),
         })
-      }}>
-        <View style={styles.icon}>
-          <MaterialIcons name={props.icon} size={24} color={theme.colors.p1}/>
-        </View>
-      </Pressable>
+      }} style={styles.icon}>
+        <MaterialIcons name={props.icon} size={24} color={theme.colors.p1}/>
+      </TouchableRipple>
       <Text style={[styles.iconLabel, m('t', 2)]}>{props.title}</Text>
     </View>
   );
