@@ -9,8 +9,7 @@ import {
   border,
   shortAddress,
   flex,
-  typography,
-  useNotificationStore
+  typography
 } from "@quip/native-ui";
 
 import QRCodeStyled from 'react-native-qrcode-styled';

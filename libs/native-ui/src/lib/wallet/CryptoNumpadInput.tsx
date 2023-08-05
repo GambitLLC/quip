@@ -6,7 +6,9 @@ import { typography } from "../styles/Typography";
 import { TouchableRipple } from "react-native-paper";
 import FontAwesome from "@expo/vector-icons/FontAwesome5"
 interface CryptoNumpadInputProps {
-
+  onInput: (n: number) => void,
+  onDelete: () => void,
+  onDecimal: () => void,
 }
 
 export function CryptoNumpadInput(props: CryptoNumpadInputProps) {
@@ -18,6 +20,13 @@ export function CryptoNumpadInput(props: CryptoNumpadInputProps) {
   ]
 
   const MapToIcon = ({num} : {num: number}) => num === -1 ? (<Text style={typography.h5}>.</Text>) : <FontAwesome size={28} name="backspace"/>
+
+  function onPress(n: number) {
+    if (n === -1) return props.onDecimal()
+    if (n === -2) return props.onDelete()
+
+    return props.onInput(n)
+  }
 
   return (
     <View style={{
@@ -31,7 +40,7 @@ export function CryptoNumpadInput(props: CryptoNumpadInputProps) {
               {
                 row.map((num, j) => {
                   return (
-                    <TouchableRipple borderless key={j} style={[styles.numpadKey, border.quip, m('x', 1)]} onPress={() => {}}>
+                    <TouchableRipple borderless key={j} style={[styles.numpadKey, border.quip, m('x', 1)]} onPress={() => onPress(num)}>
                       {num === -1 || num === -2 ? <MapToIcon num={num}/> : <Text style={typography.h5}>{num.toString()}</Text>}
                     </TouchableRipple>
                   )

@@ -34,7 +34,7 @@ export default function NotificationBar(props: NotificationBarProps) {
       {props.children}
       <View pointerEvents="box-none" style={styles.notificationBar}>
         <Screen pointerEvents="box-none" hasSafeArea={false} backgroundColor={"transparent"}>
-          <View pointerEvents="box-none" style={[p('x', 8), p('b', 8)]}>
+          <View pointerEvents="box-none" style={[p('x', 8), p('t', 14)]}>
             <View style={{position: "relative"}}>
               {
                 transitions((style, notification) => (

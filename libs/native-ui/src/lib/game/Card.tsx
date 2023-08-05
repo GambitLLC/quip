@@ -2,13 +2,14 @@ import { ColorValue, ImageSourcePropType, StyleSheet, View } from "react-native"
 import Svg, { Defs, LinearGradient, Path, Pattern, Stop, SvgProps, Use, Image} from "react-native-svg";
 import { m, p } from "../styles/Spacing";
 import theme from "../../theme";
-import { IconButton } from "react-native-paper";
+import {IconButton, TouchableRipple} from "react-native-paper";
 import { Text } from "../text/Text"
 import { typography } from "../styles/Typography";
 import { LogoText } from "../logoText/LogoText";
 import { CommonActions, ParamListBase, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import PlayerCountLabel from "./PlayerCountLabel";
+import {useNotificationStore} from "../store/NotificationStore";
 
 interface CardProps {
   imgSrc: ImageSourcePropType,
@@ -20,6 +21,7 @@ interface CardProps {
 }
 
 export function Card(props: SvgProps & CardProps) {
+  const { add } = useNotificationStore()
   const navigation = useNavigation()
 
   function navigateToInfo() {
@@ -42,7 +44,7 @@ export function Card(props: SvgProps & CardProps) {
             <Stop stopOpacity={0}/>
             <Stop offset={.8}/>
           </LinearGradient>
-          <Image id="image0_267_3024" width={1440} height={810} xlinkHref={props.imgSrc}/>
+          <Image  id="image0_267_3024" width={1440} height={810} xlinkHref={props.imgSrc}/>
         </Defs>
       </Svg>
       <View style={[styles.card]}>
@@ -59,9 +61,20 @@ export function Card(props: SvgProps & CardProps) {
               {props.cardTitle}
             </Text>
           </View>
-          <View style={[styles.playBtn, {backgroundColor: props.cardColor}]}>
+          <TouchableRipple borderless onPress={() => {
+            add({
+              id: performance.now().toString(),
+              type: (() => {
+                //return a random type
+                const types = ["success", "error", "warning", "info"] as const
+                return types[Math.floor(Math.random() * types.length)]
+              })(),
+              message: "Coming Soon!",
+              timeout: 3000,
+            })
+          }} style={[styles.playBtn, {backgroundColor: props.cardColor}]}>
             <IconButton icon={"play"} iconColor={theme.colors.white}/>
-          </View>
+          </TouchableRipple>
         </View>
       </View>
     </View>

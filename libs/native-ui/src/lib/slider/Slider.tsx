@@ -7,7 +7,7 @@ import {
   View,
   ViewProps
 } from "react-native";
-import React, { useRef, useState } from "react";
+import React, {useMemo, useRef, useState} from "react";
 import { p } from "../styles/Spacing";
 import Card from "../game/Card";
 import theme from "../../theme";
@@ -89,6 +89,36 @@ export function Slider(props: ViewProps & SliderProps) {
     outputRange: ["20deg", "0deg","-20deg"]
   })
 
+  const card1 = useMemo(() => (<Card
+    imgSrc={require('../../../../../apps/quip-app/assets/game1.jpg')}
+    cardColor={theme.colors.t1}
+    cardTitle={"Think"}
+    numPlayers={"25.3k Players"}
+    isComingSoon={true}
+    navigation={props.navigation}
+  />), [])
+
+  const card2 = useMemo(() => (
+    <Card
+      imgSrc={require('../../../../../apps/quip-app/assets/game1.jpg')}
+      cardColor={theme.colors.p2}
+      cardTitle={"Race"}
+      numPlayers={"25.3k Players"}
+      navigation={props.navigation}
+    />
+  ), [])
+
+  const card3 = useMemo(() => (
+    <Card
+      imgSrc={require('../../../../../apps/quip-app/assets/game1.jpg')}
+      cardColor={theme.colors.p1}
+      cardTitle={"Shoot"}
+      numPlayers={"25.3k Players"}
+      isComingSoon={true}
+      navigation={props.navigation}
+    />
+  ), [])
+
   return (
     <View style={[styles.container]} {...props}>
       <Animated.ScrollView
@@ -118,33 +148,13 @@ export function Slider(props: ViewProps & SliderProps) {
       >
         <View style={{width: 274, height: 300}}/>
         <Animated.View style={[{transform: [{rotateZ: rotateCard1}]}, p('x', 3)]}>
-          <Card
-            imgSrc={require('../../../../../apps/quip-app/assets/game1.jpg')}
-            cardColor={theme.colors.t1}
-            cardTitle={"Think"}
-            numPlayers={"25.3k Players"}
-            isComingSoon={true}
-            navigation={props.navigation}
-          />
+          {card1}
         </Animated.View>
         <Animated.View style={[{transform: [{rotateZ: rotateCard2}]}, p('x', 3)]}>
-          <Card
-            imgSrc={require('../../../../../apps/quip-app/assets/game1.jpg')}
-            cardColor={theme.colors.p2}
-            cardTitle={"Race"}
-            numPlayers={"25.3k Players"}
-            navigation={props.navigation}
-          />
+          {card2}
         </Animated.View>
         <Animated.View style={[{transform: [{rotateZ: rotateCard3}]}, p('x', 3)]}>
-          <Card
-            imgSrc={require('../../../../../apps/quip-app/assets/game1.jpg')}
-            cardColor={theme.colors.p1}
-            cardTitle={"Shoot"}
-            numPlayers={"25.3k Players"}
-            isComingSoon={true}
-            navigation={props.navigation}
-          />
+          {card3}
         </Animated.View>
         <View style={{width: 274, height: 300}}/>
       </Animated.ScrollView>
