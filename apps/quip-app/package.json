@@ -5,13 +5,13 @@
   "dependencies": {
     "@testing-library/jest-native": "*",
     "@testing-library/react-native": "*",
-    "react-native": "*",
-    "expo": "*",
+    "react-native": "0.71.8",
+    "expo": "~48.0.18",
     "expo-asset": "~8.9.1",
     "expo-file-system": "~15.2.2",
     "expo-gl": "~12.4.0",
     "expo-font": "*",
-    "expo-splash-screen": "*",
+    "expo-splash-screen": "~0.18.2",
     "expo-modules-core": "~1.2.7",
     "expo-three": "*",
     "react-native-svg": "*",
@@ -42,7 +42,7 @@
     "@use-gesture/react": "*",
     "react-native-svg-transformer": "*",
     "r3f-native-orbitcontrols": "*",
-    "react": "*",
+    "react": "18.2.0",
     "@nx/expo": "*",
     "@expo/metro-config": "*",
     "@solana/web3.js": "*",
@@ -58,6 +58,12 @@
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/quip-app && cp package-lock.json apps/quip-app",
-    "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/quip-app"
+    "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/quip-app",
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0"
   }
 }
