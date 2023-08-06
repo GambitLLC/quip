@@ -1,5 +1,5 @@
 import {View, StyleSheet, Pressable} from "react-native";
-import {flex, m, p, Screen, Sol, spacing, Text, theme, typography} from "@quip/native-ui";
+import {flex, m, p, Screen, Sol, spacing, Text, theme, typography, useTicker} from "@quip/native-ui";
 import { CryptoNumpadInput } from "@quip/native-ui";
 import {FontAwesome} from "@expo/vector-icons";
 import {Button, IconButton, TouchableRipple} from "react-native-paper";
@@ -12,15 +12,15 @@ interface DepositProps {
 
 export function Deposit(props: DepositProps) {
   const navigation = useNavigation();
-  const pricePerSol = 20.0
+  const { usdPrice } = useTicker()
 
   const [mode, setMode] = useState<'sol' | 'usd'>('usd')
   const [input, setInput] = useState('')
   const memoPrice = useMemo(() => {
     if (mode === 'usd') {
-      return (parseFloat(input) / pricePerSol)
+      return (parseFloat(input) / usdPrice).toFixed(9)
     } else {
-      return (parseFloat(input) * pricePerSol).toFixed(2)
+      return (parseFloat(input) * usdPrice).toFixed(2)
     }
   }, [mode, input])
 
@@ -81,8 +81,10 @@ export function Deposit(props: DepositProps) {
   function swap() {
     if (mode === 'usd') {
       setMode('sol')
+      setInput((parseFloat(input) / usdPrice).toFixed(9))
     } else {
       setMode('usd')
+      setInput((parseFloat(input) * usdPrice).toFixed(2))
     }
   }
 
