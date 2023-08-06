@@ -26,9 +26,11 @@ export function Deposit(props: DepositProps) {
 
   const usdMaxDecimalPlaces = 2
   const solanaMaxDecimalPlaces = 9
-  const maxLength = 12
+  const maxLengthSolana = 12
+  const maxLengthUsd = 9
 
   function onInput(n: number) {
+    const maxLength = mode === 'usd' ? maxLengthUsd : maxLengthSolana
     if (input.length >= maxLength) return
     if (mode === 'usd') {
       if (input.length === 0) {
@@ -81,9 +83,11 @@ export function Deposit(props: DepositProps) {
   function swap() {
     if (mode === 'usd') {
       setMode('sol')
+      if (input.length === 0) return
       setInput((parseFloat(input) / usdPrice).toFixed(9))
     } else {
       setMode('usd')
+      if (input.length === 0) return
       setInput((parseFloat(input) * usdPrice).toFixed(2))
     }
   }
@@ -93,7 +97,7 @@ export function Deposit(props: DepositProps) {
   }
 
   function fontSize() {
-    if (input.length > 8) {
+    if (input.length > 9) {
       return typography.h6
     } else if (input.length > 4) {
       return typography.h5
@@ -103,12 +107,22 @@ export function Deposit(props: DepositProps) {
   }
 
   function iconSize() {
-    if (input.length > 8) {
+    if (input.length > 9) {
       return 18
     } else if (input.length > 4) {
       return 28
     } else {
       return 32
+    }
+  }
+
+  function margin() {
+    if (input.length > 9) {
+      return m('b', 0)
+    } else if (input.length > 4) {
+      return m('b', 1)
+    } else {
+      return m('b', 1)
     }
   }
 
@@ -134,7 +148,7 @@ export function Deposit(props: DepositProps) {
               <View style={{flexDirection: "row", display: "flex", alignItems:"center"}}>
                 {
                   mode === 'usd' ? (
-                    <FontAwesome size={iconSize()} style={[m('b', 1), m('r', 1)]} name="usd"/>
+                    <FontAwesome size={iconSize()} style={[margin(), m('r', 1)]} name="usd"/>
                   ) : (
                     <Sol color={theme.colors.s1} width={iconSize()} height={iconSize()} style={[m('b', 1), m('r', 1)]}/>
                   )
