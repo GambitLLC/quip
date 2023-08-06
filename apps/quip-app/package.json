@@ -53,7 +53,8 @@
     "@expo/vector-icons": "*",
     "@magic-sdk/provider": "*",
     "react-native-qrcode-styled": "*",
-    "expo-clipboard": "~4.1.2"
+    "expo-clipboard": "~4.1.2",
+    "react-native-get-random-values": "~1.8.0"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/quip-app && cp package-lock.json apps/quip-app",

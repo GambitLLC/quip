@@ -1,7 +1,7 @@
 import { View, StyleSheet, NativeSyntheticEvent, TextInputSubmitEditingEventData } from "react-native";
 import { m, p, Screen, spacing, Text, useCrypto } from "@quip/native-ui";
 import { Button, TextInput } from "react-native-paper";
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 
 
@@ -53,6 +53,18 @@ export function Auth(props: AuthProps) {
     magic.user.logout()
     console.log("logged out")
   }
+
+  useEffect(() => {
+    magic.user.isLoggedIn().then((isLoggedIn) => {
+      if (isLoggedIn) {
+        init().then(() => {
+          navigation.dispatch({
+            ...CommonActions.navigate("gameHome"),
+          })
+        })
+      }
+    })
+  })
 
   return (
     <Screen style={[spacing.fill, styles.container]}>

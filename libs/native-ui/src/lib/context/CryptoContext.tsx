@@ -27,8 +27,6 @@ export const magic = new Magic("pk_live_79385C11B09DBB96", {
   ]
 } as MagicSDKAdditionalConfiguration)
 
-console.log(solanaExtension instanceof Extension.Internal)
-
 // Define the structure of the Web3 context state
 type CryptoContextType = {
   magic: Magic<MagicSDKExtensionsOption<"solana">>,

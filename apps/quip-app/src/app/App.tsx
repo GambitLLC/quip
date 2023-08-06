@@ -23,7 +23,7 @@ export const App = () => {
         <CryptoProvider>
           <NavigationContainer>
             <NotificationBar>
-              <Stack.Navigator initialRouteName="gameHome" screenOptions={{headerShown: false}}>
+              <Stack.Navigator initialRouteName="splash" screenOptions={{headerShown: false}}>
                 <Stack.Group>
                   <Stack.Screen name="game" component={GameScreen} />
                   <Stack.Screen name="splash" component={Splash}/>
