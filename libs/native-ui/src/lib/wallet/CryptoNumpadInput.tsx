@@ -1,4 +1,4 @@
-import { View, StyleSheet, Pressable } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { Text } from "../text/Text";
 import { p, m } from "../styles/Spacing";
 import { border } from "../styles/Border";
