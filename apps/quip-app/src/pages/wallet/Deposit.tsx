@@ -102,9 +102,23 @@ export function Deposit(props: DepositProps) {
                 style={{backgroundColor: 'white'}}
                 color={theme.colors.p1}
                 padding={0}
-                isPiecesGlued={true}
-                pieceBorderRadius={2}
+                pieceBorderRadius={3}
                 pieceSize={6}
+                pieceScale={.8}
+                innerEyesOptions={{
+                  borderRadius: 4,
+                  color: theme.colors.p1,
+                }}
+                outerEyesOptions={{
+                  borderRadius: 12,
+                  color: theme.colors.p1,
+                }}
+                logo={{
+                  href: require("../../../assets/icon.png"),
+                  padding: 8,
+                  scale: .8,
+                }}
+                errorCorrectionLevel={'H'}
               />
             </View>
             <View

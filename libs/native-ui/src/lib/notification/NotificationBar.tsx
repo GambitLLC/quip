@@ -16,17 +16,11 @@ export default function NotificationBar(props: NotificationBarProps) {
   let height = 0
   const transitions = useTransition(notifications, {
     keys: (item: any) => item.id,
-    from: {opacity: 0, maxHeight: 0},
-    enter: item => async (next: any) => {
-      await next({opacity: 1, maxHeight: 72})
+    from: {opacity: 0, height: 0},
+    enter: {opacity: 1, height: 72},
+    leave: {opacity: 0, height: 0},
+    config: {duration: 400, easing: easings.easeInOutCubic
     },
-    leave: item => async (next: any) => {
-      await next({opacity: 1, maxHeight: 0})
-    },
-    update: item => async (next: any) => {
-      await next({opacity: 1, maxHeight: 72})
-    },
-    config: {duration: 300, easing: easings.easeOutCubic},
   })
 
   return (
