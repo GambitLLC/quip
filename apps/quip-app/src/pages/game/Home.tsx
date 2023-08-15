@@ -50,7 +50,7 @@ function GameHome({navigation}: NativeStackScreenProps<ParamListBase, "games">) 
             navigation.dispatch({
               ...CommonActions.navigate('wallet')
             })
-          }} amount={2.18}/>
+          }}/>
           <AvatarXp onPress={() => {
             navigation.dispatch({
               ...CommonActions.navigate('profile')

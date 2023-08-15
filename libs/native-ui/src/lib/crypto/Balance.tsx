@@ -4,19 +4,26 @@ import { theme } from "../../theme"
 import Sol from "../candy/Sol";
 import { m, p } from "../styles/Spacing";
 import { typography } from "../styles/Typography";
+import { useCrypto } from "../context/CryptoContext";
+import { useTicker } from "../context/TickerContext";
+import { TouchableRipple } from "react-native-paper";
 
-export function Balance(props: ViewProps & PressableProps & {
-  amount: number
-}) {
+interface BalanceProps {
+  onPress: () => void
+}
+
+export function Balance(props: BalanceProps) {
+  const crypto = useCrypto()
+
   return (
-    <Pressable {...props}>
-      <View {...props} style={[styles.balance, p('a', 2), p('r', 4)]}>
+    <TouchableRipple borderless onPress={props.onPress} style={[styles.balance]}>
+      <View style={[styles.balanceRow, p('a', 2), p('r', 4)]}>
         <Sol style={styles.icon}/>
         <Text style={[typography.p3, m('l', 2)]}>
-          {props.amount} SOL
+          {crypto.balance} SOL
         </Text>
       </View>
-    </Pressable>
+    </TouchableRipple>
   )
 }
 
@@ -29,6 +36,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderStyle: "solid",
     borderColor: theme.colors.s3
+  },
+  balanceRow: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
   },
   icon: {
     color: theme.colors.s3,
