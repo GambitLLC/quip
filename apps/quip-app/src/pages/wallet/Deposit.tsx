@@ -118,10 +118,15 @@ export function Deposit(props: DepositProps) {
                   padding: 8,
                   scale: .8,
                 }}
-                errorCorrectionLevel={'H'}
+                errorCorrectionLevel='H'
               />
             </View>
-            <View
+            <TouchableRipple
+              borderless
+              onPress={() => {
+                copyToClipboard()
+                if (!showCopySuccess) setShowCopySuccess(true)
+              }}
               style={[
                 border.quip,
                 styles.address,
@@ -132,7 +137,7 @@ export function Deposit(props: DepositProps) {
               <Text style={styles.addressText}>
                 {shortAddress(address, 8)}
               </Text>
-            </View>
+            </TouchableRipple>
           </View>
         </View>
         <Text style={{width: 288}}>
@@ -142,17 +147,16 @@ export function Deposit(props: DepositProps) {
         <View>
           <Pressable
             onPressIn={() => {
-              console.log("in")
               setIsHovering(true)
             }}
 
 
             onPressOut={() => {
-              console.log("out")
               setIsHovering(false)
             }}
 
             onPress={() => {
+              copyToClipboard()
               if (!showCopySuccess) setShowCopySuccess(true)
             }}
 
