@@ -4,28 +4,33 @@ import { useEffect, useState } from "react";
 import { BarCodeScanner } from "expo-barcode-scanner";
 import { StyleSheet, Button } from "react-native";
 import Scanner from "./Scanner";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 
 export function Withdraw1() {
+  const navigation = useNavigation()
+
   return (
     <Screen hasSafeArea={false} style={[spacing.fill]}>
-      {/*<TextInput*/}
-      {/*  label={"Address"}*/}
-      {/*  mode="flat"*/}
-      {/*  style={{*/}
-      {/*    backgroundColor: "white"*/}
-      {/*  }}*/}
-      {/*  right={<TextInput.Icon containerColor="white" icon="qrcode"/>}*/}
-      {/*/>*/}
-      <Scanner style={styles.cameraView}/>
+      <TextInput
+        label={"Address"}
+        mode="flat"
+        style={{
+          backgroundColor: "white"
+        }}
+        right={<TextInput.Icon
+          onPress={() => {
+            navigation.dispatch({
+              ...CommonActions.navigate("scanner"),
+            })
+          }}
+          containerColor="white"
+          icon="qrcode"
+        />}
+      />
     </Screen>
   )
 }
 
-const styles = StyleSheet.create({
-  cameraView: {
-    width: "100%",
-    height: "100%",
-  }
-})
+const styles = StyleSheet.create({})
 
 export default Withdraw1;

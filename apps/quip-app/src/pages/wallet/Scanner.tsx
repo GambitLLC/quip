@@ -1,6 +1,7 @@
 import { View, StyleSheet, ViewProps } from "react-native";
 import { useEffect, useState } from "react";
 import { BarCodeScanner } from "expo-barcode-scanner";
+import { spacing, Screen } from "@quip/native-ui";
 
 interface ScannerProps extends ViewProps {
 
@@ -25,13 +26,20 @@ export function Scanner(props: ScannerProps) {
   };
 
   return (
-    <BarCodeScanner
-      onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-      {...props}
-    />
+    <Screen hasSafeArea={false} style={[spacing.fill]}>
+      <BarCodeScanner
+        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+        style={styles.cameraView}
+      />
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  // cameraView: {
+  //   width: "100%",
+  //   height: "100%"
+  // }
+});
 
 export default Scanner;
