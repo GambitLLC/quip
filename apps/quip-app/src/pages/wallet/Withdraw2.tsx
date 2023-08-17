@@ -1,14 +1,19 @@
 import {View, StyleSheet} from "react-native";
-import {flex, m, p, Screen, Sol, spacing, Text, theme, typography, useTicker} from "@quip/native-ui";
-import { CryptoNumpadInput } from "@quip/native-ui";
+import { flex, m, p, Screen, Sol, spacing, Text, theme, typography, useCrypto, useTicker, CryptoNumpadInput } from "@quip/native-ui";
 import {FontAwesome} from "@expo/vector-icons";
 import {Button, IconButton, TouchableRipple} from "react-native-paper";
-import {CommonActions, useNavigation} from "@react-navigation/native";
+import {CommonActions} from "@react-navigation/native";
 import {useMemo, useState} from "react";
 import { Withdraw2Props } from "./Withdraw";
 
+function toFixedAtMost(x: number, digits: number) {
+  const e = Math.pow(10, digits);
+  return Math.round(x * e) / e;
+}
+
 export function Withdraw2({navigation}: Withdraw2Props) {
   const { usdPrice } = useTicker()
+  const { balance } = useCrypto()
 
   const [mode, setMode] = useState<'sol' | 'usd'>('usd')
   const [input, setInput] = useState('')
@@ -89,7 +94,13 @@ export function Withdraw2({navigation}: Withdraw2Props) {
   }
 
   function max() {
+    if (balance === null) return
 
+    if (mode === 'usd') {
+      setInput((balance * usdPrice).toString())
+    } else {
+      setInput(balance.toString())
+    }
   }
 
   function fontSize() {
