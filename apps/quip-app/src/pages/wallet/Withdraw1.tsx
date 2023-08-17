@@ -7,10 +7,24 @@ import { PublicKey } from "@solana/web3.js";
 import { FontAwesome } from "@expo/vector-icons";
 import { Button, TouchableRipple } from "react-native-paper";
 import * as Clipboard from 'expo-clipboard';
+import { animated, useSpring } from "@react-spring/native";
+
+const AnimatedTextInput = animated(TextInput)
+const AnimatedFontAwesome = animated(FontAwesome)
 
 export function Withdraw1({route, navigation}: Withdraw1Props) {
   const textInputRef = useRef<TextInput>(null)
   const [address, setAddress] = useState(route.params?.address ?? "")
+  const [isSelected, setIsSelected] = useState(false)
+
+  const [textStyle, textApi] = useSpring(() => ({
+    borderColor: isSelected ? theme.colors.p1 : theme.colors.s3,
+    borderBottomWidth: isSelected ? 2 : 1,
+  }), [isSelected])
+
+  const [qrStyle, qrApi] = useSpring(() => ({
+    color: isSelected ? theme.colors.p1 : theme.colors.s3,
+  }), [isSelected])
 
   useEffect(() => {
     if (!textInputRef.current || !route.params?.address) return
@@ -52,9 +66,11 @@ export function Withdraw1({route, navigation}: Withdraw1Props) {
 
   return (
     <Screen hasSafeArea={false} style={[spacing.fill]}>
-      <View style={[flex.fillW, styles.textBorder, flex.row, flex.alignCenter, flex.spaceBetween]}>
-        <TextInput
+      <animated.View style={[flex.fillW, styles.textBorder, flex.row, flex.alignCenter, flex.spaceBetween, textStyle]}>
+        <AnimatedTextInput
           ref={textInputRef}
+          onFocus={() => setIsSelected(true)}
+          onBlur={() => setIsSelected(false)}
           onChangeText={setAddress}
           value={address}
           style={[styles.textInput, typography.p2, flex.grow, flex.shrink]}
@@ -63,18 +79,28 @@ export function Withdraw1({route, navigation}: Withdraw1Props) {
           autoCorrect={false}
           autoCapitalize={"none"}
           selectionColor={theme.colors.p1}
-          clearButtonMode={"while-editing"}
+          clearButtonMode={"always"}
         />
-        <TouchableRipple rippleColor="#AE50FD20" borderless onPress={() => {
+        <TouchableRipple rippleColor={isSelected ? "#AE50FD20" : undefined} borderless onPress={ !isValidAddress ? () => {
           Keyboard.dismiss()
           navigation.navigate("scanner")
-        }} style={[styles.iconButton, flex.row, flex.center, m('x', 3)]}>
-          <FontAwesome size={24} color={theme.colors.p1} name="qrcode"/>
+        } : undefined} style={[styles.iconButton, flex.row, flex.center, m('x', 3)]}>
+          {
+            address.length === 0 ? (
+              <AnimatedFontAwesome size={24} style={qrStyle} name="qrcode"/>
+            ) : (
+              isValidAddress ? (
+                <AnimatedFontAwesome name={"check-circle"} size={24} color={theme.colors.success}/>
+              ) : (
+                <AnimatedFontAwesome name={"exclamation-circle"} size={24} color={theme.colors.error}/>
+              )
+            )
+          }
         </TouchableRipple>
-      </View>
+      </animated.View>
       <View style={[flex.fillH, flex.fillW, flex.col, flex.spaceBetween, flex.shrink, flex.alignCenter, p('b', 12)]}>
         {
-          clipboardString.length > 0 && (
+          clipboardString.length > 0 ? (
             <PasteItem
               style={[{width: 320}, m('y', 4)]}
               onPress={() => {
@@ -83,6 +109,8 @@ export function Withdraw1({route, navigation}: Withdraw1Props) {
               }}
               value={clipboardString}
             />
+          ) : (
+            <View style={flex.grow}/>
           )
         }
         <Button disabled={!isValidAddress} style={[{width: 320}]} contentStyle={{height: 56}} mode={"contained"} onPress={() => {
@@ -103,8 +131,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   textBorder: {
-    borderBottomWidth: 2,
-    borderColor: theme.colors.p1,
+    borderBottomWidth: 1,
   },
   iconButton: {
     width: 48,
