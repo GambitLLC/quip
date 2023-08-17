@@ -5,13 +5,9 @@ import {FontAwesome} from "@expo/vector-icons";
 import {Button, IconButton, TouchableRipple} from "react-native-paper";
 import {CommonActions, useNavigation} from "@react-navigation/native";
 import {useMemo, useState} from "react";
+import { Withdraw2Props } from "./Withdraw";
 
-interface Withdraw2Props {
-
-}
-
-export function Withdraw2(props: Withdraw2Props) {
-  const navigation = useNavigation();
+export function Withdraw2({navigation}: Withdraw2Props) {
   const { usdPrice } = useTicker()
 
   const [mode, setMode] = useState<'sol' | 'usd'>('usd')

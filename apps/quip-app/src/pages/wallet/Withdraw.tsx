@@ -1,14 +1,30 @@
 import React from "react";
-import {createNativeStackNavigator} from "@react-navigation/native-stack";
+import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack";
 import {Withdraw1} from "./Withdraw1";
 import {Withdraw2} from "./Withdraw2";
 import {Withdraw3} from "./Withdraw3";
-import { Button, IconButton } from "react-native-paper";
-import { flex, m, p, Text, theme, typography } from "@quip/native-ui";
+import { WalletModalHeader } from "@quip/native-ui";
 import { CommonActions, useNavigation } from "@react-navigation/native";
-import { View, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import Scanner from "./Scanner";
-const Stack = createNativeStackNavigator();
+
+export type RootStackParamList = {
+  withdraw1?: {
+    address: string
+  },
+  withdraw2: {
+    address: string,
+  },
+  withdraw3: undefined,
+  scanner: undefined,
+}
+
+export type Withdraw1Props = NativeStackScreenProps<RootStackParamList, "withdraw1">
+export type Withdraw2Props = NativeStackScreenProps<RootStackParamList, "withdraw2">
+export type Withdraw3Props = NativeStackScreenProps<RootStackParamList, "withdraw3">
+export type ScannerProps = NativeStackScreenProps<RootStackParamList, "scanner">
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 interface WithdrawProps {
 
 }
@@ -22,85 +38,16 @@ export function Withdraw(props: WithdrawProps) {
         presentation: 'modal',
       }}>
         <Stack.Screen name={"scanner"} component={Scanner} options={{
-          header: () => {
-            return (
-              <View style={[
-                flex.row,
-                flex.alignCenter,
-                flex.spaceBetween,
-                p('y', 1),
-                p('x', 2),
-                {
-                  backgroundColor: theme.colors.white
-                }
-              ]}>
-                <IconButton
-                  icon="arrow-left"
-                  iconColor={theme.colors.s1}
-                  onPress={() => {
-                    navigation.goBack()
-                  }}
-                  rippleColor="#14171F20"
-                />
-                <Text style={[typography.h6]}>
-                  Send SOL
-                </Text>
-                <Button
-                  onPress={() => {
-                    navigation.dispatch({
-                      ...CommonActions.navigate("withdraw2"),
-                    })
-                  }}
-                  mode="text"
-                  rippleColor="#14171F20"
-                >
-                  <Text style={[typography.p1]}>
-                    Next
-                  </Text>
-                </Button>
-              </View>
-            )
-          },
+          header: () => <WalletModalHeader prev={() => {
+            navigation.dispatch({
+              ...CommonActions.navigate("withdraw1"),
+            })
+          }} prevIcon="close" title="Scan QR Code"/>
         }}/>
       </Stack.Group>
       <Stack.Group>
         <Stack.Screen name="withdraw1" component={Withdraw1} options={{
-          header: () => {
-            return (
-              <View style={[
-                flex.row,
-                flex.alignCenter,
-                flex.spaceBetween,
-                p('y', 1),
-                p('x', 2)
-              ]}>
-                <IconButton
-                  icon="arrow-left"
-                  iconColor={theme.colors.s1}
-                  onPress={() => {
-                    navigation.goBack()
-                  }}
-                  rippleColor="#14171F20"
-                />
-                <Text style={[typography.h6]}>
-                  Send SOL
-                </Text>
-                <Button
-                  onPress={() => {
-                    navigation.dispatch({
-                      ...CommonActions.navigate("withdraw2"),
-                    })
-                  }}
-                  mode="text"
-                  rippleColor="#14171F20"
-                >
-                  <Text style={[typography.p1]}>
-                    Next
-                  </Text>
-                </Button>
-              </View>
-            )
-          },
+          header: () => <WalletModalHeader prev={() => navigation.goBack()} prevIcon="arrow-left" title="Send SOL"/>
         }} />
         <Stack.Screen name="withdraw2" component={Withdraw2} options={{
           headerShown: false
