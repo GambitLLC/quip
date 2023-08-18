@@ -11,19 +11,35 @@ function toFixedAtMost(x: number, digits: number) {
   return Math.round(x * e) / e;
 }
 
+const usdMaxDecimalPlaces = 2
+const solanaMaxDecimalPlaces = 9
+const maxLengthSolana = 12
+const maxLengthUsd = 9
+
 export function Withdraw2({navigation}: Withdraw2Props) {
   const { usdPrice } = useTicker()
   const { balance } = useCrypto()
 
   const [mode, setMode] = useState<'sol' | 'usd'>('usd')
-  const [input, setInput] = useState('')
+
+  const [solanaValue, setSolanaValue] = useState('')
+  const [usdValue, setUsdValue] = useState('')
+
+  const input = useMemo(() => {
+    if (mode === 'usd') {
+      return usdValue
+    } else {
+      return solanaValue
+    }
+  }, [solanaValue, usdValue, mode])
+
   const memoPrice = useMemo(() => {
     if (mode === 'usd') {
-      return (parseFloat(input) / usdPrice).toFixed(9)
+      return solanaValue
     } else {
-      return (parseFloat(input) * usdPrice).toFixed(2)
+      return parseFloat(usdValue).toFixed(2)
     }
-  }, [mode, input])
+  }, [solanaValue, usdValue, mode])
 
   const usdMaxDecimalPlaces = 2
   const solanaMaxDecimalPlaces = 9
@@ -33,9 +49,11 @@ export function Withdraw2({navigation}: Withdraw2Props) {
   function onInput(n: number) {
     const maxLength = mode === 'usd' ? maxLengthUsd : maxLengthSolana
     if (input.length >= maxLength) return
+
     if (mode === 'usd') {
       if (input.length === 0) {
-        setInput(n.toString())
+        setUsdValue(n.toString())
+        setSolanaValue(toFixedAtMost(n / usdPrice, 9).toString())
         return
       }
 
@@ -46,11 +64,13 @@ export function Withdraw2({navigation}: Withdraw2Props) {
         }
       }
 
-      setInput(input + n.toString())
-      return
+      const newSolValue = toFixedAtMost(parseFloat(input + n.toString()) / usdPrice, 9)
+      setUsdValue(input + n.toString())
+      setSolanaValue(newSolValue.toString())
     } else {
       if (input.length === 0) {
-        setInput(n.toString())
+        setSolanaValue(n.toString())
+        setUsdValue(toFixedAtMost(n * usdPrice, 2).toString())
         return
       }
 
@@ -61,8 +81,9 @@ export function Withdraw2({navigation}: Withdraw2Props) {
         }
       }
 
-      setInput(input + n.toString())
-      return
+      const newUsdValue = toFixedAtMost(parseFloat(input + n.toString()) * usdPrice, 9)
+      setSolanaValue(input + n.toString())
+      setUsdValue(newUsdValue.toString())
     }
   }
 
@@ -70,37 +91,51 @@ export function Withdraw2({navigation}: Withdraw2Props) {
     if (input.includes('.')) return
 
     if (input.length === 0) {
-      setInput('0.')
+      if (mode === 'usd') {
+        setUsdValue('0.')
+        setSolanaValue('0')
+      } else {
+        setSolanaValue('0.')
+        setUsdValue('0')
+      }
       return
     } else {
-      setInput(input + '.')
+      if (mode === 'usd') {
+        const newSolValue = toFixedAtMost(parseFloat(input) / usdPrice, 9)
+        setUsdValue(input + '.')
+        setSolanaValue(newSolValue.toString())
+      } else {
+        const newUsdValue = toFixedAtMost(parseFloat(input) * usdPrice, 2)
+        setSolanaValue(input + '.')
+        setUsdValue(newUsdValue.toString())
+      }
     }
   }
 
   function onDelete() {
-    setInput(input.slice(0, -1))
+    if (mode === 'usd') {
+      const newSolValue = toFixedAtMost(parseFloat(input.slice(0, -1)) / usdPrice, 9)
+      setUsdValue(input.slice(0, -1))
+      setSolanaValue(newSolValue.toString())
+    } else {
+      const newUsdValue = toFixedAtMost(parseFloat(input.slice(0, -1)) * usdPrice, 2)
+      setSolanaValue(input.slice(0, -1))
+      setUsdValue(newUsdValue.toString())
+    }
   }
 
   function swap() {
     if (mode === 'usd') {
       setMode('sol')
-      if (input.length === 0) return
-      setInput((parseFloat(input) / usdPrice).toFixed(9))
+
     } else {
       setMode('usd')
-      if (input.length === 0) return
-      setInput((parseFloat(input) * usdPrice).toFixed(2))
     }
   }
 
   function max() {
-    if (balance === null) return
-
-    if (mode === 'usd') {
-      setInput((balance * usdPrice).toString())
-    } else {
-      setInput(balance.toString())
-    }
+    setSolanaValue((balance ?? 0).toString())
+    setUsdValue(toFixedAtMost((balance ?? 0) * usdPrice, 2).toString())
   }
 
   function fontSize() {
@@ -142,7 +177,7 @@ export function Withdraw2({navigation}: Withdraw2Props) {
               navigation.goBack();
             }}/>
             <Text style={typography.h6}>Withdraw</Text>
-            <IconButton icon="" onPress={() => {}}/>
+            <IconButton icon="" />
           </View>
           <View style={styles.depositHeaderRow}>
             <TouchableRipple borderless onPress={max} style={styles.depositButton}>
@@ -152,17 +187,26 @@ export function Withdraw2({navigation}: Withdraw2Props) {
               <Text style={styles.subtext}>{
                 mode === 'usd' ? 'USD' : 'SOL'
               }</Text>
-              <View style={{flexDirection: "row", display: "flex", alignItems:"center"}}>
+              <View style={[flex.row, flex.alignCenter]}>
                 {
                   mode === 'usd' ? (
-                    <FontAwesome size={iconSize()} style={[margin(), m('r', 1)]} name="usd"/>
+                    <FontAwesome color={theme.colors.s1} size={iconSize()} style={[margin(), m('r', 1)]} name="usd"/>
                   ) : (
                     <Sol color={theme.colors.s1} width={iconSize()} height={iconSize()} style={[m('b', 1), m('r', 1)]}/>
                   )
                 }
                 <Text style={[fontSize(), p('y', 2)]}>{input.length !== 0 ? input : '0'}</Text>
               </View>
-              <Text style={styles.subtext}>{input.length !== 0 ? `~${memoPrice}` : '0'} {mode !== 'usd' ? 'USD' : 'SOL'}</Text>
+              <View style={[flex.row, flex.alignCenter]}>
+                {
+                  mode === 'usd' ? (
+                    <Sol color={theme.colors.s4} width={14} height={14} style={{marginBottom: 2, marginRight: 2}}/>
+                  ) : (
+                    <FontAwesome color={theme.colors.s4} size={13} style={{marginBottom: 2, marginRight: 2}} name="usd"/>
+                  )
+                }
+                <Text style={styles.subtext}>{input.length !== 0 ? `${memoPrice}` : '0'} {mode !== 'usd' ? 'USD' : 'SOL'}</Text>
+              </View>
             </View>
             <TouchableRipple borderless onPress={swap} style={styles.depositButton}>
               <FontAwesome color={theme.colors.p1} size={16} name="refresh"/>
