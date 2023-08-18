@@ -41,6 +41,10 @@ export function Withdraw2({navigation}: Withdraw2Props) {
     }
   }, [solanaValue, usdValue, mode])
 
+  const isValid = useMemo(() => {
+    return parseFloat(solanaValue) > 0 && parseFloat(solanaValue) <= (balance ?? 0)
+  }, [solanaValue, balance])
+
   const usdMaxDecimalPlaces = 2
   const solanaMaxDecimalPlaces = 9
   const maxLengthSolana = 12
@@ -116,11 +120,21 @@ export function Withdraw2({navigation}: Withdraw2Props) {
     if (mode === 'usd') {
       const newSolValue = toFixedAtMost(parseFloat(input.slice(0, -1)) / usdPrice, 9)
       setUsdValue(input.slice(0, -1))
-      setSolanaValue(newSolValue.toString())
+
+      if (isNaN(newSolValue)) {
+        setSolanaValue('')
+      } else {
+        setSolanaValue(newSolValue.toString())
+      }
     } else {
       const newUsdValue = toFixedAtMost(parseFloat(input.slice(0, -1)) * usdPrice, 2)
       setSolanaValue(input.slice(0, -1))
-      setUsdValue(newUsdValue.toString())
+
+      if (isNaN(newUsdValue)) {
+        setUsdValue('')
+      } else {
+        setUsdValue(newUsdValue.toString())
+      }
     }
   }
 
@@ -139,8 +153,20 @@ export function Withdraw2({navigation}: Withdraw2Props) {
   }
 
   function fontSize() {
-    if (input.length > 9) {
-      return typography.h6
+    if (input.length > 10) {
+      return {
+        fontSize: 18,
+        lineHeight: 18,
+        letterSpacing: 0,
+        fontFamily: 'Co-Headline-700'
+      }
+    } else if (input.length > 8) {
+      return {
+        fontSize: 26,
+        lineHeight: 26,
+        letterSpacing: 0,
+        fontFamily: 'Co-Headline-700'
+      }
     } else if (input.length > 4) {
       return typography.h5
     } else {
@@ -149,8 +175,10 @@ export function Withdraw2({navigation}: Withdraw2Props) {
   }
 
   function iconSize() {
-    if (input.length > 9) {
+    if (input.length > 10) {
       return 18
+    } else if (input.length > 8) {
+      return 22
     } else if (input.length > 4) {
       return 28
     } else {
@@ -169,16 +197,9 @@ export function Withdraw2({navigation}: Withdraw2Props) {
   }
 
   return (
-    <Screen style={[spacing.fill]}>
-      <View style={[spacing.fill, p('a', 4)]}>
+    <Screen hasSafeArea={false} style={[spacing.fill]}>
+      <View style={[spacing.fill, p('a', 4), p('t', 10)]}>
         <View style={[p('a', 6), styles.depositHeader]}>
-          <View style={[styles.depositHeaderRow, m('b', 4)]}>
-            <IconButton iconColor={theme.colors.s1} size={24} icon="close" onPress={() => {
-              navigation.goBack();
-            }}/>
-            <Text style={typography.h6}>Withdraw</Text>
-            <IconButton icon="" />
-          </View>
           <View style={styles.depositHeaderRow}>
             <TouchableRipple borderless onPress={max} style={styles.depositButton}>
               <Text style={styles.maxText}>MAX</Text>
@@ -221,7 +242,7 @@ export function Withdraw2({navigation}: Withdraw2Props) {
           />
         </View>
         <View style={m('b', 8)}>
-          <Button onPress={() => {
+          <Button disabled={!isValid} onPress={() => {
             navigation.dispatch({
               ...CommonActions.navigate('withdraw3')
             })

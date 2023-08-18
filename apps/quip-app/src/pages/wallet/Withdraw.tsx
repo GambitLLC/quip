@@ -50,7 +50,9 @@ export function Withdraw(props: WithdrawProps) {
           header: () => <WalletModalHeader prev={() => navigation.goBack()} prevIcon="arrow-left" title="Send SOL"/>
         }} />
         <Stack.Screen name="withdraw2" component={Withdraw2} options={{
-          headerShown: false
+          header: () => <WalletModalHeader prev={() => navigation.dispatch({
+            ...CommonActions.navigate("withdraw1"),
+          })} prevIcon={"arrow-left"} title={"Withdraw"}/>,
         }}/>
         <Stack.Screen name="withdraw3" component={Withdraw3} options={{
           headerShown: false

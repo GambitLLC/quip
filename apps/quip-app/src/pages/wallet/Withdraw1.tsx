@@ -87,7 +87,7 @@ export function Withdraw1({route, navigation}: Withdraw1Props) {
         } : undefined} style={[styles.iconButton, flex.row, flex.center, m('x', 3)]}>
           {
             address.length === 0 ? (
-              <AnimatedFontAwesome size={24} style={qrStyle} name="qrcode"/>
+              <AnimatedFontAwesome size={24} color={theme.colors.p1} name="qrcode"/>
             ) : (
               isValidAddress ? (
                 <AnimatedFontAwesome name={"check-circle"} size={24} color={theme.colors.success}/>
