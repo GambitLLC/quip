@@ -16,9 +16,10 @@ const solanaMaxDecimalPlaces = 9
 const maxLengthSolana = 12
 const maxLengthUsd = 9
 
-export function Withdraw2({navigation}: Withdraw2Props) {
+export function Withdraw2({navigation, route}: Withdraw2Props) {
   const { usdPrice } = useTicker()
   const { balance } = useCrypto()
+  const { address } = route.params
 
   const [mode, setMode] = useState<'sol' | 'usd'>('usd')
 
@@ -243,8 +244,9 @@ export function Withdraw2({navigation}: Withdraw2Props) {
         </View>
         <View style={m('b', 8)}>
           <Button disabled={!isValid} onPress={() => {
-            navigation.dispatch({
-              ...CommonActions.navigate('withdraw3')
+            navigation.navigate("withdraw3", {
+              address: address,
+              amountSol: parseFloat(solanaValue),
             })
           }} mode="contained" style={{width: "100%"}} contentStyle={{height: 56}}>
             <Text style={[typography.button1, {color: theme.colors.white}]}>

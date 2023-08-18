@@ -1,12 +1,17 @@
 import {View} from 'react-native'
-import {Text} from "@quip/native-ui";
+import { spacing, Text, Screen } from "@quip/native-ui";
 import { Withdraw3Props } from "./Withdraw";
 
-export function Withdraw3({navigation}: Withdraw3Props) {
+export function Withdraw3({navigation, route}: Withdraw3Props) {
+  const { address, amountSol } = route.params
   return (
-    <View>
-      <Text>Withdraw3</Text>
-    </View>
+    <Screen hasSafeArea={false} style={[spacing.fill]}>
+      <View>
+        <Text>Withdraw3</Text>
+        <Text>{address}</Text>
+        <Text>{amountSol}</Text>
+      </View>
+    </Screen>
   )
 }
 
