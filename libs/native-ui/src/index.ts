@@ -50,4 +50,5 @@ export * from './lib/wallet/CryptoNumpadInput'
 export * from './lib/wallet/TransactionDayInfoRow'
 export * from './lib/wallet/WalletModalHeader'
 export * from './lib/notification/NotificationBar'
+export * from './lib/animations/ButtonClick'
 
