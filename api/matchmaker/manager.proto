@@ -3,6 +3,7 @@ package quip.matchmaker;
 option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
 
 import "google/protobuf/empty.proto";
+import "matchmaker/messages.proto";
 
 // Manager service to keep track of match details (in-progress and completed).
 // Should only be used by Director or some subscriber who is listening to
@@ -26,7 +27,7 @@ message GetMatchRequest {
 message GetMatchResponse {
   GameConfiguration config = 2;
   MatchRoster roster = 3;
-  optional MatchResults = 4;
+  optional MatchResults results = 4;
 }
 
 message SetMatchResultsRequest {

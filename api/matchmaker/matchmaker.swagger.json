@@ -1,12 +1,12 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "matchmaker/frontend.proto",
+    "title": "matchmaker/matchmaker.proto",
     "version": "version not set"
   },
   "tags": [
     {
-      "name": "Frontend"
+      "name": "QuipMatchmaker"
     }
   ],
   "consumes": [
@@ -49,15 +49,22 @@
       },
       "description": "GameConfiguration contains information for specifying a desired match."
     },
-    "matchmakerGetStatusRequest": {
+    "matchmakerGetStatus": {
+      "type": "object",
+      "description": "GetStatus gets the current status for the player. If in queue or in a match,\nwill also send the corresponding details in a second message."
+    },
+    "matchmakerMatchCancelled": {
       "type": "object",
       "properties": {
-        "target": {
+        "match_id": {
           "type": "string"
+        },
+        "reason": {
+          "$ref": "#/definitions/matchmakerReason"
         }
       }
     },
-    "matchmakerMatchDetails": {
+    "matchmakerMatchConnection": {
       "type": "object",
       "properties": {
         "match_id": {
@@ -67,7 +74,38 @@
           "type": "string"
         }
       },
-      "description": "MatchDetails contains necessary match information to identify and connect to a match."
+      "description": "MatchConnection contains necessary match information to identify and connect to a match."
+    },
+    "matchmakerMatchDetails": {
+      "type": "object",
+      "properties": {
+        "match_id": {
+          "type": "string"
+        },
+        "time": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "MatchDetails contains information about a potential match that was found.\nSent as intermediate step for players to accept (send match wager) match before\nallocating a server."
+    },
+    "matchmakerMatchResults": {
+      "type": "object",
+      "properties": {
+        "match_id": {
+          "type": "string"
+        }
+      }
+    },
+    "matchmakerPlayerState": {
+      "type": "string",
+      "enum": [
+        "STATE_OFFLINE",
+        "STATE_IDLE",
+        "STATE_SEARCHING",
+        "STATE_PLAYING"
+      ],
+      "default": "STATE_OFFLINE"
     },
     "matchmakerQueueDetails": {
       "type": "object",
@@ -85,13 +123,56 @@
     "matchmakerQueueStopped": {
       "type": "object",
       "properties": {
+        "reason": {
+          "$ref": "#/definitions/matchmakerReason"
+        },
         "message": {
           "type": "string"
         }
       },
       "description": "QueueStopped contains information about why a queue has stopped."
     },
-    "matchmakerStartQueueRequest": {
+    "matchmakerReason": {
+      "type": "string",
+      "enum": [
+        "REASON_UNSPECIFIED",
+        "REASON_PLAYER"
+      ],
+      "default": "REASON_UNSPECIFIED"
+    },
+    "matchmakerResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "$ref": "#/definitions/googlerpcStatus",
+          "description": "error is sent if any request failed."
+        },
+        "status": {
+          "$ref": "#/definitions/quipmatchmakerStatus",
+          "description": "Sent as response to GetStatus or whenever status changes."
+        },
+        "queue_started": {
+          "$ref": "#/definitions/matchmakerQueueDetails",
+          "title": "Queue changes relevant to the current player"
+        },
+        "queue_stopped": {
+          "$ref": "#/definitions/matchmakerQueueStopped"
+        },
+        "match_found": {
+          "$ref": "#/definitions/matchmakerMatchDetails"
+        },
+        "match_cancelled": {
+          "$ref": "#/definitions/matchmakerMatchCancelled"
+        },
+        "match_started": {
+          "$ref": "#/definitions/matchmakerMatchConnection"
+        },
+        "match_finished": {
+          "$ref": "#/definitions/matchmakerMatchResults"
+        }
+      }
+    },
+    "matchmakerStartQueue": {
       "type": "object",
       "properties": {
         "config": {
@@ -99,27 +180,8 @@
         }
       }
     },
-    "matchmakerState": {
-      "type": "string",
-      "enum": [
-        "STATE_OFFLINE",
-        "STATE_IDLE",
-        "STATE_SEARCHING",
-        "STATE_PLAYING"
-      ],
-      "default": "STATE_OFFLINE"
-    },
-    "matchmakerStreamResponse": {
-      "type": "object",
-      "properties": {
-        "error": {
-          "$ref": "#/definitions/googlerpcStatus",
-          "title": "error is sent whenever some stream request failed"
-        },
-        "status_update": {
-          "$ref": "#/definitions/quipmatchmakerStatus"
-        }
-      }
+    "matchmakerStopQueue": {
+      "type": "object"
     },
     "protobufAny": {
       "type": "object",
@@ -135,20 +197,14 @@
     "quipmatchmakerStatus": {
       "type": "object",
       "properties": {
+        "player": {
+          "type": "string"
+        },
         "state": {
-          "$ref": "#/definitions/matchmakerState"
-        },
-        "searching": {
-          "$ref": "#/definitions/matchmakerQueueDetails"
-        },
-        "stopped": {
-          "$ref": "#/definitions/matchmakerQueueStopped"
-        },
-        "matched": {
-          "$ref": "#/definitions/matchmakerMatchDetails"
+          "$ref": "#/definitions/matchmakerPlayerState"
         }
       },
-      "description": "Status represents the current matchmaking status for any target."
+      "description": "Status represents the current matchmaking state for a specific player."
     }
   }
 }

@@ -21,56 +21,102 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type State int32
+type PlayerState int32
 
 const (
-	State_STATE_OFFLINE   State = 0
-	State_STATE_IDLE      State = 1
-	State_STATE_SEARCHING State = 2
-	State_STATE_PLAYING   State = 3
+	PlayerState_PLAYER_STATE_OFFLINE   PlayerState = 0
+	PlayerState_PLAYER_STATE_IDLE      PlayerState = 1
+	PlayerState_PLAYER_STATE_SEARCHING PlayerState = 2
+	PlayerState_PLAYER_STATE_PLAYING   PlayerState = 3
 )
 
-// Enum value maps for State.
+// Enum value maps for PlayerState.
 var (
-	State_name = map[int32]string{
-		0: "STATE_OFFLINE",
-		1: "STATE_IDLE",
-		2: "STATE_SEARCHING",
-		3: "STATE_PLAYING",
+	PlayerState_name = map[int32]string{
+		0: "PLAYER_STATE_OFFLINE",
+		1: "PLAYER_STATE_IDLE",
+		2: "PLAYER_STATE_SEARCHING",
+		3: "PLAYER_STATE_PLAYING",
 	}
-	State_value = map[string]int32{
-		"STATE_OFFLINE":   0,
-		"STATE_IDLE":      1,
-		"STATE_SEARCHING": 2,
-		"STATE_PLAYING":   3,
+	PlayerState_value = map[string]int32{
+		"PLAYER_STATE_OFFLINE":   0,
+		"PLAYER_STATE_IDLE":      1,
+		"PLAYER_STATE_SEARCHING": 2,
+		"PLAYER_STATE_PLAYING":   3,
 	}
 )
 
-func (x State) Enum() *State {
-	p := new(State)
+func (x PlayerState) Enum() *PlayerState {
+	p := new(PlayerState)
 	*p = x
 	return p
 }
 
-func (x State) String() string {
+func (x PlayerState) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (State) Descriptor() protoreflect.EnumDescriptor {
+func (PlayerState) Descriptor() protoreflect.EnumDescriptor {
 	return file_matchmaker_messages_proto_enumTypes[0].Descriptor()
 }
 
-func (State) Type() protoreflect.EnumType {
+func (PlayerState) Type() protoreflect.EnumType {
 	return &file_matchmaker_messages_proto_enumTypes[0]
 }
 
-func (x State) Number() protoreflect.EnumNumber {
+func (x PlayerState) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use State.Descriptor instead.
-func (State) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use PlayerState.Descriptor instead.
+func (PlayerState) EnumDescriptor() ([]byte, []int) {
 	return file_matchmaker_messages_proto_rawDescGZIP(), []int{0}
+}
+
+type Reason int32
+
+const (
+	Reason_REASON_UNSPECIFIED Reason = 0
+	Reason_REASON_PLAYER      Reason = 1
+)
+
+// Enum value maps for Reason.
+var (
+	Reason_name = map[int32]string{
+		0: "REASON_UNSPECIFIED",
+		1: "REASON_PLAYER",
+	}
+	Reason_value = map[string]int32{
+		"REASON_UNSPECIFIED": 0,
+		"REASON_PLAYER":      1,
+	}
+)
+
+func (x Reason) Enum() *Reason {
+	p := new(Reason)
+	*p = x
+	return p
+}
+
+func (x Reason) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Reason) Descriptor() protoreflect.EnumDescriptor {
+	return file_matchmaker_messages_proto_enumTypes[1].Descriptor()
+}
+
+func (Reason) Type() protoreflect.EnumType {
+	return &file_matchmaker_messages_proto_enumTypes[1]
+}
+
+func (x Reason) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Reason.Descriptor instead.
+func (Reason) EnumDescriptor() ([]byte, []int) {
+	return file_matchmaker_messages_proto_rawDescGZIP(), []int{1}
 }
 
 // GameConfiguration contains information for specifying a desired match.
@@ -121,6 +167,109 @@ func (x *GameConfiguration) GetGamemode() string {
 	return ""
 }
 
+type MatchRoster struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Players []string `protobuf:"bytes,1,rep,name=players,proto3" json:"players,omitempty"`
+}
+
+func (x *MatchRoster) Reset() {
+	*x = MatchRoster{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_matchmaker_messages_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MatchRoster) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MatchRoster) ProtoMessage() {}
+
+func (x *MatchRoster) ProtoReflect() protoreflect.Message {
+	mi := &file_matchmaker_messages_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MatchRoster.ProtoReflect.Descriptor instead.
+func (*MatchRoster) Descriptor() ([]byte, []int) {
+	return file_matchmaker_messages_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *MatchRoster) GetPlayers() []string {
+	if x != nil {
+		return x.Players
+	}
+	return nil
+}
+
+// Status represents the current matchmaking state for a specific player.
+type Status struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Player string      `protobuf:"bytes,1,opt,name=player,proto3" json:"player,omitempty"`
+	State  PlayerState `protobuf:"varint,2,opt,name=state,proto3,enum=quip.matchmaker.PlayerState" json:"state,omitempty"`
+}
+
+func (x *Status) Reset() {
+	*x = Status{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_matchmaker_messages_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Status) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Status) ProtoMessage() {}
+
+func (x *Status) ProtoReflect() protoreflect.Message {
+	mi := &file_matchmaker_messages_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Status.ProtoReflect.Descriptor instead.
+func (*Status) Descriptor() ([]byte, []int) {
+	return file_matchmaker_messages_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Status) GetPlayer() string {
+	if x != nil {
+		return x.Player
+	}
+	return ""
+}
+
+func (x *Status) GetState() PlayerState {
+	if x != nil {
+		return x.State
+	}
+	return PlayerState_PLAYER_STATE_OFFLINE
+}
+
 // QueueDetails contains information about a currently running queue.
 type QueueDetails struct {
 	state         protoimpl.MessageState
@@ -134,7 +283,7 @@ type QueueDetails struct {
 func (x *QueueDetails) Reset() {
 	*x = QueueDetails{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_matchmaker_messages_proto_msgTypes[1]
+		mi := &file_matchmaker_messages_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -147,7 +296,7 @@ func (x *QueueDetails) String() string {
 func (*QueueDetails) ProtoMessage() {}
 
 func (x *QueueDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_matchmaker_messages_proto_msgTypes[1]
+	mi := &file_matchmaker_messages_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -160,7 +309,7 @@ func (x *QueueDetails) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueueDetails.ProtoReflect.Descriptor instead.
 func (*QueueDetails) Descriptor() ([]byte, []int) {
-	return file_matchmaker_messages_proto_rawDescGZIP(), []int{1}
+	return file_matchmaker_messages_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *QueueDetails) GetConfig() *GameConfiguration {
@@ -183,13 +332,14 @@ type QueueStopped struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	Reason  Reason  `protobuf:"varint,1,opt,name=reason,proto3,enum=quip.matchmaker.Reason" json:"reason,omitempty"`
+	Message *string `protobuf:"bytes,2,opt,name=message,proto3,oneof" json:"message,omitempty"`
 }
 
 func (x *QueueStopped) Reset() {
 	*x = QueueStopped{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_matchmaker_messages_proto_msgTypes[2]
+		mi := &file_matchmaker_messages_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -202,7 +352,7 @@ func (x *QueueStopped) String() string {
 func (*QueueStopped) ProtoMessage() {}
 
 func (x *QueueStopped) ProtoReflect() protoreflect.Message {
-	mi := &file_matchmaker_messages_proto_msgTypes[2]
+	mi := &file_matchmaker_messages_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -215,30 +365,39 @@ func (x *QueueStopped) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueueStopped.ProtoReflect.Descriptor instead.
 func (*QueueStopped) Descriptor() ([]byte, []int) {
-	return file_matchmaker_messages_proto_rawDescGZIP(), []int{2}
+	return file_matchmaker_messages_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *QueueStopped) GetReason() Reason {
+	if x != nil {
+		return x.Reason
+	}
+	return Reason_REASON_UNSPECIFIED
 }
 
 func (x *QueueStopped) GetMessage() string {
-	if x != nil {
-		return x.Message
+	if x != nil && x.Message != nil {
+		return *x.Message
 	}
 	return ""
 }
 
-// MatchDetails contains necessary match information to identify and connect to a match.
+// MatchDetails contains information about a potential match that was found.
+// Sent as intermediate step for players to accept (send match wager) match before
+// allocating a server.
 type MatchDetails struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	MatchId    string `protobuf:"bytes,1,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
-	Connection string `protobuf:"bytes,2,opt,name=connection,proto3" json:"connection,omitempty"`
+	MatchId string                 `protobuf:"bytes,1,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
+	Time    *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=time,proto3" json:"time,omitempty"`
 }
 
 func (x *MatchDetails) Reset() {
 	*x = MatchDetails{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_matchmaker_messages_proto_msgTypes[3]
+		mi := &file_matchmaker_messages_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -251,7 +410,7 @@ func (x *MatchDetails) String() string {
 func (*MatchDetails) ProtoMessage() {}
 
 func (x *MatchDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_matchmaker_messages_proto_msgTypes[3]
+	mi := &file_matchmaker_messages_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -264,7 +423,7 @@ func (x *MatchDetails) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchDetails.ProtoReflect.Descriptor instead.
 func (*MatchDetails) Descriptor() ([]byte, []int) {
-	return file_matchmaker_messages_proto_rawDescGZIP(), []int{3}
+	return file_matchmaker_messages_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *MatchDetails) GetMatchId() string {
@@ -274,45 +433,149 @@ func (x *MatchDetails) GetMatchId() string {
 	return ""
 }
 
-func (x *MatchDetails) GetConnection() string {
+func (x *MatchDetails) GetTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Time
+	}
+	return nil
+}
+
+type MatchCancelled struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	MatchId string `protobuf:"bytes,1,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
+	Reason  Reason `protobuf:"varint,2,opt,name=reason,proto3,enum=quip.matchmaker.Reason" json:"reason,omitempty"`
+}
+
+func (x *MatchCancelled) Reset() {
+	*x = MatchCancelled{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_matchmaker_messages_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MatchCancelled) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MatchCancelled) ProtoMessage() {}
+
+func (x *MatchCancelled) ProtoReflect() protoreflect.Message {
+	mi := &file_matchmaker_messages_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MatchCancelled.ProtoReflect.Descriptor instead.
+func (*MatchCancelled) Descriptor() ([]byte, []int) {
+	return file_matchmaker_messages_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *MatchCancelled) GetMatchId() string {
+	if x != nil {
+		return x.MatchId
+	}
+	return ""
+}
+
+func (x *MatchCancelled) GetReason() Reason {
+	if x != nil {
+		return x.Reason
+	}
+	return Reason_REASON_UNSPECIFIED
+}
+
+// MatchConnection contains necessary match information to identify and connect to a match.
+type MatchConnection struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	MatchId    string `protobuf:"bytes,1,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
+	Connection string `protobuf:"bytes,2,opt,name=connection,proto3" json:"connection,omitempty"`
+}
+
+func (x *MatchConnection) Reset() {
+	*x = MatchConnection{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_matchmaker_messages_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MatchConnection) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MatchConnection) ProtoMessage() {}
+
+func (x *MatchConnection) ProtoReflect() protoreflect.Message {
+	mi := &file_matchmaker_messages_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MatchConnection.ProtoReflect.Descriptor instead.
+func (*MatchConnection) Descriptor() ([]byte, []int) {
+	return file_matchmaker_messages_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *MatchConnection) GetMatchId() string {
+	if x != nil {
+		return x.MatchId
+	}
+	return ""
+}
+
+func (x *MatchConnection) GetConnection() string {
 	if x != nil {
 		return x.Connection
 	}
 	return ""
 }
 
-// Status represents the current matchmaking status for any target.
-type Status struct {
+type MatchResults struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	State State `protobuf:"varint,1,opt,name=state,proto3,enum=quip.matchmaker.State" json:"state,omitempty"`
-	// Types that are assignable to Details:
-	//
-	//	*Status_Searching
-	//	*Status_Stopped
-	//	*Status_Matched
-	Details isStatus_Details `protobuf_oneof:"details"`
+	MatchId string `protobuf:"bytes,1,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
 }
 
-func (x *Status) Reset() {
-	*x = Status{}
+func (x *MatchResults) Reset() {
+	*x = MatchResults{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_matchmaker_messages_proto_msgTypes[4]
+		mi := &file_matchmaker_messages_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
 }
 
-func (x *Status) String() string {
+func (x *MatchResults) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Status) ProtoMessage() {}
+func (*MatchResults) ProtoMessage() {}
 
-func (x *Status) ProtoReflect() protoreflect.Message {
-	mi := &file_matchmaker_messages_proto_msgTypes[4]
+func (x *MatchResults) ProtoReflect() protoreflect.Message {
+	mi := &file_matchmaker_messages_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -323,122 +586,16 @@ func (x *Status) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Status.ProtoReflect.Descriptor instead.
-func (*Status) Descriptor() ([]byte, []int) {
-	return file_matchmaker_messages_proto_rawDescGZIP(), []int{4}
+// Deprecated: Use MatchResults.ProtoReflect.Descriptor instead.
+func (*MatchResults) Descriptor() ([]byte, []int) {
+	return file_matchmaker_messages_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *Status) GetState() State {
+func (x *MatchResults) GetMatchId() string {
 	if x != nil {
-		return x.State
+		return x.MatchId
 	}
-	return State_STATE_OFFLINE
-}
-
-func (m *Status) GetDetails() isStatus_Details {
-	if m != nil {
-		return m.Details
-	}
-	return nil
-}
-
-func (x *Status) GetSearching() *QueueDetails {
-	if x, ok := x.GetDetails().(*Status_Searching); ok {
-		return x.Searching
-	}
-	return nil
-}
-
-func (x *Status) GetStopped() *QueueStopped {
-	if x, ok := x.GetDetails().(*Status_Stopped); ok {
-		return x.Stopped
-	}
-	return nil
-}
-
-func (x *Status) GetMatched() *MatchDetails {
-	if x, ok := x.GetDetails().(*Status_Matched); ok {
-		return x.Matched
-	}
-	return nil
-}
-
-type isStatus_Details interface {
-	isStatus_Details()
-}
-
-type Status_Searching struct {
-	Searching *QueueDetails `protobuf:"bytes,2,opt,name=searching,proto3,oneof"`
-}
-
-type Status_Stopped struct {
-	Stopped *QueueStopped `protobuf:"bytes,3,opt,name=stopped,proto3,oneof"`
-}
-
-type Status_Matched struct {
-	Matched *MatchDetails `protobuf:"bytes,4,opt,name=matched,proto3,oneof"`
-}
-
-func (*Status_Searching) isStatus_Details() {}
-
-func (*Status_Stopped) isStatus_Details() {}
-
-func (*Status_Matched) isStatus_Details() {}
-
-// StatusUpdate indicates a change in status for a set of targets.
-type StatusUpdate struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Targets []string `protobuf:"bytes,1,rep,name=targets,proto3" json:"targets,omitempty"`
-	Status  *Status  `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
-}
-
-func (x *StatusUpdate) Reset() {
-	*x = StatusUpdate{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_matchmaker_messages_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *StatusUpdate) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*StatusUpdate) ProtoMessage() {}
-
-func (x *StatusUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_matchmaker_messages_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use StatusUpdate.ProtoReflect.Descriptor instead.
-func (*StatusUpdate) Descriptor() ([]byte, []int) {
-	return file_matchmaker_messages_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *StatusUpdate) GetTargets() []string {
-	if x != nil {
-		return x.Targets
-	}
-	return nil
-}
-
-func (x *StatusUpdate) GetStatus() *Status {
-	if x != nil {
-		return x.Status
-	}
-	return nil
+	return ""
 }
 
 var File_matchmaker_messages_proto protoreflect.FileDescriptor
@@ -451,53 +608,64 @@ var file_matchmaker_messages_proto_rawDesc = []byte{
 	0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x2f, 0x0a,
 	0x11, 0x47, 0x61, 0x6d, 0x65, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x75, 0x72, 0x61, 0x74, 0x69,
 	0x6f, 0x6e, 0x12, 0x1a, 0x0a, 0x08, 0x67, 0x61, 0x6d, 0x65, 0x6d, 0x6f, 0x64, 0x65, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x67, 0x61, 0x6d, 0x65, 0x6d, 0x6f, 0x64, 0x65, 0x22, 0x85,
-	0x01, 0x0a, 0x0c, 0x51, 0x75, 0x65, 0x75, 0x65, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x12,
-	0x3a, 0x0a, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x22, 0x2e, 0x71, 0x75, 0x69, 0x70, 0x2e, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65,
-	0x72, 0x2e, 0x47, 0x61, 0x6d, 0x65, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x75, 0x72, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x52, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x39, 0x0a, 0x0a, 0x73,
-	0x74, 0x61, 0x72, 0x74, 0x5f, 0x74, 0x69, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75,
-	0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x73, 0x74, 0x61,
-	0x72, 0x74, 0x54, 0x69, 0x6d, 0x65, 0x22, 0x28, 0x0a, 0x0c, 0x51, 0x75, 0x65, 0x75, 0x65, 0x53,
-	0x74, 0x6f, 0x70, 0x70, 0x65, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67,
-	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
-	0x22, 0x49, 0x0a, 0x0c, 0x4d, 0x61, 0x74, 0x63, 0x68, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73,
-	0x12, 0x19, 0x0a, 0x08, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x07, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x49, 0x64, 0x12, 0x1e, 0x0a, 0x0a, 0x63,
-	0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x0a, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0xf6, 0x01, 0x0a, 0x06,
-	0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x2c, 0x0a, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x16, 0x2e, 0x71, 0x75, 0x69, 0x70, 0x2e, 0x6d, 0x61, 0x74,
-	0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x05, 0x73,
-	0x74, 0x61, 0x74, 0x65, 0x12, 0x3d, 0x0a, 0x09, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x69, 0x6e,
-	0x67, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x71, 0x75, 0x69, 0x70, 0x2e, 0x6d,
-	0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72, 0x2e, 0x51, 0x75, 0x65, 0x75, 0x65, 0x44,
-	0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x48, 0x00, 0x52, 0x09, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68,
-	0x69, 0x6e, 0x67, 0x12, 0x39, 0x0a, 0x07, 0x73, 0x74, 0x6f, 0x70, 0x70, 0x65, 0x64, 0x18, 0x03,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x71, 0x75, 0x69, 0x70, 0x2e, 0x6d, 0x61, 0x74, 0x63,
-	0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72, 0x2e, 0x51, 0x75, 0x65, 0x75, 0x65, 0x53, 0x74, 0x6f, 0x70,
-	0x70, 0x65, 0x64, 0x48, 0x00, 0x52, 0x07, 0x73, 0x74, 0x6f, 0x70, 0x70, 0x65, 0x64, 0x12, 0x39,
-	0x0a, 0x07, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x65, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x1d, 0x2e, 0x71, 0x75, 0x69, 0x70, 0x2e, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65,
-	0x72, 0x2e, 0x4d, 0x61, 0x74, 0x63, 0x68, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x48, 0x00,
-	0x52, 0x07, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x65, 0x64, 0x42, 0x09, 0x0a, 0x07, 0x64, 0x65, 0x74,
-	0x61, 0x69, 0x6c, 0x73, 0x22, 0x59, 0x0a, 0x0c, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x55, 0x70,
-	0x64, 0x61, 0x74, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x73, 0x18,
-	0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x07, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x73, 0x12, 0x2f,
-	0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x67, 0x61, 0x6d, 0x65, 0x6d, 0x6f, 0x64, 0x65, 0x22, 0x27,
+	0x0a, 0x0b, 0x4d, 0x61, 0x74, 0x63, 0x68, 0x52, 0x6f, 0x73, 0x74, 0x65, 0x72, 0x12, 0x18, 0x0a,
+	0x07, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x07,
+	0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x73, 0x22, 0x54, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75,
+	0x73, 0x12, 0x16, 0x0a, 0x06, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x06, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x32, 0x0a, 0x05, 0x73, 0x74, 0x61,
+	0x74, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1c, 0x2e, 0x71, 0x75, 0x69, 0x70, 0x2e,
+	0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72, 0x2e, 0x50, 0x6c, 0x61, 0x79, 0x65,
+	0x72, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x22, 0x85, 0x01,
+	0x0a, 0x0c, 0x51, 0x75, 0x65, 0x75, 0x65, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x12, 0x3a,
+	0x0a, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x22,
 	0x2e, 0x71, 0x75, 0x69, 0x70, 0x2e, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72,
-	0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x2a,
-	0x52, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x11, 0x0a, 0x0d, 0x53, 0x54, 0x41, 0x54,
-	0x45, 0x5f, 0x4f, 0x46, 0x46, 0x4c, 0x49, 0x4e, 0x45, 0x10, 0x00, 0x12, 0x0e, 0x0a, 0x0a, 0x53,
-	0x54, 0x41, 0x54, 0x45, 0x5f, 0x49, 0x44, 0x4c, 0x45, 0x10, 0x01, 0x12, 0x13, 0x0a, 0x0f, 0x53,
-	0x54, 0x41, 0x54, 0x45, 0x5f, 0x53, 0x45, 0x41, 0x52, 0x43, 0x48, 0x49, 0x4e, 0x47, 0x10, 0x02,
-	0x12, 0x11, 0x0a, 0x0d, 0x53, 0x54, 0x41, 0x54, 0x45, 0x5f, 0x50, 0x4c, 0x41, 0x59, 0x49, 0x4e,
-	0x47, 0x10, 0x03, 0x42, 0x2e, 0x5a, 0x2c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
-	0x6d, 0x2f, 0x47, 0x61, 0x6d, 0x62, 0x69, 0x74, 0x4c, 0x4c, 0x43, 0x2f, 0x71, 0x75, 0x69, 0x70,
-	0x2f, 0x6c, 0x69, 0x62, 0x73, 0x2f, 0x70, 0x62, 0x2f, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61,
-	0x6b, 0x65, 0x72, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x2e, 0x47, 0x61, 0x6d, 0x65, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x75, 0x72, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x52, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x39, 0x0a, 0x0a, 0x73, 0x74,
+	0x61, 0x72, 0x74, 0x5f, 0x74, 0x69, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a,
+	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66,
+	0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x73, 0x74, 0x61, 0x72,
+	0x74, 0x54, 0x69, 0x6d, 0x65, 0x22, 0x6a, 0x0a, 0x0c, 0x51, 0x75, 0x65, 0x75, 0x65, 0x53, 0x74,
+	0x6f, 0x70, 0x70, 0x65, 0x64, 0x12, 0x2f, 0x0a, 0x06, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x17, 0x2e, 0x71, 0x75, 0x69, 0x70, 0x2e, 0x6d, 0x61, 0x74,
+	0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72, 0x2e, 0x52, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x52, 0x06,
+	0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x12, 0x1d, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67,
+	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61,
+	0x67, 0x65, 0x88, 0x01, 0x01, 0x42, 0x0a, 0x0a, 0x08, 0x5f, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67,
+	0x65, 0x22, 0x59, 0x0a, 0x0c, 0x4d, 0x61, 0x74, 0x63, 0x68, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c,
+	0x73, 0x12, 0x19, 0x0a, 0x08, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x49, 0x64, 0x12, 0x2e, 0x0a, 0x04,
+	0x74, 0x69, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f,
+	0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d,
+	0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x04, 0x74, 0x69, 0x6d, 0x65, 0x22, 0x5c, 0x0a, 0x0e,
+	0x4d, 0x61, 0x74, 0x63, 0x68, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x6c, 0x65, 0x64, 0x12, 0x19,
+	0x0a, 0x08, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x07, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x49, 0x64, 0x12, 0x2f, 0x0a, 0x06, 0x72, 0x65, 0x61,
+	0x73, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x17, 0x2e, 0x71, 0x75, 0x69, 0x70,
+	0x2e, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72, 0x2e, 0x52, 0x65, 0x61, 0x73,
+	0x6f, 0x6e, 0x52, 0x06, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x22, 0x4c, 0x0a, 0x0f, 0x4d, 0x61,
+	0x74, 0x63, 0x68, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x19, 0x0a,
+	0x08, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x07, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x49, 0x64, 0x12, 0x1e, 0x0a, 0x0a, 0x63, 0x6f, 0x6e, 0x6e,
+	0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x63, 0x6f,
+	0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x29, 0x0a, 0x0c, 0x4d, 0x61, 0x74, 0x63,
+	0x68, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x12, 0x19, 0x0a, 0x08, 0x6d, 0x61, 0x74, 0x63,
+	0x68, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x61, 0x74, 0x63,
+	0x68, 0x49, 0x64, 0x2a, 0x74, 0x0a, 0x0b, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x53, 0x74, 0x61,
+	0x74, 0x65, 0x12, 0x18, 0x0a, 0x14, 0x50, 0x4c, 0x41, 0x59, 0x45, 0x52, 0x5f, 0x53, 0x54, 0x41,
+	0x54, 0x45, 0x5f, 0x4f, 0x46, 0x46, 0x4c, 0x49, 0x4e, 0x45, 0x10, 0x00, 0x12, 0x15, 0x0a, 0x11,
+	0x50, 0x4c, 0x41, 0x59, 0x45, 0x52, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x45, 0x5f, 0x49, 0x44, 0x4c,
+	0x45, 0x10, 0x01, 0x12, 0x1a, 0x0a, 0x16, 0x50, 0x4c, 0x41, 0x59, 0x45, 0x52, 0x5f, 0x53, 0x54,
+	0x41, 0x54, 0x45, 0x5f, 0x53, 0x45, 0x41, 0x52, 0x43, 0x48, 0x49, 0x4e, 0x47, 0x10, 0x02, 0x12,
+	0x18, 0x0a, 0x14, 0x50, 0x4c, 0x41, 0x59, 0x45, 0x52, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x45, 0x5f,
+	0x50, 0x4c, 0x41, 0x59, 0x49, 0x4e, 0x47, 0x10, 0x03, 0x2a, 0x33, 0x0a, 0x06, 0x52, 0x65, 0x61,
+	0x73, 0x6f, 0x6e, 0x12, 0x16, 0x0a, 0x12, 0x52, 0x45, 0x41, 0x53, 0x4f, 0x4e, 0x5f, 0x55, 0x4e,
+	0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x11, 0x0a, 0x0d, 0x52,
+	0x45, 0x41, 0x53, 0x4f, 0x4e, 0x5f, 0x50, 0x4c, 0x41, 0x59, 0x45, 0x52, 0x10, 0x01, 0x42, 0x2e,
+	0x5a, 0x2c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x47, 0x61, 0x6d,
+	0x62, 0x69, 0x74, 0x4c, 0x4c, 0x43, 0x2f, 0x71, 0x75, 0x69, 0x70, 0x2f, 0x6c, 0x69, 0x62, 0x73,
+	0x2f, 0x70, 0x62, 0x2f, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -512,31 +680,34 @@ func file_matchmaker_messages_proto_rawDescGZIP() []byte {
 	return file_matchmaker_messages_proto_rawDescData
 }
 
-var file_matchmaker_messages_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_matchmaker_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_matchmaker_messages_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_matchmaker_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_matchmaker_messages_proto_goTypes = []interface{}{
-	(State)(0),                    // 0: quip.matchmaker.State
-	(*GameConfiguration)(nil),     // 1: quip.matchmaker.GameConfiguration
-	(*QueueDetails)(nil),          // 2: quip.matchmaker.QueueDetails
-	(*QueueStopped)(nil),          // 3: quip.matchmaker.QueueStopped
-	(*MatchDetails)(nil),          // 4: quip.matchmaker.MatchDetails
-	(*Status)(nil),                // 5: quip.matchmaker.Status
-	(*StatusUpdate)(nil),          // 6: quip.matchmaker.StatusUpdate
-	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
+	(PlayerState)(0),              // 0: quip.matchmaker.PlayerState
+	(Reason)(0),                   // 1: quip.matchmaker.Reason
+	(*GameConfiguration)(nil),     // 2: quip.matchmaker.GameConfiguration
+	(*MatchRoster)(nil),           // 3: quip.matchmaker.MatchRoster
+	(*Status)(nil),                // 4: quip.matchmaker.Status
+	(*QueueDetails)(nil),          // 5: quip.matchmaker.QueueDetails
+	(*QueueStopped)(nil),          // 6: quip.matchmaker.QueueStopped
+	(*MatchDetails)(nil),          // 7: quip.matchmaker.MatchDetails
+	(*MatchCancelled)(nil),        // 8: quip.matchmaker.MatchCancelled
+	(*MatchConnection)(nil),       // 9: quip.matchmaker.MatchConnection
+	(*MatchResults)(nil),          // 10: quip.matchmaker.MatchResults
+	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
 }
 var file_matchmaker_messages_proto_depIdxs = []int32{
-	1, // 0: quip.matchmaker.QueueDetails.config:type_name -> quip.matchmaker.GameConfiguration
-	7, // 1: quip.matchmaker.QueueDetails.start_time:type_name -> google.protobuf.Timestamp
-	0, // 2: quip.matchmaker.Status.state:type_name -> quip.matchmaker.State
-	2, // 3: quip.matchmaker.Status.searching:type_name -> quip.matchmaker.QueueDetails
-	3, // 4: quip.matchmaker.Status.stopped:type_name -> quip.matchmaker.QueueStopped
-	4, // 5: quip.matchmaker.Status.matched:type_name -> quip.matchmaker.MatchDetails
-	5, // 6: quip.matchmaker.StatusUpdate.status:type_name -> quip.matchmaker.Status
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	0,  // 0: quip.matchmaker.Status.state:type_name -> quip.matchmaker.PlayerState
+	2,  // 1: quip.matchmaker.QueueDetails.config:type_name -> quip.matchmaker.GameConfiguration
+	11, // 2: quip.matchmaker.QueueDetails.start_time:type_name -> google.protobuf.Timestamp
+	1,  // 3: quip.matchmaker.QueueStopped.reason:type_name -> quip.matchmaker.Reason
+	11, // 4: quip.matchmaker.MatchDetails.time:type_name -> google.protobuf.Timestamp
+	1,  // 5: quip.matchmaker.MatchCancelled.reason:type_name -> quip.matchmaker.Reason
+	6,  // [6:6] is the sub-list for method output_type
+	6,  // [6:6] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_matchmaker_messages_proto_init() }
@@ -558,7 +729,7 @@ func file_matchmaker_messages_proto_init() {
 			}
 		}
 		file_matchmaker_messages_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QueueDetails); i {
+			switch v := v.(*MatchRoster); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -570,30 +741,6 @@ func file_matchmaker_messages_proto_init() {
 			}
 		}
 		file_matchmaker_messages_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QueueStopped); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_matchmaker_messages_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MatchDetails); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_matchmaker_messages_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Status); i {
 			case 0:
 				return &v.state
@@ -605,8 +752,68 @@ func file_matchmaker_messages_proto_init() {
 				return nil
 			}
 		}
+		file_matchmaker_messages_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*QueueDetails); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_matchmaker_messages_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*QueueStopped); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 		file_matchmaker_messages_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StatusUpdate); i {
+			switch v := v.(*MatchDetails); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_matchmaker_messages_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MatchCancelled); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_matchmaker_messages_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MatchConnection); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_matchmaker_messages_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MatchResults); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -618,18 +825,14 @@ func file_matchmaker_messages_proto_init() {
 			}
 		}
 	}
-	file_matchmaker_messages_proto_msgTypes[4].OneofWrappers = []interface{}{
-		(*Status_Searching)(nil),
-		(*Status_Stopped)(nil),
-		(*Status_Matched)(nil),
-	}
+	file_matchmaker_messages_proto_msgTypes[4].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_matchmaker_messages_proto_rawDesc,
-			NumEnums:      1,
-			NumMessages:   6,
+			NumEnums:      2,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

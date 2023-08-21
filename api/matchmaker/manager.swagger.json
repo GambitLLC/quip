@@ -1,12 +1,12 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "matchmaker/backend.proto",
+    "title": "matchmaker/manager.proto",
     "version": "version not set"
   },
   "tags": [
     {
-      "name": "Backend"
+      "name": "QuipManager"
     }
   ],
   "consumes": [
@@ -45,17 +45,27 @@
       },
       "description": "GameConfiguration contains information for specifying a desired match."
     },
-    "matchmakerMatchDetails": {
+    "matchmakerGetMatchResponse": {
+      "type": "object",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/matchmakerGameConfiguration"
+        },
+        "roster": {
+          "$ref": "#/definitions/matchmakerMatchRoster"
+        },
+        "results": {
+          "$ref": "#/definitions/matchmakerMatchResults"
+        }
+      }
+    },
+    "matchmakerMatchResults": {
       "type": "object",
       "properties": {
         "match_id": {
           "type": "string"
-        },
-        "connection": {
-          "type": "string"
         }
-      },
-      "description": "MatchDetails contains necessary match information to identify and connect to a match."
+      }
     },
     "matchmakerMatchRoster": {
       "type": "object",
@@ -67,7 +77,7 @@
           }
         }
       },
-      "title": "MatchRoster specifies the players in a match.\nTODO: specify teams when team games are supported"
+      "title": "TODO: support teams\n message Team { repeated string players = 1; }\n repeated Team teams = 1;"
     },
     "protobufAny": {
       "type": "object",
