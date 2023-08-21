@@ -1,20 +1,20 @@
-import { Button } from "react-native-paper";
+import { TouchableRipple } from "react-native-paper";
 import React, {useState} from "react";
 import { animated, easings, useSpring } from "@react-spring/native";
 
-interface ButtonClickProps extends React.ComponentPropsWithRef<typeof Button> {
+interface RippleClickProps extends React.ComponentPropsWithRef<typeof TouchableRipple> {
   duration?: number
   minScale?: number
   easing?: (t: number) => number
 }
 
-const AnimatedButton = animated(Button)
+const AnimatedTouchableRipple = animated(TouchableRipple)
 
-export function ButtonClick(props: ButtonClickProps) {
+export function RippleClick(props: RippleClickProps) {
   const [isHovering, setIsHovering] = useState(false)
 
   const minScale = props.minScale ?? .75
-  const duration = props.duration ?? 1000
+  const duration = props.duration ?? 900
   const easing = props.easing ?? easings.easeOutElastic
 
   const {scale} = useSpring({
@@ -27,7 +27,7 @@ export function ButtonClick(props: ButtonClickProps) {
 
 
   return (
-    <AnimatedButton
+    <AnimatedTouchableRipple
       {...props}
       style={[props.style, {
         transform: [
@@ -44,8 +44,8 @@ export function ButtonClick(props: ButtonClickProps) {
       }}
     >
       {props.children}
-    </AnimatedButton>
+    </AnimatedTouchableRipple>
   );
 }
 
-export default ButtonClick;
+export default RippleClick;

@@ -1,5 +1,18 @@
 import {View, StyleSheet} from 'react-native'
-import { spacing, Text, Screen, flex, theme, useTicker, Sol, typography, m, border, p } from "@quip/native-ui";
+import {
+  spacing,
+  Text,
+  Screen,
+  flex,
+  theme,
+  useTicker,
+  Sol,
+  typography,
+  m,
+  border,
+  p,
+  ButtonClick
+} from "@quip/native-ui";
 import { Withdraw3Props } from "./Withdraw";
 import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
 import { Button } from "react-native-paper";
@@ -38,13 +51,14 @@ export function Withdraw3({navigation, route}: Withdraw3Props) {
         </Text>
         <View style={flex.grow}/>
         <View style={m('b', 12)}>
-          <Button onPress={() => {
+          <ButtonClick minScale={.85
+          } onPress={() => {
 
           }} mode="contained" style={[{width: 320}]} contentStyle={{height: 56}}>
             <Text style={[typography.button1, {color: theme.colors.white}]}>
               Send
             </Text>
-          </Button>
+          </ButtonClick>
         </View>
       </View>
     </Screen>

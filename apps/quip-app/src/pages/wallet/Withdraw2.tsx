@@ -1,5 +1,19 @@
 import {View, StyleSheet} from "react-native";
-import { flex, m, p, Screen, Sol, spacing, Text, theme, typography, useCrypto, useTicker, CryptoNumpadInput } from "@quip/native-ui";
+import {
+  flex,
+  m,
+  p,
+  Screen,
+  Sol,
+  spacing,
+  Text,
+  theme,
+  typography,
+  useCrypto,
+  useTicker,
+  CryptoNumpadInput,
+  ButtonClick, RippleClick
+} from "@quip/native-ui";
 import {FontAwesome} from "@expo/vector-icons";
 import {Button, IconButton, TouchableRipple} from "react-native-paper";
 import {CommonActions} from "@react-navigation/native";
@@ -52,6 +66,8 @@ export function Withdraw2({navigation, route}: Withdraw2Props) {
   const maxLengthUsd = 9
 
   function onInput(n: number) {
+    if (input.length === 0 && n === 0) return
+
     const maxLength = mode === 'usd' ? maxLengthUsd : maxLengthSolana
     if (input.length >= maxLength) return
 
@@ -202,9 +218,9 @@ export function Withdraw2({navigation, route}: Withdraw2Props) {
       <View style={[spacing.fill, p('a', 4), p('t', 10)]}>
         <View style={[p('a', 6), styles.depositHeader]}>
           <View style={styles.depositHeaderRow}>
-            <TouchableRipple borderless onPress={max} style={styles.depositButton}>
+            <RippleClick minScale={.8} borderless onPress={max} style={styles.depositButton}>
               <Text style={styles.maxText}>MAX</Text>
-            </TouchableRipple>
+            </RippleClick>
             <View style={styles.info}>
               <Text style={styles.subtext}>{
                 mode === 'usd' ? 'USD' : 'SOL'
@@ -230,9 +246,9 @@ export function Withdraw2({navigation, route}: Withdraw2Props) {
                 <Text style={styles.subtext}>{input.length !== 0 ? `${memoPrice}` : '0'} {mode !== 'usd' ? 'USD' : 'SOL'}</Text>
               </View>
             </View>
-            <TouchableRipple borderless onPress={swap} style={styles.depositButton}>
+            <RippleClick minScale={.8} borderless onPress={swap} style={styles.depositButton}>
               <FontAwesome color={theme.colors.p1} size={16} name="refresh"/>
-            </TouchableRipple>
+            </RippleClick>
           </View>
         </View>
         <View style={[flex.col, flex.shrink, m('y', 10)]}>
@@ -243,7 +259,9 @@ export function Withdraw2({navigation, route}: Withdraw2Props) {
           />
         </View>
         <View style={m('b', 8)}>
-          <Button disabled={!isValid} onPress={() => {
+          <ButtonClick
+            minScale={.85}
+            disabled={!isValid} onPress={() => {
             navigation.navigate("withdraw3", {
               address: address,
               amountSol: parseFloat(solanaValue),
@@ -252,7 +270,7 @@ export function Withdraw2({navigation, route}: Withdraw2Props) {
             <Text style={[typography.button1, {color: theme.colors.white}]}>
               Next
             </Text>
-          </Button>
+          </ButtonClick>
         </View>
       </View>
     </Screen>
@@ -263,12 +281,14 @@ const styles = StyleSheet.create({
   depositHeader: {
     backgroundColor: theme.colors.s5,
     borderRadius: 16,
+    minHeight: 148
   },
 
   depositHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    height: 100
   },
 
   depositButton: {

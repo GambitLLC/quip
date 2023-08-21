@@ -1,11 +1,11 @@
-import { spacing, Screen, Text, theme, typography, flex, m, border, PasteItem, p } from "@quip/native-ui";
+import { spacing, Screen, Text, theme, typography, flex, m, border, PasteItem, p, ButtonClick } from "@quip/native-ui";
 import { StyleSheet, TextInput, View } from "react-native";
 import { Withdraw1Props } from "./Withdraw";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Keyboard } from "react-native"
 import { PublicKey } from "@solana/web3.js";
 import { FontAwesome } from "@expo/vector-icons";
-import { Button, TouchableRipple } from "react-native-paper";
+import { TouchableRipple } from "react-native-paper";
 import * as Clipboard from 'expo-clipboard';
 import { animated, useSpring } from "@react-spring/native";
 
@@ -113,13 +113,20 @@ export function Withdraw1({route, navigation}: Withdraw1Props) {
             <View style={flex.grow}/>
           )
         }
-        <Button disabled={!isValidAddress} style={[{width: 320}]} contentStyle={{height: 56}} mode={"contained"} onPress={() => {
-          navigation.navigate("withdraw2", {
-            address,
-          })
-        }}>
+        <ButtonClick
+          disabled={!isValidAddress}
+          style={[{width: 320}]}
+          contentStyle={{height: 56}}
+          mode={"contained"}
+          onPress={() => {
+            navigation.navigate("withdraw2", {
+              address,
+            })
+          }}
+          minScale={.85}
+        >
           <Text style={[typography.button1, {color: theme.colors.white}]}>Next</Text>
-        </Button>
+        </ButtonClick>
       </View>
     </Screen>
   )
