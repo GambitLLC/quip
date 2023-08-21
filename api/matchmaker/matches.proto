@@ -1,0 +1,32 @@
+syntax = "proto3";
+package quip.matchmaker;
+option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
+
+import "google/protobuf/empty.proto";
+
+// Manager service to keep track of match details (in-progress and completed).
+// Should only be used by Director or some subscriber who is listening to
+// messages for when matches begin and finish.
+service QuipManager {
+  rpc CreateMatch(CreateMatchRequest) returns (google.protobuf.Empty);
+  rpc GetMatch(GetMatchRequest) returns (GetMatchResponse);
+  rpc SetMatchResults(SetMatchResultsRequest) returns (google.protobuf.Empty);
+}
+
+message CreateMatchRequest {
+  string match_id = 1;
+  GameConfiguration config = 2;
+}
+
+message GetMatchRequest {
+  string match_id = 1;
+}
+
+message GetMatchResponse {
+
+}
+
+message SetMatchResultsRequest {
+  string match_id = 1;
+  MatchResults results = 2;
+}

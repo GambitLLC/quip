@@ -5,6 +5,7 @@
 PROTOC_VERSION = 21.12
 GOOGLE_APIS_VERSION = 73131bbb21f396969b5cf86893231dbe4c94728d
 GRPC_GATEWAY_VERSION = 2.15.0
+OPEN_MATCH_VERSION = 1.7.0
 
 # Defines the absolute local directory of this project
 REPOSITORY_ROOT := $(patsubst %/,%,$(dir $(abspath $(MAKEFILE_LIST))))
@@ -111,7 +112,15 @@ build/e2e/bin/synchronizer:
 	cd $(BUILD_DIR)/e2e/bin && $(GO) get open-match.dev/open-match/cmd/synchronizer && $(GO) build -pkgdir . open-match.dev/open-match/cmd/synchronizer
 
 
-api/third-party/: api/third-party/google api/third-party/protoc-gen-openapiv2/options
+api/third-party/: api/third-party/google api/third-party/protoc-gen-openapiv2/options api/third-party/open-match
+
+api/third-party/open-match:
+	mkdir -p $(TOOLCHAIN_DIR)/open-match-temp/
+	mkdir -p $(REPOSITORY_ROOT)/api/third-party/open-match
+	curl -o $(TOOLCHAIN_DIR)/open-match-temp/open-match.zip -L https://github.com/googleforgames/open-match/archive/v$(OPEN_MATCH_VERSION).zip
+	(cd $(TOOLCHAIN_DIR)/open-match-temp/; unzip -q -o open-match.zip)
+	cp -f $(TOOLCHAIN_DIR)/open-match-temp/open-match-$(OPEN_MATCH_VERSION)/api/messages.proto $(REPOSITORY_ROOT)/api/third-party/open-match/
+	rm -rf $(TOOLCHAIN_DIR)/open-match-temp
 
 GOOGLE_API_FILES := api/http api/annotations rpc/status
 api/third-party/google:

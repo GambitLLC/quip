@@ -9,46 +9,56 @@ message GameConfiguration {
   string gamemode = 1;
 }
 
-// QueueDetails contains information about a currently running queue.
-message QueueDetails {
-  GameConfiguration config = 1;
-  google.protobuf.Timestamp start_time = 2;
-}
-
-// QueueStopped contains information about why a queue has stopped.
-message QueueStopped {
-  string message = 1;
-}
-
-// MatchDetails contains necessary match information to identify and connect to a match.
-message MatchDetails {
-  string match_id = 1;
-  string connection = 2;
-}
-
-enum State {
+enum PlayerState {
   STATE_OFFLINE = 0;
   STATE_IDLE = 1;
   STATE_SEARCHING = 2;
   STATE_PLAYING = 3;
 }
 
-// Status represents the current matchmaking status for any target.
+// Status represents the current matchmaking state for a specific player.
 message Status {
-  State state = 1;
-
-  oneof details {
-    QueueDetails searching = 2;
-
-    QueueStopped stopped = 3;
-
-    MatchDetails matched = 4;
-  }
+  string player = 1;
+  PlayerState state = 2;
 }
 
-// StatusUpdate indicates a change in status for a set of targets.
-message StatusUpdate {
-  repeated string targets = 1;
-
-  Status status = 2;
+// QueueDetails contains information about a currently running queue.
+message QueueDetails {
+  GameConfiguration config = 1;
+  google.protobuf.Timestamp start_time = 2;
 }
+
+enum Reason {
+  REASON_UNSPECIFIED = 0;
+  REASON_PLAYER = 1;
+}
+
+// QueueStopped contains information about why a queue has stopped.
+message QueueStopped {
+  Reason reason = 1;
+  optional string message = 2;
+}
+
+// MatchDetails contains information about a potential match that was found.
+// Sent as intermediate step for players to accept (send match wager) match before
+// allocating a server.
+message MatchDetails {
+  string match_id = 1;
+  google.protobuf.Timestamp time = 2;
+}
+
+message MatchCancelled {
+  string match_id = 1;
+  Reason reason = 2;
+}
+
+// MatchConnection contains necessary match information to identify and connect to a match.
+message MatchConnection {
+  string match_id = 1;
+  string connection = 2;
+}
+
+message MatchResults {
+  string match_id = 1;
+}
+

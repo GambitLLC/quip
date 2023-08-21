@@ -1,0 +1,53 @@
+syntax = "proto3";
+package quip.matchmaker;
+option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
+
+import "matchmaker/messages.proto";
+import "google/rpc/status.proto";
+
+// Matchmaker service for end user clients.
+service QuipMatchmaker {
+  // Connect is a long-lived rpc for clients to send queue actions and
+  // receive queue updates.
+  rpc Connect(stream Request) returns (stream Response);
+}
+
+message Request {
+  oneof action {
+    // TODO: is a keepalive message needed?
+
+    GetStatus get_status = 1; 
+    StartQueue start_queue = 2;
+    StopQueue stop_queue = 3;
+  }
+}
+
+// GetStatus gets the current status for the player. If in queue or in a match,
+// will also send the corresponding details in a second message.
+message GetStatus {
+}
+
+message StartQueue {
+  GameConfiguration config = 1;
+}
+
+message StopQueue {
+}
+
+message Response {
+  oneof message {
+    // error is sent if any request failed.
+    google.rpc.Status error = 1;
+
+    // Sent as response to GetStatus or whenever status changes.
+    Status status = 2;
+
+    // Queue changes relevant to the current player
+    QueueDetails queue_started = 3;
+    QueueStopped queue_stopped = 4;
+    MatchDetails match_found = 5;
+    MatchCancelled match_cancelled = 6;
+    MatchConnection match_started = 7;
+    MatchResults match_finished = 8;
+  }
+}

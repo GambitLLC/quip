@@ -5,34 +5,34 @@ option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
 import "matchmaker/messages.proto";
 import "google/protobuf/empty.proto";
 
-enum MatchState {
-  MATCH_STATE_UNSPECIFIED = 0;
-  MATCH_STATE_PENDING = 1;      // Match has been allocated and is waiting for connections.
-  MATCH_STATE_PLAYING = 2;      // Match is in progress.
-  MATCH_STATE_FINISHED = 3;     // Match has completed.
-}
+// enum MatchState {
+//   MATCH_STATE_UNSPECIFIED = 0;
+//   MATCH_STATE_PENDING = 1;      // Match has been allocated and is waiting for connections.
+//   MATCH_STATE_PLAYING = 2;      // Match is in progress.
+//   MATCH_STATE_FINISHED = 3;     // Match has completed.
+// }
 
-// MatchRoster specifies the players in a match.
-// TODO: specify teams when team games are supported
-message MatchRoster {
-  repeated string players = 2;
-}
+// // MatchRoster specifies the players in a match.
+// // TODO: specify teams when team games are supported
+// message MatchRoster {
+//   repeated string players = 2;
+// }
 
-message AllocateMatchRequest {
-  string match_id = 1;
+// message AllocateMatchRequest {
+//   string match_id = 1;
 
-  GameConfiguration game_config = 2;
-  MatchRoster roster = 3;
-}
+//   GameConfiguration game_config = 2;
+//   MatchRoster roster = 3;
+// }
 
-message FinishMatchRequest {
-  string match_id = 1;
-}
+// message FinishMatchRequest {
+//   string match_id = 1;
+// }
 
-service Backend {
-  // AllocateMatch allocates a gameserver for the specified match.
-  rpc AllocateMatch(AllocateMatchRequest) returns (MatchDetails);
+// service Backend {
+//   // AllocateMatch allocates a gameserver for the specified match.
+//   rpc AllocateMatch(AllocateMatchRequest) returns (MatchDetails);
 
-  // FinishMatch marks a specified match as completed.
-  rpc FinishMatch(FinishMatchRequest) returns (google.protobuf.Empty);
-}
+//   // FinishMatch marks a specified match as completed.
+//   rpc FinishMatch(FinishMatchRequest) returns (google.protobuf.Empty);
+// }

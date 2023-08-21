@@ -1,0 +1,21 @@
+syntax = "proto3";
+package quip.matchmaker;
+option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
+
+import "matchmaker/messages.proto";
+
+message OMTicketExtension {
+
+}
+
+message OMProfileExtension {
+
+}
+
+message OMMatchExtension {
+
+}
+
+message AgonesAnnotation {
+
+}

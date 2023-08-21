@@ -6,32 +6,32 @@ import "matchmaker/messages.proto";
 import "google/protobuf/empty.proto";
 import "google/rpc/status.proto";
 
-message GetStatusRequest {
-  string target = 1;
-}
+// message GetStatusRequest {
+//   string target = 1;
+// }
 
-message StartQueueRequest {
-  GameConfiguration config = 1;
-}
+// message StartQueueRequest {
+//   GameConfiguration config = 1;
+// }
 
-// TODO: keepalive?
-message StreamRequest {
-  oneof message {
-    GetStatusRequest get_status = 1;
-    StartQueueRequest start_queue = 2;
-    google.protobuf.Empty stop_queue = 3;
-  }
-}
+// // TODO: keepalive?
+// message StreamRequest {
+//   oneof message {
+//     GetStatusRequest get_status = 1;
+//     StartQueueRequest start_queue = 2;
+//     google.protobuf.Empty stop_queue = 3;
+//   }
+// }
 
-message StreamResponse {
-  oneof message {
-    // error is sent whenever some stream request failed
-    google.rpc.Status error = 1;
+// message StreamResponse {
+//   oneof message {
+//     // error is sent whenever some stream request failed
+//     google.rpc.Status error = 1;
 
-    Status status_update = 2;
-  }
-}
+//     Status status_update = 2;
+//   }
+// }
 
-service Frontend {
-  rpc Stream(stream StreamRequest) returns (stream StreamResponse);
-}
+// service Frontend {
+//   rpc Stream(stream StreamRequest) returns (stream StreamResponse);
+// }

@@ -1,0 +1,36 @@
+syntax = "proto3";
+package quip.matchmaker;
+option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
+
+import "matchmaker/messages.proto";
+
+// End user notification message. Needs to be sent as a message
+// for notifying other friends or other party members.
+message StatusUpdate {
+  repeated string targets = 1;
+  
+}
+
+// End user notification message. Needs to be sent as a message
+// for notifying other friends or other party members.
+message QueueUpdate {
+  repeated string targets = 1;
+
+  oneof update {
+    QueueDetails queue_started = 2;
+    QueueStopped queue_stopped = 3;
+    MatchDetails match_found = 4;
+    MatchCancelled match_cancelled = 5;
+    MatchConnection match_started = 6;
+    MatchResults match_finished = 7;
+  }
+}
+
+// Internal broker message. Mainly sent by director or gameservers.
+message MatchUpdate {
+  oneof update {
+    MatchCancelled match_cancelled = 1;
+    MatchConnection match_started = 2;
+    MatchResults match_finished = 3;
+  }
+}
