@@ -16,6 +16,7 @@ service QuipManager {
 message CreateMatchRequest {
   string match_id = 1;
   GameConfiguration config = 2;
+  MatchRoster roster = 3;
 }
 
 message GetMatchRequest {
@@ -23,7 +24,9 @@ message GetMatchRequest {
 }
 
 message GetMatchResponse {
-
+  GameConfiguration config = 2;
+  MatchRoster roster = 3;
+  optional MatchResults = 4;
 }
 
 message SetMatchResultsRequest {

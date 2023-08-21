@@ -9,6 +9,14 @@ message GameConfiguration {
   string gamemode = 1;
 }
 
+message MatchRoster {
+  // TODO: support teams
+  // message Team { repeated string players = 1; }
+  // repeated Team teams = 1;
+
+  repeated string players = 1;
+}
+
 enum PlayerState {
   STATE_OFFLINE = 0;
   STATE_IDLE = 1;
