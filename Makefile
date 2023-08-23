@@ -37,7 +37,7 @@ PROTOC_INCLUDES := api/third-party
 
 MATCHMAKER_INTERNAL_PROTOS = libs/matchmaker/internal/ipb/messages.pb.go
 
-MATCHMAKER_PROTO_NAMES = matchmaker manager broker extensions messages
+MATCHMAKER_PROTO_NAMES = frontend manager broker extensions messages
 MATCHMAKER_TYPESCRIPT_PROTOS = $(foreach proto,$(MATCHMAKER_PROTO_NAMES), libs/pb/matchmaker/$(proto).ts)
 MATCHMAKER_GOLANG_PROTOS = $(foreach proto,$(MATCHMAKER_PROTO_NAMES), libs/pb/matchmaker/$(proto).pb.go) $(MATCHMAKER_INTERNAL_PROTOS)
 MATCHMAKER_PROTOS = $(MATCHMAKER_TYPESCRIPT_PROTOS) $(MATCHMAKER_GOLANG_PROTOS)
@@ -191,7 +191,7 @@ libs/pb/matchmaker/%.pb.go: api/matchmaker/%.proto api/third-party/ $(GO_PROTOC_
 		--go-grpc_opt=module=$(GO_MODULE)/libs/pb/matchmaker
 
 # Include proto structure for dependency chain to run properly.
-libs/pb/matchmaker/matchmaker.pb.go: libs/pb/matchmaker/messages.pb.go
+libs/pb/matchmaker/frontend.pb.go: libs/pb/matchmaker/messages.pb.go
 libs/pb/matchmaker/manager.pb.go: libs/pb/matchmaker/messages.pb.go
 libs/pb/matchmaker/broker.pb.go: libs/pb/matchmaker/messages.pb.go
 libs/pb/matchmaker/extensions.pb.go: libs/pb/matchmaker/messages.pb.go

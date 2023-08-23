@@ -498,14 +498,14 @@ export const Response = {
 };
 
 /** Matchmaker service for end user clients. */
-export type QuipMatchmakerService = typeof QuipMatchmakerService;
-export const QuipMatchmakerService = {
+export type QuipFrontendService = typeof QuipFrontendService;
+export const QuipFrontendService = {
   /**
    * Connect is a long-lived rpc for clients to send queue actions and
    * receive queue updates.
    */
   connect: {
-    path: "/quip.matchmaker.QuipMatchmaker/Connect",
+    path: "/quip.matchmaker.QuipFrontend/Connect",
     requestStream: true,
     responseStream: true,
     requestSerialize: (value: Request) => Buffer.from(Request.encode(value).finish()),
@@ -515,7 +515,7 @@ export const QuipMatchmakerService = {
   },
 } as const;
 
-export interface QuipMatchmakerServer extends UntypedServiceImplementation {
+export interface QuipFrontendServer extends UntypedServiceImplementation {
   /**
    * Connect is a long-lived rpc for clients to send queue actions and
    * receive queue updates.
@@ -523,7 +523,7 @@ export interface QuipMatchmakerServer extends UntypedServiceImplementation {
   connect: handleBidiStreamingCall<Request, Response>;
 }
 
-export interface QuipMatchmakerClient extends Client {
+export interface QuipFrontendClient extends Client {
   /**
    * Connect is a long-lived rpc for clients to send queue actions and
    * receive queue updates.
@@ -533,12 +533,12 @@ export interface QuipMatchmakerClient extends Client {
   connect(metadata: Metadata, options?: Partial<CallOptions>): ClientDuplexStream<Request, Response>;
 }
 
-export const QuipMatchmakerClient = makeGenericClientConstructor(
-  QuipMatchmakerService,
-  "quip.matchmaker.QuipMatchmaker",
+export const QuipFrontendClient = makeGenericClientConstructor(
+  QuipFrontendService,
+  "quip.matchmaker.QuipFrontend",
 ) as unknown as {
-  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): QuipMatchmakerClient;
-  service: typeof QuipMatchmakerService;
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): QuipFrontendClient;
+  service: typeof QuipFrontendService;
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

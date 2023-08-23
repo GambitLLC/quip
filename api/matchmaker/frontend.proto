@@ -6,7 +6,7 @@ import "matchmaker/messages.proto";
 import "google/rpc/status.proto";
 
 // Matchmaker service for end user clients.
-service QuipMatchmaker {
+service QuipFrontend {
   // Connect is a long-lived rpc for clients to send queue actions and
   // receive queue updates.
   rpc Connect(stream Request) returns (stream Response);
