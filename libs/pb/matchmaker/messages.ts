@@ -88,10 +88,18 @@ export interface MatchRoster {
   players: string[];
 }
 
-/** Status represents the current matchmaking state for a specific player. */
+/** Status represents the current matchmaking state for a single player. */
 export interface Status {
-  player: string;
   state: PlayerState;
+}
+
+export interface QueueUpdate {
+  queueStarted?: QueueDetails | undefined;
+  queueStopped?: QueueStopped | undefined;
+  matchFound?: MatchDetails | undefined;
+  matchCancelled?: MatchCancelled | undefined;
+  matchStarted?: MatchConnection | undefined;
+  matchFinished?: MatchResults | undefined;
 }
 
 /** QueueDetails contains information about a currently running queue. */
@@ -248,16 +256,13 @@ export const MatchRoster = {
 };
 
 function createBaseStatus(): Status {
-  return { player: "", state: 0 };
+  return { state: 0 };
 }
 
 export const Status = {
   encode(message: Status, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.player !== "") {
-      writer.uint32(10).string(message.player);
-    }
     if (message.state !== 0) {
-      writer.uint32(16).int32(message.state);
+      writer.uint32(8).int32(message.state);
     }
     return writer;
   },
@@ -270,14 +275,7 @@ export const Status = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.player = reader.string();
-          continue;
-        case 2:
-          if (tag !== 16) {
+          if (tag !== 8) {
             break;
           }
 
@@ -293,17 +291,11 @@ export const Status = {
   },
 
   fromJSON(object: any): Status {
-    return {
-      player: isSet(object.player) ? String(object.player) : "",
-      state: isSet(object.state) ? playerStateFromJSON(object.state) : 0,
-    };
+    return { state: isSet(object.state) ? playerStateFromJSON(object.state) : 0 };
   },
 
   toJSON(message: Status): unknown {
     const obj: any = {};
-    if (message.player !== "") {
-      obj.player = message.player;
-    }
     if (message.state !== 0) {
       obj.state = playerStateToJSON(message.state);
     }
@@ -316,8 +308,161 @@ export const Status = {
 
   fromPartial<I extends Exact<DeepPartial<Status>, I>>(object: I): Status {
     const message = createBaseStatus();
-    message.player = object.player ?? "";
     message.state = object.state ?? 0;
+    return message;
+  },
+};
+
+function createBaseQueueUpdate(): QueueUpdate {
+  return {
+    queueStarted: undefined,
+    queueStopped: undefined,
+    matchFound: undefined,
+    matchCancelled: undefined,
+    matchStarted: undefined,
+    matchFinished: undefined,
+  };
+}
+
+export const QueueUpdate = {
+  encode(message: QueueUpdate, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.queueStarted !== undefined) {
+      QueueDetails.encode(message.queueStarted, writer.uint32(18).fork()).ldelim();
+    }
+    if (message.queueStopped !== undefined) {
+      QueueStopped.encode(message.queueStopped, writer.uint32(26).fork()).ldelim();
+    }
+    if (message.matchFound !== undefined) {
+      MatchDetails.encode(message.matchFound, writer.uint32(34).fork()).ldelim();
+    }
+    if (message.matchCancelled !== undefined) {
+      MatchCancelled.encode(message.matchCancelled, writer.uint32(42).fork()).ldelim();
+    }
+    if (message.matchStarted !== undefined) {
+      MatchConnection.encode(message.matchStarted, writer.uint32(50).fork()).ldelim();
+    }
+    if (message.matchFinished !== undefined) {
+      MatchResults.encode(message.matchFinished, writer.uint32(58).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): QueueUpdate {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseQueueUpdate();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.queueStarted = QueueDetails.decode(reader, reader.uint32());
+          continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          message.queueStopped = QueueStopped.decode(reader, reader.uint32());
+          continue;
+        case 4:
+          if (tag !== 34) {
+            break;
+          }
+
+          message.matchFound = MatchDetails.decode(reader, reader.uint32());
+          continue;
+        case 5:
+          if (tag !== 42) {
+            break;
+          }
+
+          message.matchCancelled = MatchCancelled.decode(reader, reader.uint32());
+          continue;
+        case 6:
+          if (tag !== 50) {
+            break;
+          }
+
+          message.matchStarted = MatchConnection.decode(reader, reader.uint32());
+          continue;
+        case 7:
+          if (tag !== 58) {
+            break;
+          }
+
+          message.matchFinished = MatchResults.decode(reader, reader.uint32());
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueueUpdate {
+    return {
+      queueStarted: isSet(object.queueStarted) ? QueueDetails.fromJSON(object.queueStarted) : undefined,
+      queueStopped: isSet(object.queueStopped) ? QueueStopped.fromJSON(object.queueStopped) : undefined,
+      matchFound: isSet(object.matchFound) ? MatchDetails.fromJSON(object.matchFound) : undefined,
+      matchCancelled: isSet(object.matchCancelled) ? MatchCancelled.fromJSON(object.matchCancelled) : undefined,
+      matchStarted: isSet(object.matchStarted) ? MatchConnection.fromJSON(object.matchStarted) : undefined,
+      matchFinished: isSet(object.matchFinished) ? MatchResults.fromJSON(object.matchFinished) : undefined,
+    };
+  },
+
+  toJSON(message: QueueUpdate): unknown {
+    const obj: any = {};
+    if (message.queueStarted !== undefined) {
+      obj.queueStarted = QueueDetails.toJSON(message.queueStarted);
+    }
+    if (message.queueStopped !== undefined) {
+      obj.queueStopped = QueueStopped.toJSON(message.queueStopped);
+    }
+    if (message.matchFound !== undefined) {
+      obj.matchFound = MatchDetails.toJSON(message.matchFound);
+    }
+    if (message.matchCancelled !== undefined) {
+      obj.matchCancelled = MatchCancelled.toJSON(message.matchCancelled);
+    }
+    if (message.matchStarted !== undefined) {
+      obj.matchStarted = MatchConnection.toJSON(message.matchStarted);
+    }
+    if (message.matchFinished !== undefined) {
+      obj.matchFinished = MatchResults.toJSON(message.matchFinished);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<QueueUpdate>, I>>(base?: I): QueueUpdate {
+    return QueueUpdate.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<QueueUpdate>, I>>(object: I): QueueUpdate {
+    const message = createBaseQueueUpdate();
+    message.queueStarted = (object.queueStarted !== undefined && object.queueStarted !== null)
+      ? QueueDetails.fromPartial(object.queueStarted)
+      : undefined;
+    message.queueStopped = (object.queueStopped !== undefined && object.queueStopped !== null)
+      ? QueueStopped.fromPartial(object.queueStopped)
+      : undefined;
+    message.matchFound = (object.matchFound !== undefined && object.matchFound !== null)
+      ? MatchDetails.fromPartial(object.matchFound)
+      : undefined;
+    message.matchCancelled = (object.matchCancelled !== undefined && object.matchCancelled !== null)
+      ? MatchCancelled.fromPartial(object.matchCancelled)
+      : undefined;
+    message.matchStarted = (object.matchStarted !== undefined && object.matchStarted !== null)
+      ? MatchConnection.fromPartial(object.matchStarted)
+      : undefined;
+    message.matchFinished = (object.matchFinished !== undefined && object.matchFinished !== null)
+      ? MatchResults.fromPartial(object.matchFinished)
+      : undefined;
     return message;
   },
 };

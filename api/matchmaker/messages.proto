@@ -24,10 +24,22 @@ enum PlayerState {
   PLAYER_STATE_PLAYING = 3;
 }
 
-// Status represents the current matchmaking state for a specific player.
+// Status represents the current matchmaking state for a single player.
 message Status {
-  string player = 1;
-  PlayerState state = 2;
+  PlayerState state = 1;
+
+  // TODO: additional details like gamemode/play time?
+}
+
+message QueueUpdate {
+  oneof update {
+    QueueDetails queue_started = 2;
+    QueueStopped queue_stopped = 3;
+    MatchDetails match_found = 4;
+    MatchCancelled match_cancelled = 5;
+    MatchConnection match_started = 6;
+    MatchResults match_finished = 7;
+  }
 }
 
 // QueueDetails contains information about a currently running queue.

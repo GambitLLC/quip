@@ -39,15 +39,15 @@ message Response {
     // error is sent if any request failed.
     google.rpc.Status error = 1;
 
-    // Sent as response to GetStatus or whenever status changes.
-    Status status = 2;
+    // Sent as response to GetStatus or whenever friends' status changes.
+    StatusUpdate status_update = 2;
 
     // Queue changes relevant to the current player
-    QueueDetails queue_started = 3;
-    QueueStopped queue_stopped = 4;
-    MatchDetails match_found = 5;
-    MatchCancelled match_cancelled = 6;
-    MatchConnection match_started = 7;
-    MatchResults match_finished = 8;
+    QueueUpdate queue_update = 3;
   }
+}
+
+message StatusUpdate {
+  string player = 1;
+  Status status = 2;
 }
