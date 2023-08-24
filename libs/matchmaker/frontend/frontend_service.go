@@ -2,16 +2,17 @@ package frontend
 
 import (
 	"context"
+	"errors"
 	"os"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"github.com/rs/zerolog"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
-	"github.com/GambitLLC/quip/libs/broker"
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/broker"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
@@ -20,114 +21,130 @@ var logger = zerolog.New(os.Stderr).With().
 	Logger()
 
 type Service struct {
-	store statestore.Service
-	omfc  *omFrontendClient
-	gc    *games.GameDetailCache
+	// sessionMapLock sync.RWMutex
 
-	broker broker.Client
-
-	// use channel as semaphore to synchronize access
-	managerSemaphore chan *manager
+	// closed channel to prevent panics in tests
+	closed chan struct{}
 }
 
-func NewService(cfg config.View) *Service {
-	mc := make(chan *manager, 1)
-	mc <- &manager{
-		idToChan: make(map[string][]chan *pb.Status),
-		chanToId: make(map[<-chan *pb.Status]string),
+func NewQuipService(cfg config.View) *Service {
+	srv := &Service{
+		closed: make(chan struct{}),
 	}
 
-	return &Service{
-		store:            statestore.New(cfg),
-		omfc:             newOmFrontendClient(cfg),
-		gc:               games.NewGameDetailCache(),
-		broker:           broker.NewRedis(cfg),
-		managerSemaphore: mc,
+	if err := srv.subscribeToMessages(cfg); err != nil {
+		panic(err)
 	}
+
+	return srv
 }
 
-func (s *Service) Stream(stream pb.Frontend_StreamServer) error {
-	session, err := s.newSession(stream)
+func (s *Service) Close() error {
+	if s.closed != nil {
+		// TODO: handle closing twice?
+		close(s.closed)
+	}
+
+	return nil
+}
+
+// Connect is a long-lived rpc for clients to send queue actions and
+// receive queue updates.
+func (s *Service) Connect(srv pb.QuipFrontend_ConnectServer) error {
+	session, err := s.createSession(srv)
 	if err != nil {
 		return err
 	}
 
-	defer session.cleanup()
+	defer s.deleteSession(session)
 
 	go session.send()
-
-	// recv returns when the client disconnects or closes the send direction of the stream
-	// consider Stream finished in both cases
 	return session.recv()
 }
 
-type manager struct {
-	idToChan map[string][]chan *pb.Status
-	chanToId map[<-chan *pb.Status]string
+// subscribeToMessages creates a new goroutine that will listen to StatusUpdate
+// and QueueUpdate messages from the broker and send them to the relevant
+// sessions that are connected.
+func (s *Service) subscribeToMessages(cfg config.View) error {
+	rb := broker.NewRedisBroker(cfg)
 
-	close func() error
-}
-
-func (s *Service) subscribe(id string) (<-chan *pb.Status, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	manager := <-s.managerSemaphore
-	if manager.close == nil {
-		updates, close, err := s.broker.ConsumeStatusUpdate(ctx)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to consume status updates")
-		}
-
-		go func() {
-			for update := range updates {
-				manager := <-s.managerSemaphore
-				for _, target := range update.Targets {
-					for _, ch := range manager.idToChan[target] {
-						select {
-						case ch <- update.Status:
-							// noop
-						default:
-							// channel blocked
-							logger.Warn().Str("id", target).Msg("sending status update to channel was blocked")
-						}
-					}
-				}
-				s.managerSemaphore <- manager
-			}
-
-		}()
-
-		manager.close = close
+	statusSub := rb.SubscribeStatusUpdate(ctx)
+	if statusSub == nil {
+		return errors.New("RedisBroker.SubscribeStatusUpdate returned nil")
 	}
 
-	ch := make(chan *pb.Status, 1)
-	manager.chanToId[ch] = id
-	manager.idToChan[id] = append(manager.idToChan[id], ch)
+	queueSub := rb.SubscribeQueueUpdate(ctx)
+	if queueSub == nil {
+		return errors.New("RedisBroker.SubscribeQueueUpdate returned nil")
+	}
 
-	s.managerSemaphore <- manager
-	return ch, nil
+	go func() {
+		for {
+			select {
+			case <-s.closed:
+				// service closed
+
+				// TODO: handle errors
+				_ = statusSub.Close()
+				_ = queueSub.Close()
+				_ = rb.Close()
+				return
+			case msg, ok := <-statusSub.Channel():
+				if !ok {
+					panic("StatusSubscription channel closed")
+				}
+
+				// TODO: send msg to relevant sessions
+				_ = msg
+			case msg, ok := <-queueSub.Channel():
+				if !ok {
+					panic("StatusSubscription channel closed")
+				}
+
+				// TODO: send msg to relevant sessions
+				_ = msg
+			}
+		}
+	}()
+
+	return nil
 }
 
-func (s *Service) unsubscribe(ch <-chan *pb.Status) {
-	manager := <-s.managerSemaphore
-	id, ok := manager.chanToId[ch]
-	if !ok {
-		s.managerSemaphore <- manager
-		return
+func (s *Service) createSession(srv pb.QuipFrontend_ConnectServer) (*session, error) {
+	id := metautils.ExtractIncoming(srv.Context()).Get("Player-Id")
+	if id == "" {
+		return nil, status.Error(codes.Unauthenticated, "Player-Id is not set")
 	}
 
-	filter := manager.idToChan[id][:0]
-	for _, other := range manager.idToChan[id] {
-		if other != ch {
-			filter = append(filter, other)
-		}
-	}
+	// ch, err := s.subscribe(id)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	// garbage collect
-	for i := len(filter); i < len(manager.idToChan[id]); i++ {
-		manager.idToChan[id] = nil
-	}
+	return &session{
+		srv: srv,
+		out: make(chan *pb.Response, 1),
+	}, nil
+}
 
-	s.managerSemaphore <- manager
+func (s *Service) deleteSession(sess *session) {
+	//  s.sessionMapLock.RLock()
+	//  defer s.sessionMapLock.RUnlock()
+	// 	id, ok := s.chanToId[ch]
+
+	// 	filter := s.idToChan[id][:0]
+	// 	for _, other := range s.idToChan[id] {
+	// 		if other != ch {
+	// 			filter = append(filter, other)
+	// 		}
+	// 	}
+
+	// // garbage collect
+	//
+	//	for i := len(filter); i < len(s.idToChan[id]); i++ {
+	//		s.idToChan[id] = nil
+	//	}
 }
