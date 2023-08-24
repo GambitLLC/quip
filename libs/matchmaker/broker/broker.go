@@ -24,12 +24,12 @@ type RedisBroker struct {
 }
 
 // NewRedisBroker constructs a new broker connecting to the redis address in cfg.
-// Expects config with the following keys set:
+// Redis address should be set under keys 'matchmaker.redis.hostname' and 'matchmaker.redis.port'
 // redis.hostname, redis.port
 func NewRedisBroker(cfg config.View) *RedisBroker {
 	client := redis.NewClient(
 		&redis.Options{
-			Addr: fmt.Sprintf("%s:%s", cfg.GetString("redis.hostname"), cfg.GetString("redis.port")),
+			Addr: fmt.Sprintf("%s:%s", cfg.GetString("matchmaker.redis.hostname"), cfg.GetString("matchmaker.redis.port")),
 		},
 	)
 

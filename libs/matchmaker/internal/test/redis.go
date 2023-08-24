@@ -16,6 +16,6 @@ func NewRedis(t *testing.T, cfg config.Mutable) {
 
 	t.Cleanup(mredis.Close)
 
-	cfg.Set("redis.hostname", "localhost")
-	cfg.Set("redis.port", mredis.Port())
+	cfg.Set("matchmaker.redis.hostname", "localhost")
+	cfg.Set("matchmaker.redis.port", mredis.Port())
 }
