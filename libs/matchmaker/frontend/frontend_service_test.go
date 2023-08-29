@@ -2,12 +2,15 @@ package frontend
 
 import (
 	"context"
+	"io"
 	"net"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -34,29 +37,122 @@ func TestConnect(t *testing.T) {
 	stream, err := client.Connect(ctx)
 	require.NoError(t, err, "client.Connect failed")
 
-	// msgs := make(chan *pb.Response, 1)
-
-	// eg := &errgroup.Group{}
-	// eg.Go(func() error {
-	// 	for {
-	// 		msg, err := stream.Recv()
-	// 		if err == io.EOF {
-	// 			return nil
-	// 		}
-
-	// 		if err != nil {
-	// 			return err
-	// 		}
-
-	// 		msgs <- msg
-	// 	}
-	// })
-
 	err = stream.CloseSend()
 	require.NoError(t, err, "stream.CloseSend failed")
+}
 
-	// err = eg.Wait()
-	// require.NoError(t, err, "eg.Wait returned error")
+func TestGetStatus(t *testing.T) {
+	runFrontendTest(t, func(t *testing.T, id string, reqs chan<- *pb.Request, resps <-chan *pb.Response, errs <-chan error) {
+		reqs <- &pb.Request{
+			Action: &pb.Request_GetStatus{},
+		}
+
+		resp := requireResponse(t, resps, errs)
+		t.Log(resp)
+	})
+}
+
+type TestCase func(t *testing.T, id string, reqs chan<- *pb.Request, resps <-chan *pb.Response, errs <-chan error)
+
+func requireResponse(t *testing.T, resps <-chan *pb.Response, errs <-chan error) *pb.Response {
+	select {
+	case resp, ok := <-resps:
+		if !ok {
+			require.FailNow(t, "response channel closed")
+		}
+		return resp
+	case err := <-errs:
+		require.FailNowf(t, "received error while waiting for response", "err: %v", err)
+	case <-time.After(3 * time.Second):
+		require.FailNow(t, "test timed out waiting for response")
+	}
+
+	return nil
+}
+
+func requireError(t *testing.T, resps <-chan *pb.Response, errs <-chan error) error {
+	select {
+	case resp := <-resps:
+		require.FailNowf(t, "received response while waiting for error", "resp: %v", resp)
+	case err, ok := <-errs:
+		if !ok {
+			require.FailNow(t, "error channel closed")
+		}
+		return err
+	case <-time.After(3 * time.Second):
+		require.FailNow(t, "test timed out waiting for response")
+	}
+
+	return nil
+}
+
+func runFrontendTest(t *testing.T, tc TestCase) {
+	cfg := viper.New()
+	newService(t, cfg)
+
+	client, id := newClient(t, cfg)
+	require.NotNil(t, client, "QuipFrontendClient is nil")
+
+	ctx, cancel := context.WithCancel(test.NewContext(t))
+
+	// Cleanup cancel instead of defer incase subtests are run.
+	t.Cleanup(cancel)
+
+	stream, err := client.Connect(ctx)
+	require.NoError(t, err, "client.Connect failed")
+
+	reqs := make(chan *pb.Request, 1)
+	resps := make(chan *pb.Response, 1)
+	errs := make(chan error, 1)
+	eg := &errgroup.Group{}
+
+	// Cleanup CloseSend and Wait incase subtests are run.
+	t.Cleanup(func() {
+		err := stream.CloseSend()
+		require.NoError(t, err, "stream.CloseSend failed")
+
+		err = eg.Wait()
+		require.NoError(t, err, "eg.Wait returned error")
+	})
+
+	eg.Go(func() error {
+		defer func() {
+			close(reqs)
+			close(resps)
+			close(errs)
+		}()
+
+		for {
+			msg, err := stream.Recv()
+			if err == io.EOF {
+				return nil
+			}
+
+			if err != nil {
+				errs <- err
+				return nil
+			}
+
+			resps <- msg
+		}
+	})
+	eg.Go(func() error {
+		for {
+			req, ok := <-reqs
+			if !ok {
+				// request channel closed
+				return nil
+			}
+
+			err := stream.Send(req)
+			if err != nil {
+				errs <- err
+				return nil
+			}
+		}
+	})
+
+	tc(t, id, reqs, resps, errs)
 }
 
 func newService(t *testing.T, cfg config.Mutable) {
