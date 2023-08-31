@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
@@ -21,7 +22,8 @@ var logger = zerolog.New(os.Stderr).With().
 	Logger()
 
 type Service struct {
-	// sessionMapLock sync.RWMutex
+	sessionMapLock sync.RWMutex
+	idToChan       map[string]chan *pb.Response
 
 	// closed channel to prevent panics in tests
 	closed chan struct{}
@@ -29,6 +31,8 @@ type Service struct {
 
 func NewQuipService(cfg config.View) *Service {
 	srv := &Service{
+		idToChan: make(map[string]chan *pb.Response),
+
 		closed: make(chan struct{}),
 	}
 
@@ -97,15 +101,52 @@ func (s *Service) subscribeToMessages(cfg config.View) error {
 					panic("StatusSubscription channel closed")
 				}
 
-				// TODO: send msg to relevant sessions
-				_ = msg
+				s.sessionMapLock.RLock()
+				for _, id := range msg.Targets {
+					ch, ok := s.idToChan[id]
+					if !ok {
+						// TODO: log channel doesn't exist
+						continue
+					}
+
+					select {
+					case ch <- &pb.Response{
+						Message: &pb.Response_StatusUpdate{
+							StatusUpdate: &pb.StatusUpdate{
+								Player: id,
+								Status: msg.Update,
+							},
+						},
+					}:
+					default:
+						// TODO: log channel blocked
+					}
+				}
+				s.sessionMapLock.RUnlock()
 			case msg, ok := <-queueSub.Channel():
 				if !ok {
 					panic("StatusSubscription channel closed")
 				}
 
-				// TODO: send msg to relevant sessions
-				_ = msg
+				s.sessionMapLock.RLock()
+				for _, id := range msg.Targets {
+					ch, ok := s.idToChan[id]
+					if !ok {
+						// TODO: log channel doesn't exist
+						continue
+					}
+
+					select {
+					case ch <- &pb.Response{
+						Message: &pb.Response_QueueUpdate{
+							QueueUpdate: msg.Update,
+						},
+					}:
+					default:
+						// TODO: log channel blocked
+					}
+				}
+				s.sessionMapLock.RUnlock()
 			}
 		}
 	}()
@@ -119,32 +160,22 @@ func (s *Service) createSession(srv pb.QuipFrontend_ConnectServer) (*session, er
 		return nil, status.Error(codes.Unauthenticated, "Player-Id is not set")
 	}
 
-	// ch, err := s.subscribe(id)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	s.sessionMapLock.Lock()
+	defer s.sessionMapLock.Unlock()
+
+	ch := make(chan *pb.Response, 1)
+	s.idToChan[id] = ch
 
 	return &session{
 		srv: srv,
-		out: make(chan *pb.Response, 1),
+		id:  id,
+		out: ch,
 	}, nil
 }
 
 func (s *Service) deleteSession(sess *session) {
-	//  s.sessionMapLock.RLock()
-	//  defer s.sessionMapLock.RUnlock()
-	// 	id, ok := s.chanToId[ch]
+	s.sessionMapLock.Lock()
+	defer s.sessionMapLock.Unlock()
 
-	// 	filter := s.idToChan[id][:0]
-	// 	for _, other := range s.idToChan[id] {
-	// 		if other != ch {
-	// 			filter = append(filter, other)
-	// 		}
-	// 	}
-
-	// // garbage collect
-	//
-	//	for i := len(filter); i < len(s.idToChan[id]); i++ {
-	//		s.idToChan[id] = nil
-	//	}
+	delete(s.idToChan, sess.id)
 }

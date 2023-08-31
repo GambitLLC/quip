@@ -15,10 +15,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/GambitLLC/quip/libs/appmain"
 	"github.com/GambitLLC/quip/libs/appmain/apptest"
 	"github.com/GambitLLC/quip/libs/config"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/broker"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/test"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/GambitLLC/quip/libs/rpc"
@@ -50,6 +52,125 @@ func TestGetStatus(t *testing.T) {
 		resp := requireResponse(t, resps, errs)
 		t.Log(resp)
 	})
+}
+
+func TestBrokerMessages(t *testing.T) {
+	tt := []struct {
+		name     string
+		route    broker.Route
+		msg      func(id string) proto.Message
+		expected func(id string) *pb.Response
+	}{
+		{
+			name:  "StatusUpdate",
+			route: broker.StatusUpdateRoute,
+			msg: func(id string) proto.Message {
+				return &pb.StatusUpdateMessage{
+					Targets: []string{id},
+					Update: &pb.Status{
+						State: pb.PlayerState_PLAYER_STATE_PLAYING,
+					},
+				}
+			},
+			expected: func(id string) *pb.Response {
+				return &pb.Response{
+					Message: &pb.Response_StatusUpdate{
+						StatusUpdate: &pb.StatusUpdate{
+							Player: id,
+							Status: &pb.Status{
+								State: pb.PlayerState_PLAYER_STATE_PLAYING,
+							},
+						},
+					},
+				}
+			},
+		},
+		{
+			name:  "QueueUpdate",
+			route: broker.QueueUpdateRoute,
+			msg: func(id string) proto.Message {
+				return &pb.QueueUpdateMessage{
+					Targets: []string{id},
+					Update: &pb.QueueUpdate{
+						Update: &pb.QueueUpdate_QueueStopped{
+							QueueStopped: &pb.QueueStopped{
+								Reason: pb.Reason_REASON_PLAYER,
+							},
+						},
+					},
+				}
+			},
+			expected: func(id string) *pb.Response {
+				return &pb.Response{
+					Message: &pb.Response_QueueUpdate{
+						QueueUpdate: &pb.QueueUpdate{
+							Update: &pb.QueueUpdate_QueueStopped{
+								QueueStopped: &pb.QueueStopped{
+									Reason: pb.Reason_REASON_PLAYER,
+								},
+							},
+						},
+					},
+				}
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := viper.New()
+			newService(t, cfg)
+
+			rb := broker.NewRedisBroker(cfg)
+			t.Cleanup(func() {
+				require.NoError(t, rb.Close(), "RedisBroker.Close failed")
+			})
+
+			client, id := newClient(t, cfg)
+			require.NotNil(t, client, "QuipFrontendClient is nil")
+
+			ctx, cancel := context.WithCancel(test.NewContext(t))
+			t.Cleanup(cancel)
+
+			stream, err := client.Connect(ctx)
+			require.NoError(t, err, "client.Connect failed")
+
+			resps := make(chan *pb.Response, 1)
+
+			eg := &errgroup.Group{}
+			eg.Go(func() error {
+				resp, err := stream.Recv()
+				if err == io.EOF {
+					return nil
+				}
+
+				if err != nil {
+					return err
+				}
+				resps <- resp
+				return nil
+			})
+
+			err = rb.Publish(ctx, tc.route, tc.msg(id))
+			require.NoError(t, err, "RedisBroker.Publish failed")
+
+			select {
+			case resp := <-resps:
+				expected := tc.expected(id)
+				equal := proto.Equal(resp, expected)
+				require.Truef(t, equal, "proto.Equal is false\nrecv'd: %+v\nexpected: %+v", resp, expected)
+			case <-time.After(3 * time.Second):
+				require.FailNow(t, "test timed out")
+			}
+
+			err = stream.CloseSend()
+			require.NoError(t, err, "stream.CloseSend failed")
+
+			err = eg.Wait()
+			require.NoError(t, err, "eg.Wait returned error")
+		})
+	}
+
 }
 
 type TestCase func(t *testing.T, id string, reqs chan<- *pb.Request, resps <-chan *pb.Response, errs <-chan error)

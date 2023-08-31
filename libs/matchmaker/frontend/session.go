@@ -11,6 +11,7 @@ import (
 
 type session struct {
 	srv pb.QuipFrontend_ConnectServer
+	id  string
 	out chan *pb.Response
 }
 
