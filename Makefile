@@ -35,11 +35,12 @@ endif
 
 PROTOC_INCLUDES := api/third-party
 
-MATCHMAKER_INTERNAL_PROTOS = libs/matchmaker/internal/ipb/messages.pb.go
+
 
 MATCHMAKER_PROTO_NAMES = frontend manager broker extensions messages
 MATCHMAKER_TYPESCRIPT_PROTOS = $(foreach proto,$(MATCHMAKER_PROTO_NAMES), libs/pb/matchmaker/$(proto).ts)
-MATCHMAKER_GOLANG_PROTOS = $(foreach proto,$(MATCHMAKER_PROTO_NAMES), libs/pb/matchmaker/$(proto).pb.go) $(MATCHMAKER_INTERNAL_PROTOS)
+MATCHMAKER_GOLANG_PROTOS = $(foreach proto,$(MATCHMAKER_PROTO_NAMES), libs/pb/matchmaker/$(proto).pb.go)
+# MATCHMAKER_INTERNAL_PROTOS = libs/matchmaker/internal/ipb/messages.pb.go
 MATCHMAKER_PROTOS = $(MATCHMAKER_TYPESCRIPT_PROTOS) $(MATCHMAKER_GOLANG_PROTOS)
 
 SWAGGER_JSON_DOCS = api/matchmaker/matchmaker.swagger.json api/matchmaker/manager.swagger.json
@@ -196,12 +197,12 @@ libs/pb/matchmaker/manager.pb.go: libs/pb/matchmaker/messages.pb.go
 libs/pb/matchmaker/broker.pb.go: libs/pb/matchmaker/messages.pb.go
 libs/pb/matchmaker/extensions.pb.go: libs/pb/matchmaker/messages.pb.go
 
-libs/matchmaker/internal/ipb/%.pb.go: libs/matchmaker/internal/api/%.proto $(GO_PROTOC_DEPS)
-	mkdir -p $(REPOSITORY_ROOT)/libs/matchmaker/internal/ipb
-	$(PROTOC) $< \
-		-I $(REPOSITORY_ROOT) -I $(PROTOC_INCLUDES) \
-		--go_out=$(REPOSITORY_ROOT)/libs/matchmaker/internal/ipb \
-		--go_opt=module=$(GO_MODULE)/libs/matchmaker/internal/ipb
+# libs/matchmaker/internal/ipb/%.pb.go: libs/matchmaker/internal/api/%.proto $(GO_PROTOC_DEPS)
+# 	mkdir -p $(REPOSITORY_ROOT)/libs/matchmaker/internal/ipb
+# 	$(PROTOC) $< \
+# 		-I $(REPOSITORY_ROOT) -I $(PROTOC_INCLUDES) \
+# 		--go_out=$(REPOSITORY_ROOT)/libs/matchmaker/internal/ipb \
+# 		--go_opt=module=$(GO_MODULE)/libs/matchmaker/internal/ipb
 
 TS_PROTOC_DEPS := build/toolchain/bin/protoc$(EXE_EXTENSION) node_modules
 
