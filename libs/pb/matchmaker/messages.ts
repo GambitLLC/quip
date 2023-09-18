@@ -6,9 +6,10 @@ export const protobufPackage = "quip.matchmaker";
 
 export enum PlayerState {
   OFFLINE = 0,
-  IDLE = 1,
-  SEARCHING = 2,
-  PLAYING = 3,
+  ONLINE = 1,
+  IDLE = 2,
+  SEARCHING = 3,
+  PLAYING = 4,
 }
 
 export function playerStateFromJSON(object: any): PlayerState {
@@ -17,12 +18,15 @@ export function playerStateFromJSON(object: any): PlayerState {
     case "PLAYER_STATE_OFFLINE":
       return PlayerState.OFFLINE;
     case 1:
+    case "PLAYER_STATE_ONLINE":
+      return PlayerState.ONLINE;
+    case 2:
     case "PLAYER_STATE_IDLE":
       return PlayerState.IDLE;
-    case 2:
+    case 3:
     case "PLAYER_STATE_SEARCHING":
       return PlayerState.SEARCHING;
-    case 3:
+    case 4:
     case "PLAYER_STATE_PLAYING":
       return PlayerState.PLAYING;
     default:
@@ -34,6 +38,8 @@ export function playerStateToJSON(object: PlayerState): string {
   switch (object) {
     case PlayerState.OFFLINE:
       return "PLAYER_STATE_OFFLINE";
+    case PlayerState.ONLINE:
+      return "PLAYER_STATE_ONLINE";
     case PlayerState.IDLE:
       return "PLAYER_STATE_IDLE";
     case PlayerState.SEARCHING:
@@ -74,27 +80,42 @@ export function reasonToJSON(object: Reason): string {
   }
 }
 
-/** GameConfiguration contains information for specifying a desired match. */
-export interface GameConfiguration {
+export interface Player {
+  /** Id represents the player identifier. */
+  id: string;
+  /**
+   * State is a simple enum representing whether the player is currently
+   * online, idle, in queue, or in a game.
+   */
+  state: PlayerState;
+  queueAssignment?: QueueAssignment | undefined;
+  matchAssignment?: MatchAssignment | undefined;
+}
+
+export interface QueueAssignment {
+  /** Queue identifier to determine which queue has updated. */
+  id: string;
+  /** Config represents information about the desired game. */
+  config:
+    | QueueConfiguration
+    | undefined;
+  /** Start time is the time the queue began. */
+  startTime: Date | undefined;
+}
+
+export interface QueueConfiguration {
   gamemode: string;
 }
 
-/**
- * TODO: support teams
- * message Team { repeated string players = 1; }
- * repeated Team teams = 1;
- */
-export interface MatchRoster {
-  players: string[];
+export interface MatchAssignment {
+  /** Id represents the auto-generated match id. */
+  id: string;
+  /** Connection information for this match. */
+  connection: string;
 }
 
-/** Status represents the current matchmaking state for a single player. */
-export interface Status {
-  state: PlayerState;
-}
-
-export interface QueueUpdate {
-  queueStarted?: QueueDetails | undefined;
+export interface StatusUpdate {
+  queueStarted?: QueueAssignment | undefined;
   queueStopped?: QueueStopped | undefined;
   matchFound?: MatchDetails | undefined;
   matchCancelled?: MatchCancelled | undefined;
@@ -102,14 +123,9 @@ export interface QueueUpdate {
   matchFinished?: MatchResults | undefined;
 }
 
-/** QueueDetails contains information about a currently running queue. */
-export interface QueueDetails {
-  config: GameConfiguration | undefined;
-  startTime: Date | undefined;
-}
-
 /** QueueStopped contains information about why a queue has stopped. */
 export interface QueueStopped {
+  id: string;
   reason: Reason;
   message?: string | undefined;
 }
@@ -139,22 +155,228 @@ export interface MatchResults {
   matchId: string;
 }
 
-function createBaseGameConfiguration(): GameConfiguration {
+/** MatchRoster contains necessary information for a gameserver to setup. */
+export interface MatchRoster {
+  players: string[];
+}
+
+function createBasePlayer(): Player {
+  return { id: "", state: 0, queueAssignment: undefined, matchAssignment: undefined };
+}
+
+export const Player = {
+  encode(message: Player, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.state !== 0) {
+      writer.uint32(16).int32(message.state);
+    }
+    if (message.queueAssignment !== undefined) {
+      QueueAssignment.encode(message.queueAssignment, writer.uint32(26).fork()).ldelim();
+    }
+    if (message.matchAssignment !== undefined) {
+      MatchAssignment.encode(message.matchAssignment, writer.uint32(34).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): Player {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePlayer();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        case 2:
+          if (tag !== 16) {
+            break;
+          }
+
+          message.state = reader.int32() as any;
+          continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          message.queueAssignment = QueueAssignment.decode(reader, reader.uint32());
+          continue;
+        case 4:
+          if (tag !== 34) {
+            break;
+          }
+
+          message.matchAssignment = MatchAssignment.decode(reader, reader.uint32());
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Player {
+    return {
+      id: isSet(object.id) ? String(object.id) : "",
+      state: isSet(object.state) ? playerStateFromJSON(object.state) : 0,
+      queueAssignment: isSet(object.queueAssignment) ? QueueAssignment.fromJSON(object.queueAssignment) : undefined,
+      matchAssignment: isSet(object.matchAssignment) ? MatchAssignment.fromJSON(object.matchAssignment) : undefined,
+    };
+  },
+
+  toJSON(message: Player): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.state !== 0) {
+      obj.state = playerStateToJSON(message.state);
+    }
+    if (message.queueAssignment !== undefined) {
+      obj.queueAssignment = QueueAssignment.toJSON(message.queueAssignment);
+    }
+    if (message.matchAssignment !== undefined) {
+      obj.matchAssignment = MatchAssignment.toJSON(message.matchAssignment);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Player>, I>>(base?: I): Player {
+    return Player.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<Player>, I>>(object: I): Player {
+    const message = createBasePlayer();
+    message.id = object.id ?? "";
+    message.state = object.state ?? 0;
+    message.queueAssignment = (object.queueAssignment !== undefined && object.queueAssignment !== null)
+      ? QueueAssignment.fromPartial(object.queueAssignment)
+      : undefined;
+    message.matchAssignment = (object.matchAssignment !== undefined && object.matchAssignment !== null)
+      ? MatchAssignment.fromPartial(object.matchAssignment)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseQueueAssignment(): QueueAssignment {
+  return { id: "", config: undefined, startTime: undefined };
+}
+
+export const QueueAssignment = {
+  encode(message: QueueAssignment, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.config !== undefined) {
+      QueueConfiguration.encode(message.config, writer.uint32(18).fork()).ldelim();
+    }
+    if (message.startTime !== undefined) {
+      Timestamp.encode(toTimestamp(message.startTime), writer.uint32(26).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): QueueAssignment {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseQueueAssignment();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.config = QueueConfiguration.decode(reader, reader.uint32());
+          continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          message.startTime = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueueAssignment {
+    return {
+      id: isSet(object.id) ? String(object.id) : "",
+      config: isSet(object.config) ? QueueConfiguration.fromJSON(object.config) : undefined,
+      startTime: isSet(object.startTime) ? fromJsonTimestamp(object.startTime) : undefined,
+    };
+  },
+
+  toJSON(message: QueueAssignment): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.config !== undefined) {
+      obj.config = QueueConfiguration.toJSON(message.config);
+    }
+    if (message.startTime !== undefined) {
+      obj.startTime = message.startTime.toISOString();
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<QueueAssignment>, I>>(base?: I): QueueAssignment {
+    return QueueAssignment.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<QueueAssignment>, I>>(object: I): QueueAssignment {
+    const message = createBaseQueueAssignment();
+    message.id = object.id ?? "";
+    message.config = (object.config !== undefined && object.config !== null)
+      ? QueueConfiguration.fromPartial(object.config)
+      : undefined;
+    message.startTime = object.startTime ?? undefined;
+    return message;
+  },
+};
+
+function createBaseQueueConfiguration(): QueueConfiguration {
   return { gamemode: "" };
 }
 
-export const GameConfiguration = {
-  encode(message: GameConfiguration, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const QueueConfiguration = {
+  encode(message: QueueConfiguration, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.gamemode !== "") {
       writer.uint32(10).string(message.gamemode);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GameConfiguration {
+  decode(input: _m0.Reader | Uint8Array, length?: number): QueueConfiguration {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGameConfiguration();
+    const message = createBaseQueueConfiguration();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -174,11 +396,11 @@ export const GameConfiguration = {
     return message;
   },
 
-  fromJSON(object: any): GameConfiguration {
+  fromJSON(object: any): QueueConfiguration {
     return { gamemode: isSet(object.gamemode) ? String(object.gamemode) : "" };
   },
 
-  toJSON(message: GameConfiguration): unknown {
+  toJSON(message: QueueConfiguration): unknown {
     const obj: any = {};
     if (message.gamemode !== "") {
       obj.gamemode = message.gamemode;
@@ -186,33 +408,36 @@ export const GameConfiguration = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<GameConfiguration>, I>>(base?: I): GameConfiguration {
-    return GameConfiguration.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<QueueConfiguration>, I>>(base?: I): QueueConfiguration {
+    return QueueConfiguration.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<GameConfiguration>, I>>(object: I): GameConfiguration {
-    const message = createBaseGameConfiguration();
+  fromPartial<I extends Exact<DeepPartial<QueueConfiguration>, I>>(object: I): QueueConfiguration {
+    const message = createBaseQueueConfiguration();
     message.gamemode = object.gamemode ?? "";
     return message;
   },
 };
 
-function createBaseMatchRoster(): MatchRoster {
-  return { players: [] };
+function createBaseMatchAssignment(): MatchAssignment {
+  return { id: "", connection: "" };
 }
 
-export const MatchRoster = {
-  encode(message: MatchRoster, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    for (const v of message.players) {
-      writer.uint32(10).string(v!);
+export const MatchAssignment = {
+  encode(message: MatchAssignment, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.connection !== "") {
+      writer.uint32(18).string(message.connection);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): MatchRoster {
+  decode(input: _m0.Reader | Uint8Array, length?: number): MatchAssignment {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseMatchRoster();
+    const message = createBaseMatchAssignment();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -221,65 +446,14 @@ export const MatchRoster = {
             break;
           }
 
-          message.players.push(reader.string());
+          message.id = reader.string();
           continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): MatchRoster {
-    return { players: Array.isArray(object?.players) ? object.players.map((e: any) => String(e)) : [] };
-  },
-
-  toJSON(message: MatchRoster): unknown {
-    const obj: any = {};
-    if (message.players?.length) {
-      obj.players = message.players;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<MatchRoster>, I>>(base?: I): MatchRoster {
-    return MatchRoster.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<MatchRoster>, I>>(object: I): MatchRoster {
-    const message = createBaseMatchRoster();
-    message.players = object.players?.map((e) => e) || [];
-    return message;
-  },
-};
-
-function createBaseStatus(): Status {
-  return { state: 0 };
-}
-
-export const Status = {
-  encode(message: Status, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.state !== 0) {
-      writer.uint32(8).int32(message.state);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): Status {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseStatus();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 8) {
+        case 2:
+          if (tag !== 18) {
             break;
           }
 
-          message.state = reader.int32() as any;
+          message.connection = reader.string();
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -290,30 +464,37 @@ export const Status = {
     return message;
   },
 
-  fromJSON(object: any): Status {
-    return { state: isSet(object.state) ? playerStateFromJSON(object.state) : 0 };
+  fromJSON(object: any): MatchAssignment {
+    return {
+      id: isSet(object.id) ? String(object.id) : "",
+      connection: isSet(object.connection) ? String(object.connection) : "",
+    };
   },
 
-  toJSON(message: Status): unknown {
+  toJSON(message: MatchAssignment): unknown {
     const obj: any = {};
-    if (message.state !== 0) {
-      obj.state = playerStateToJSON(message.state);
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.connection !== "") {
+      obj.connection = message.connection;
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<Status>, I>>(base?: I): Status {
-    return Status.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<MatchAssignment>, I>>(base?: I): MatchAssignment {
+    return MatchAssignment.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<Status>, I>>(object: I): Status {
-    const message = createBaseStatus();
-    message.state = object.state ?? 0;
+  fromPartial<I extends Exact<DeepPartial<MatchAssignment>, I>>(object: I): MatchAssignment {
+    const message = createBaseMatchAssignment();
+    message.id = object.id ?? "";
+    message.connection = object.connection ?? "";
     return message;
   },
 };
 
-function createBaseQueueUpdate(): QueueUpdate {
+function createBaseStatusUpdate(): StatusUpdate {
   return {
     queueStarted: undefined,
     queueStopped: undefined,
@@ -324,10 +505,10 @@ function createBaseQueueUpdate(): QueueUpdate {
   };
 }
 
-export const QueueUpdate = {
-  encode(message: QueueUpdate, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const StatusUpdate = {
+  encode(message: StatusUpdate, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.queueStarted !== undefined) {
-      QueueDetails.encode(message.queueStarted, writer.uint32(18).fork()).ldelim();
+      QueueAssignment.encode(message.queueStarted, writer.uint32(18).fork()).ldelim();
     }
     if (message.queueStopped !== undefined) {
       QueueStopped.encode(message.queueStopped, writer.uint32(26).fork()).ldelim();
@@ -347,10 +528,10 @@ export const QueueUpdate = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): QueueUpdate {
+  decode(input: _m0.Reader | Uint8Array, length?: number): StatusUpdate {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseQueueUpdate();
+    const message = createBaseStatusUpdate();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -359,7 +540,7 @@ export const QueueUpdate = {
             break;
           }
 
-          message.queueStarted = QueueDetails.decode(reader, reader.uint32());
+          message.queueStarted = QueueAssignment.decode(reader, reader.uint32());
           continue;
         case 3:
           if (tag !== 26) {
@@ -405,9 +586,9 @@ export const QueueUpdate = {
     return message;
   },
 
-  fromJSON(object: any): QueueUpdate {
+  fromJSON(object: any): StatusUpdate {
     return {
-      queueStarted: isSet(object.queueStarted) ? QueueDetails.fromJSON(object.queueStarted) : undefined,
+      queueStarted: isSet(object.queueStarted) ? QueueAssignment.fromJSON(object.queueStarted) : undefined,
       queueStopped: isSet(object.queueStopped) ? QueueStopped.fromJSON(object.queueStopped) : undefined,
       matchFound: isSet(object.matchFound) ? MatchDetails.fromJSON(object.matchFound) : undefined,
       matchCancelled: isSet(object.matchCancelled) ? MatchCancelled.fromJSON(object.matchCancelled) : undefined,
@@ -416,10 +597,10 @@ export const QueueUpdate = {
     };
   },
 
-  toJSON(message: QueueUpdate): unknown {
+  toJSON(message: StatusUpdate): unknown {
     const obj: any = {};
     if (message.queueStarted !== undefined) {
-      obj.queueStarted = QueueDetails.toJSON(message.queueStarted);
+      obj.queueStarted = QueueAssignment.toJSON(message.queueStarted);
     }
     if (message.queueStopped !== undefined) {
       obj.queueStopped = QueueStopped.toJSON(message.queueStopped);
@@ -439,14 +620,14 @@ export const QueueUpdate = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<QueueUpdate>, I>>(base?: I): QueueUpdate {
-    return QueueUpdate.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<StatusUpdate>, I>>(base?: I): StatusUpdate {
+    return StatusUpdate.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<QueueUpdate>, I>>(object: I): QueueUpdate {
-    const message = createBaseQueueUpdate();
+  fromPartial<I extends Exact<DeepPartial<StatusUpdate>, I>>(object: I): StatusUpdate {
+    const message = createBaseStatusUpdate();
     message.queueStarted = (object.queueStarted !== undefined && object.queueStarted !== null)
-      ? QueueDetails.fromPartial(object.queueStarted)
+      ? QueueAssignment.fromPartial(object.queueStarted)
       : undefined;
     message.queueStopped = (object.queueStopped !== undefined && object.queueStopped !== null)
       ? QueueStopped.fromPartial(object.queueStopped)
@@ -467,94 +648,20 @@ export const QueueUpdate = {
   },
 };
 
-function createBaseQueueDetails(): QueueDetails {
-  return { config: undefined, startTime: undefined };
-}
-
-export const QueueDetails = {
-  encode(message: QueueDetails, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.config !== undefined) {
-      GameConfiguration.encode(message.config, writer.uint32(10).fork()).ldelim();
-    }
-    if (message.startTime !== undefined) {
-      Timestamp.encode(toTimestamp(message.startTime), writer.uint32(18).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): QueueDetails {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseQueueDetails();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.config = GameConfiguration.decode(reader, reader.uint32());
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.startTime = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): QueueDetails {
-    return {
-      config: isSet(object.config) ? GameConfiguration.fromJSON(object.config) : undefined,
-      startTime: isSet(object.startTime) ? fromJsonTimestamp(object.startTime) : undefined,
-    };
-  },
-
-  toJSON(message: QueueDetails): unknown {
-    const obj: any = {};
-    if (message.config !== undefined) {
-      obj.config = GameConfiguration.toJSON(message.config);
-    }
-    if (message.startTime !== undefined) {
-      obj.startTime = message.startTime.toISOString();
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<QueueDetails>, I>>(base?: I): QueueDetails {
-    return QueueDetails.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<QueueDetails>, I>>(object: I): QueueDetails {
-    const message = createBaseQueueDetails();
-    message.config = (object.config !== undefined && object.config !== null)
-      ? GameConfiguration.fromPartial(object.config)
-      : undefined;
-    message.startTime = object.startTime ?? undefined;
-    return message;
-  },
-};
-
 function createBaseQueueStopped(): QueueStopped {
-  return { reason: 0, message: undefined };
+  return { id: "", reason: 0, message: undefined };
 }
 
 export const QueueStopped = {
   encode(message: QueueStopped, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
     if (message.reason !== 0) {
-      writer.uint32(8).int32(message.reason);
+      writer.uint32(16).int32(message.reason);
     }
     if (message.message !== undefined) {
-      writer.uint32(18).string(message.message);
+      writer.uint32(26).string(message.message);
     }
     return writer;
   },
@@ -567,14 +674,21 @@ export const QueueStopped = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          if (tag !== 8) {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        case 2:
+          if (tag !== 16) {
             break;
           }
 
           message.reason = reader.int32() as any;
           continue;
-        case 2:
-          if (tag !== 18) {
+        case 3:
+          if (tag !== 26) {
             break;
           }
 
@@ -591,6 +705,7 @@ export const QueueStopped = {
 
   fromJSON(object: any): QueueStopped {
     return {
+      id: isSet(object.id) ? String(object.id) : "",
       reason: isSet(object.reason) ? reasonFromJSON(object.reason) : 0,
       message: isSet(object.message) ? String(object.message) : undefined,
     };
@@ -598,6 +713,9 @@ export const QueueStopped = {
 
   toJSON(message: QueueStopped): unknown {
     const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
     if (message.reason !== 0) {
       obj.reason = reasonToJSON(message.reason);
     }
@@ -613,6 +731,7 @@ export const QueueStopped = {
 
   fromPartial<I extends Exact<DeepPartial<QueueStopped>, I>>(object: I): QueueStopped {
     const message = createBaseQueueStopped();
+    message.id = object.id ?? "";
     message.reason = object.reason ?? 0;
     message.message = object.message ?? undefined;
     return message;
@@ -898,6 +1017,64 @@ export const MatchResults = {
   fromPartial<I extends Exact<DeepPartial<MatchResults>, I>>(object: I): MatchResults {
     const message = createBaseMatchResults();
     message.matchId = object.matchId ?? "";
+    return message;
+  },
+};
+
+function createBaseMatchRoster(): MatchRoster {
+  return { players: [] };
+}
+
+export const MatchRoster = {
+  encode(message: MatchRoster, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    for (const v of message.players) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): MatchRoster {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMatchRoster();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.players.push(reader.string());
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MatchRoster {
+    return { players: Array.isArray(object?.players) ? object.players.map((e: any) => String(e)) : [] };
+  },
+
+  toJSON(message: MatchRoster): unknown {
+    const obj: any = {};
+    if (message.players?.length) {
+      obj.players = message.players;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MatchRoster>, I>>(base?: I): MatchRoster {
+    return MatchRoster.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<MatchRoster>, I>>(object: I): MatchRoster {
+    const message = createBaseMatchRoster();
+    message.players = object.players?.map((e) => e) || [];
     return message;
   },
 };

@@ -1,6 +1,14 @@
 /* eslint-disable */
 import _m0 from "protobufjs/minimal";
-import { MatchCancelled, MatchConnection, MatchResults, QueueUpdate, Status } from "./messages";
+import {
+  MatchCancelled,
+  MatchConnection,
+  MatchResults,
+  PlayerState,
+  playerStateFromJSON,
+  playerStateToJSON,
+  StatusUpdate,
+} from "./messages";
 
 export const protobufPackage = "quip.matchmaker";
 
@@ -8,26 +16,104 @@ export const protobufPackage = "quip.matchmaker";
  * End user notification message. Needs to be sent as a message
  * for notifying other friends or other party members.
  */
-export interface StatusUpdateMessage {
+export interface StateUpdateMessage {
   targets: string[];
-  update: Status | undefined;
+  state: PlayerState;
 }
 
 /**
  * End user notification message. Needs to be sent as a message
  * for notifying other friends or other party members.
  */
-export interface QueueUpdateMessage {
+export interface StatusUpdateMessage {
   targets: string[];
-  update: QueueUpdate | undefined;
+  update: StatusUpdate | undefined;
 }
 
-/** Internal broker message. Mainly sent by director or gameservers. */
+/**
+ * Internal broker message. Mainly sent by director or gameservers.
+ * TODO: this may not be necessary? can possibly watch solana transactions
+ */
 export interface MatchUpdateMessage {
   matchCancelled?: MatchCancelled | undefined;
   matchStarted?: MatchConnection | undefined;
   matchFinished?: MatchResults | undefined;
 }
+
+function createBaseStateUpdateMessage(): StateUpdateMessage {
+  return { targets: [], state: 0 };
+}
+
+export const StateUpdateMessage = {
+  encode(message: StateUpdateMessage, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    for (const v of message.targets) {
+      writer.uint32(10).string(v!);
+    }
+    if (message.state !== 0) {
+      writer.uint32(16).int32(message.state);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): StateUpdateMessage {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStateUpdateMessage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.targets.push(reader.string());
+          continue;
+        case 2:
+          if (tag !== 16) {
+            break;
+          }
+
+          message.state = reader.int32() as any;
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StateUpdateMessage {
+    return {
+      targets: Array.isArray(object?.targets) ? object.targets.map((e: any) => String(e)) : [],
+      state: isSet(object.state) ? playerStateFromJSON(object.state) : 0,
+    };
+  },
+
+  toJSON(message: StateUpdateMessage): unknown {
+    const obj: any = {};
+    if (message.targets?.length) {
+      obj.targets = message.targets;
+    }
+    if (message.state !== 0) {
+      obj.state = playerStateToJSON(message.state);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StateUpdateMessage>, I>>(base?: I): StateUpdateMessage {
+    return StateUpdateMessage.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<StateUpdateMessage>, I>>(object: I): StateUpdateMessage {
+    const message = createBaseStateUpdateMessage();
+    message.targets = object.targets?.map((e) => e) || [];
+    message.state = object.state ?? 0;
+    return message;
+  },
+};
 
 function createBaseStatusUpdateMessage(): StatusUpdateMessage {
   return { targets: [], update: undefined };
@@ -39,7 +125,7 @@ export const StatusUpdateMessage = {
       writer.uint32(10).string(v!);
     }
     if (message.update !== undefined) {
-      Status.encode(message.update, writer.uint32(18).fork()).ldelim();
+      StatusUpdate.encode(message.update, writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -63,7 +149,7 @@ export const StatusUpdateMessage = {
             break;
           }
 
-          message.update = Status.decode(reader, reader.uint32());
+          message.update = StatusUpdate.decode(reader, reader.uint32());
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -77,7 +163,7 @@ export const StatusUpdateMessage = {
   fromJSON(object: any): StatusUpdateMessage {
     return {
       targets: Array.isArray(object?.targets) ? object.targets.map((e: any) => String(e)) : [],
-      update: isSet(object.update) ? Status.fromJSON(object.update) : undefined,
+      update: isSet(object.update) ? StatusUpdate.fromJSON(object.update) : undefined,
     };
   },
 
@@ -87,7 +173,7 @@ export const StatusUpdateMessage = {
       obj.targets = message.targets;
     }
     if (message.update !== undefined) {
-      obj.update = Status.toJSON(message.update);
+      obj.update = StatusUpdate.toJSON(message.update);
     }
     return obj;
   },
@@ -100,84 +186,7 @@ export const StatusUpdateMessage = {
     const message = createBaseStatusUpdateMessage();
     message.targets = object.targets?.map((e) => e) || [];
     message.update = (object.update !== undefined && object.update !== null)
-      ? Status.fromPartial(object.update)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseQueueUpdateMessage(): QueueUpdateMessage {
-  return { targets: [], update: undefined };
-}
-
-export const QueueUpdateMessage = {
-  encode(message: QueueUpdateMessage, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    for (const v of message.targets) {
-      writer.uint32(10).string(v!);
-    }
-    if (message.update !== undefined) {
-      QueueUpdate.encode(message.update, writer.uint32(18).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): QueueUpdateMessage {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseQueueUpdateMessage();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.targets.push(reader.string());
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.update = QueueUpdate.decode(reader, reader.uint32());
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): QueueUpdateMessage {
-    return {
-      targets: Array.isArray(object?.targets) ? object.targets.map((e: any) => String(e)) : [],
-      update: isSet(object.update) ? QueueUpdate.fromJSON(object.update) : undefined,
-    };
-  },
-
-  toJSON(message: QueueUpdateMessage): unknown {
-    const obj: any = {};
-    if (message.targets?.length) {
-      obj.targets = message.targets;
-    }
-    if (message.update !== undefined) {
-      obj.update = QueueUpdate.toJSON(message.update);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<QueueUpdateMessage>, I>>(base?: I): QueueUpdateMessage {
-    return QueueUpdateMessage.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<QueueUpdateMessage>, I>>(object: I): QueueUpdateMessage {
-    const message = createBaseQueueUpdateMessage();
-    message.targets = object.targets?.map((e) => e) || [];
-    message.update = (object.update !== undefined && object.update !== null)
-      ? QueueUpdate.fromPartial(object.update)
+      ? StatusUpdate.fromPartial(object.update)
       : undefined;
     return message;
   },

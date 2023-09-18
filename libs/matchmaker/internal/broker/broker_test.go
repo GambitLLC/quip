@@ -13,32 +13,30 @@ import (
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
-func TestStatusUpdate(t *testing.T) {
+func TestStateUpdate(t *testing.T) {
 	ctx := test.NewContext(t)
 	rb := newRedisBroker(t)
-	sub := rb.SubscribeStatusUpdate(ctx)
+	sub := rb.SubscribeStateUpdate(ctx)
 	t.Cleanup(func() {
-		require.NoError(t, sub.Close(), "StatusSubscription.Close failed")
+		require.NoError(t, sub.Close(), "StateSubscription.Close failed")
 	})
 
-	msg := &pb.StatusUpdateMessage{
+	msg := &pb.StateUpdateMessage{
 		Targets: []string{"target"},
-		Update: &pb.Status{
-			State: pb.PlayerState_PLAYER_STATE_PLAYING,
-		},
+		State:   pb.PlayerState_PLAYER_STATE_ONLINE,
 	}
 
-	err := rb.Publish(ctx, broker.StatusUpdateRoute, msg)
+	err := rb.Publish(ctx, broker.StateUpdateRoute, msg)
 	require.NoError(t, err, "RedisBroker.Publish failed")
 
 	select {
 	case rcvdMsg, ok := <-sub.Channel():
-		require.True(t, ok, "StatusSubscription.Channel closed")
+		require.True(t, ok, "StateSubscription.Channel closed")
 		equal := proto.Equal(rcvdMsg, msg)
 		require.True(t, equal, "received msg does not equal published msg")
 
 	case <-time.After(5 * time.Second):
-		t.Fatal("test timed out: did not receive status update message")
+		t.Fatal("test timed out: did not receive state update message")
 	}
 }
 

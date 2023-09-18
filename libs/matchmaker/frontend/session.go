@@ -1,7 +1,9 @@
 package frontend
 
 import (
+	"context"
 	"io"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,7 +33,14 @@ func (s *session) recv() error {
 			return status.Errorf(codes.Internal, ".Action type '%T' is not supported", msg)
 		case nil:
 			return status.Error(codes.Internal, ".Action is nil")
+		case *pb.Request_GetPlayer:
+			err = s.getPlayer(msg)
 			// TODO: actually handle the different action types
+		}
+
+		// TODO: handle err
+		if err != nil {
+			return err
 		}
 	}
 }
@@ -66,7 +75,26 @@ func (s *session) cleanup() {
 	// stop queue
 }
 
-// const requestTimeout = 10 * time.Second
+const requestTimeout = 10 * time.Second
+
+func (s *session) getPlayer(req *pb.Request_GetPlayer) error {
+	ctx, cancel := context.WithTimeout(s.srv.Context(), requestTimeout)
+	defer cancel()
+
+	_ = ctx
+
+	// TODO: access statestore
+	s.out <- &pb.Response{
+		Message: &pb.Response_Player{
+			Player: &pb.Player{
+				Id:    s.id,
+				State: pb.PlayerState_PLAYER_STATE_IDLE,
+			},
+		},
+	}
+
+	return nil
+}
 
 // func (s *session) getStatus(req *pb.GetStatusRequest) (*pb.StreamResponse, error) {
 // 	ctx, cancel := context.WithTimeout(s.stream.Context(), requestTimeout)

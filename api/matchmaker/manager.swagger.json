@@ -17,45 +17,25 @@
   ],
   "paths": {},
   "definitions": {
-    "googlerpcStatus": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "message": {
-          "type": "string"
-        },
-        "details": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/protobufAny"
-          }
-        }
-      }
-    },
-    "matchmakerGameConfiguration": {
-      "type": "object",
-      "properties": {
-        "gamemode": {
-          "type": "string"
-        }
-      },
-      "description": "GameConfiguration contains information for specifying a desired match."
-    },
     "matchmakerGetMatchResponse": {
       "type": "object",
       "properties": {
         "config": {
-          "$ref": "#/definitions/matchmakerGameConfiguration"
+          "$ref": "#/definitions/matchmakerMatchConfiguration"
         },
         "roster": {
           "$ref": "#/definitions/matchmakerMatchRoster"
         },
         "results": {
           "$ref": "#/definitions/matchmakerMatchResults"
+        }
+      }
+    },
+    "matchmakerMatchConfiguration": {
+      "type": "object",
+      "properties": {
+        "gamemode": {
+          "type": "string"
         }
       }
     },
@@ -77,7 +57,7 @@
           }
         }
       },
-      "title": "TODO: support teams\n message Team { repeated string players = 1; }\n repeated Team teams = 1;"
+      "description": "MatchRoster contains necessary information for a gameserver to setup.\n\nTODO: support teams\n message Team { repeated string players = 1; }\n repeated Team teams = 1;"
     },
     "protobufAny": {
       "type": "object",
@@ -87,6 +67,25 @@
         }
       },
       "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
     }
   }
 }

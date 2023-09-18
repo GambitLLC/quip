@@ -43,10 +43,10 @@ func TestConnect(t *testing.T) {
 	require.NoError(t, err, "stream.CloseSend failed")
 }
 
-func TestGetStatus(t *testing.T) {
+func TestGetPlayer(t *testing.T) {
 	runFrontendTest(t, func(t *testing.T, id string, reqs chan<- *pb.Request, resps <-chan *pb.Response, errs <-chan error) {
 		reqs <- &pb.Request{
-			Action: &pb.Request_GetStatus{},
+			Action: &pb.Request_GetPlayer{},
 		}
 
 		resp := requireResponse(t, resps, errs)
@@ -62,37 +62,33 @@ func TestBrokerMessages(t *testing.T) {
 		expected func(id string) *pb.Response
 	}{
 		{
-			name:  "StatusUpdate",
-			route: broker.StatusUpdateRoute,
+			name:  "StateUpdate",
+			route: broker.StateUpdateRoute,
 			msg: func(id string) proto.Message {
-				return &pb.StatusUpdateMessage{
+				return &pb.StateUpdateMessage{
 					Targets: []string{id},
-					Update: &pb.Status{
-						State: pb.PlayerState_PLAYER_STATE_PLAYING,
-					},
+					State:   pb.PlayerState_PLAYER_STATE_PLAYING,
 				}
 			},
 			expected: func(id string) *pb.Response {
 				return &pb.Response{
-					Message: &pb.Response_StatusUpdate{
-						StatusUpdate: &pb.StatusUpdate{
-							Player: id,
-							Status: &pb.Status{
-								State: pb.PlayerState_PLAYER_STATE_PLAYING,
-							},
+					Message: &pb.Response_Player{
+						Player: &pb.Player{
+							Id:    id,
+							State: pb.PlayerState_PLAYER_STATE_PLAYING,
 						},
 					},
 				}
 			},
 		},
 		{
-			name:  "QueueUpdate",
-			route: broker.QueueUpdateRoute,
+			name:  "StatusUpdate",
+			route: broker.StatusUpdateRoute,
 			msg: func(id string) proto.Message {
-				return &pb.QueueUpdateMessage{
+				return &pb.StatusUpdateMessage{
 					Targets: []string{id},
-					Update: &pb.QueueUpdate{
-						Update: &pb.QueueUpdate_QueueStopped{
+					Update: &pb.StatusUpdate{
+						Update: &pb.StatusUpdate_QueueStopped{
 							QueueStopped: &pb.QueueStopped{
 								Reason: pb.Reason_REASON_PLAYER,
 							},
@@ -102,9 +98,9 @@ func TestBrokerMessages(t *testing.T) {
 			},
 			expected: func(id string) *pb.Response {
 				return &pb.Response{
-					Message: &pb.Response_QueueUpdate{
-						QueueUpdate: &pb.QueueUpdate{
-							Update: &pb.QueueUpdate_QueueStopped{
+					Message: &pb.Response_StatusUpdate{
+						StatusUpdate: &pb.StatusUpdate{
+							Update: &pb.StatusUpdate_QueueStopped{
 								QueueStopped: &pb.QueueStopped{
 									Reason: pb.Reason_REASON_PLAYER,
 								},

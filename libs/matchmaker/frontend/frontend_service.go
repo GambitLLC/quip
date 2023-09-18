@@ -66,8 +66,8 @@ func (s *Service) Connect(srv pb.QuipFrontend_ConnectServer) error {
 	return session.recv()
 }
 
-// subscribeToMessages creates a new goroutine that will listen to StatusUpdate
-// and QueueUpdate messages from the broker and send them to the relevant
+// subscribeToMessages creates a new goroutine that will listen to StateUpdate
+// and StatusUpdate messages from the broker and send them to the relevant
 // sessions that are connected.
 func (s *Service) subscribeToMessages(cfg config.View) error {
 	rb := broker.NewRedisBroker(cfg)
@@ -75,14 +75,14 @@ func (s *Service) subscribeToMessages(cfg config.View) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
+	stateSub := rb.SubscribeStateUpdate(ctx)
+	if stateSub == nil {
+		return errors.New("RedisBroker.SubscribeStateUpdate returned nil")
+	}
+
 	statusSub := rb.SubscribeStatusUpdate(ctx)
 	if statusSub == nil {
 		return errors.New("RedisBroker.SubscribeStatusUpdate returned nil")
-	}
-
-	queueSub := rb.SubscribeQueueUpdate(ctx)
-	if queueSub == nil {
-		return errors.New("RedisBroker.SubscribeQueueUpdate returned nil")
 	}
 
 	go func() {
@@ -92,10 +92,37 @@ func (s *Service) subscribeToMessages(cfg config.View) error {
 				// service closed
 
 				// TODO: handle errors
+				_ = stateSub.Close()
 				_ = statusSub.Close()
-				_ = queueSub.Close()
 				_ = rb.Close()
 				return
+			case msg, ok := <-stateSub.Channel():
+				if !ok {
+					panic("StateSubscription channel closed")
+				}
+
+				s.sessionMapLock.RLock()
+				for _, id := range msg.Targets {
+					ch, ok := s.idToChan[id]
+					if !ok {
+						// TODO: log channel doesn't exist
+						continue
+					}
+
+					select {
+					case ch <- &pb.Response{
+						Message: &pb.Response_Player{
+							Player: &pb.Player{
+								Id:    id,
+								State: msg.State,
+							},
+						},
+					}:
+					default:
+						// TODO: log channel blocked
+					}
+				}
+				s.sessionMapLock.RUnlock()
 			case msg, ok := <-statusSub.Channel():
 				if !ok {
 					panic("StatusSubscription channel closed")
@@ -112,34 +139,7 @@ func (s *Service) subscribeToMessages(cfg config.View) error {
 					select {
 					case ch <- &pb.Response{
 						Message: &pb.Response_StatusUpdate{
-							StatusUpdate: &pb.StatusUpdate{
-								Player: id,
-								Status: msg.Update,
-							},
-						},
-					}:
-					default:
-						// TODO: log channel blocked
-					}
-				}
-				s.sessionMapLock.RUnlock()
-			case msg, ok := <-queueSub.Channel():
-				if !ok {
-					panic("StatusSubscription channel closed")
-				}
-
-				s.sessionMapLock.RLock()
-				for _, id := range msg.Targets {
-					ch, ok := s.idToChan[id]
-					if !ok {
-						// TODO: log channel doesn't exist
-						continue
-					}
-
-					select {
-					case ch <- &pb.Response{
-						Message: &pb.Response_QueueUpdate{
-							QueueUpdate: msg.Update,
+							StatusUpdate: msg.Update,
 						},
 					}:
 					default:

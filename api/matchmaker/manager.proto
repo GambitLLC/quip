@@ -14,9 +14,13 @@ service QuipManager {
   rpc SetMatchResults(SetMatchResultsRequest) returns (google.protobuf.Empty);
 }
 
+message MatchConfiguration {
+  string gamemode = 1;
+}
+
 message CreateMatchRequest {
   string match_id = 1;
-  GameConfiguration config = 2;
+  MatchConfiguration config = 2;
   MatchRoster roster = 3;
 }
 
@@ -25,9 +29,9 @@ message GetMatchRequest {
 }
 
 message GetMatchResponse {
-  GameConfiguration config = 2;
-  MatchRoster roster = 3;
-  optional MatchResults results = 4;
+  MatchConfiguration config = 1;
+  MatchRoster roster = 2;
+  optional MatchResults results = 3;
 }
 
 message SetMatchResultsRequest {

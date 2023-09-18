@@ -6,19 +6,21 @@ import "matchmaker/messages.proto";
 
 // End user notification message. Needs to be sent as a message
 // for notifying other friends or other party members.
-message StatusUpdateMessage {
+message StateUpdateMessage {
   repeated string targets = 1;
-  Status update = 2;
+
+  PlayerState state = 2;
 }
 
 // End user notification message. Needs to be sent as a message
 // for notifying other friends or other party members.
-message QueueUpdateMessage {
+message StatusUpdateMessage {
   repeated string targets = 1;
-  QueueUpdate update = 2;
+  StatusUpdate update = 2;
 }
 
 // Internal broker message. Mainly sent by director or gameservers.
+// TODO: this may not be necessary? can possibly watch solana transactions
 message MatchUpdateMessage {
   oneof update {
     MatchCancelled match_cancelled = 1;

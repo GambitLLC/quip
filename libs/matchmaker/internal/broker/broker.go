@@ -14,8 +14,8 @@ import (
 type Route string
 
 const (
+	StateUpdateRoute  Route = "state_update"
 	StatusUpdateRoute Route = "status_update"
-	QueueUpdateRoute  Route = "queue_update"
 	MatchUpdateRoute  Route = "match_update"
 )
 
@@ -51,6 +51,31 @@ func (b *RedisBroker) Publish(ctx context.Context, route Route, msg proto.Messag
 	return b.redis.Publish(ctx, string(route), bs).Err()
 }
 
+func (b *RedisBroker) SubscribeStateUpdate(ctx context.Context) *StateSubscription {
+	pubsub := b.redis.Subscribe(ctx, string(StateUpdateRoute))
+	ch := make(chan *pb.StateUpdateMessage, 1)
+
+	go func() {
+		for msg := range pubsub.Channel() {
+			update := &pb.StateUpdateMessage{}
+			if err := proto.Unmarshal([]byte(msg.Payload), update); err != nil {
+				// logger.Error().Err(err).Msg("Unmarshal StateUpdate failed")
+				continue
+			}
+
+			ch <- update
+		}
+		close(ch)
+	}()
+
+	return &StateSubscription{
+		redisSubscription: &redisSubscription{
+			pubsub: pubsub,
+		},
+		ch: ch,
+	}
+}
+
 func (b *RedisBroker) SubscribeStatusUpdate(ctx context.Context) *StatusSubscription {
 	pubsub := b.redis.Subscribe(ctx, string(StatusUpdateRoute))
 	ch := make(chan *pb.StatusUpdateMessage, 1)
@@ -59,7 +84,7 @@ func (b *RedisBroker) SubscribeStatusUpdate(ctx context.Context) *StatusSubscrip
 		for msg := range pubsub.Channel() {
 			update := &pb.StatusUpdateMessage{}
 			if err := proto.Unmarshal([]byte(msg.Payload), update); err != nil {
-				// logger.Error().Err(err).Msg("Unmarshal StatusUpdate failed")
+				// logger.Error().Err(err).Msg("Unmarshal StateUpdate failed")
 				continue
 			}
 
@@ -76,31 +101,6 @@ func (b *RedisBroker) SubscribeStatusUpdate(ctx context.Context) *StatusSubscrip
 	}
 }
 
-func (b *RedisBroker) SubscribeQueueUpdate(ctx context.Context) *QueueSubscription {
-	pubsub := b.redis.Subscribe(ctx, string(QueueUpdateRoute))
-	ch := make(chan *pb.QueueUpdateMessage, 1)
-
-	go func() {
-		for msg := range pubsub.Channel() {
-			update := &pb.QueueUpdateMessage{}
-			if err := proto.Unmarshal([]byte(msg.Payload), update); err != nil {
-				// logger.Error().Err(err).Msg("Unmarshal StatusUpdate failed")
-				continue
-			}
-
-			ch <- update
-		}
-		close(ch)
-	}()
-
-	return &QueueSubscription{
-		redisSubscription: &redisSubscription{
-			pubsub: pubsub,
-		},
-		ch: ch,
-	}
-}
-
 // TODO: MatchUpdates should probably be on RabbitMQ or Kafka, not redis
 func (b *RedisBroker) SubscribeMatchUpdate(ctx context.Context) *MatchSubscription {
 	pubsub := b.redis.Subscribe(ctx, string(MatchUpdateRoute))
@@ -110,7 +110,7 @@ func (b *RedisBroker) SubscribeMatchUpdate(ctx context.Context) *MatchSubscripti
 		for msg := range pubsub.Channel() {
 			update := &pb.MatchUpdateMessage{}
 			if err := proto.Unmarshal([]byte(msg.Payload), update); err != nil {
-				// logger.Error().Err(err).Msg("Unmarshal StatusUpdate failed")
+				// logger.Error().Err(err).Msg("Unmarshal StateUpdate failed")
 				continue
 			}
 
@@ -137,21 +137,21 @@ func (s *redisSubscription) Close() error {
 	return s.pubsub.Close()
 }
 
+type StateSubscription struct {
+	*redisSubscription
+	ch chan *pb.StateUpdateMessage
+}
+
+func (s *StateSubscription) Channel() <-chan *pb.StateUpdateMessage {
+	return s.ch
+}
+
 type StatusSubscription struct {
 	*redisSubscription
 	ch chan *pb.StatusUpdateMessage
 }
 
 func (s *StatusSubscription) Channel() <-chan *pb.StatusUpdateMessage {
-	return s.ch
-}
-
-type QueueSubscription struct {
-	*redisSubscription
-	ch chan *pb.QueueUpdateMessage
-}
-
-func (s *QueueSubscription) Channel() <-chan *pb.QueueUpdateMessage {
 	return s.ch
 }
 

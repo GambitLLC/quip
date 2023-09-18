@@ -4,48 +4,63 @@ option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
 
 import "google/protobuf/timestamp.proto";
 
-// GameConfiguration contains information for specifying a desired match.
-message GameConfiguration {
-  string gamemode = 1;
-}
+message Player {
+  // Id represents the player identifier.
+  string id = 1;
 
-message MatchRoster {
-  // TODO: support teams
-  // message Team { repeated string players = 1; }
-  // repeated Team teams = 1;
+  // State is a simple enum representing whether the player is currently
+  // online, idle, in queue, or in a game.
+  PlayerState state = 2;
 
-  repeated string players = 1;
+  // Assignment represents a queue or match the player is currently in.
+  oneof assignment {
+    QueueAssignment queue_assignment = 3;
+    MatchAssignment match_assignment = 4;
+  }
 }
 
 enum PlayerState {
   PLAYER_STATE_OFFLINE = 0;
-  PLAYER_STATE_IDLE = 1;
-  PLAYER_STATE_SEARCHING = 2;
-  PLAYER_STATE_PLAYING = 3;
+  PLAYER_STATE_ONLINE = 1;
+  PLAYER_STATE_IDLE = 2;
+  PLAYER_STATE_SEARCHING = 3;
+  PLAYER_STATE_PLAYING = 4;
 }
 
-// Status represents the current matchmaking state for a single player.
-message Status {
-  PlayerState state = 1;
+message QueueAssignment {
+  // Queue identifier to determine which queue has updated.
+  string id = 1;
 
-  // TODO: additional details like gamemode/play time?
+  // Config represents information about the desired game.
+  QueueConfiguration config = 2;
+  
+  // Start time is the time the queue began.
+  google.protobuf.Timestamp start_time = 3;
 }
 
-message QueueUpdate {
+message QueueConfiguration {
+  string gamemode = 1;
+
+  // TODO: location (server location)
+}
+
+message MatchAssignment {
+  // Id represents the auto-generated match id.
+  string id = 1;
+
+  // Connection information for this match.
+  string connection = 2;
+}
+
+message StatusUpdate {
   oneof update {
-    QueueDetails queue_started = 2;
+    QueueAssignment queue_started = 2;
     QueueStopped queue_stopped = 3;
     MatchDetails match_found = 4;
     MatchCancelled match_cancelled = 5;
     MatchConnection match_started = 6;
     MatchResults match_finished = 7;
   }
-}
-
-// QueueDetails contains information about a currently running queue.
-message QueueDetails {
-  GameConfiguration config = 1;
-  google.protobuf.Timestamp start_time = 2;
 }
 
 enum Reason {
@@ -55,8 +70,9 @@ enum Reason {
 
 // QueueStopped contains information about why a queue has stopped.
 message QueueStopped {
-  Reason reason = 1;
-  optional string message = 2;
+  string id = 1;
+  Reason reason = 2;
+  optional string message = 3;
 }
 
 // MatchDetails contains information about a potential match that was found.
@@ -82,3 +98,12 @@ message MatchResults {
   string match_id = 1;
 }
 
+
+// MatchRoster contains necessary information for a gameserver to setup.
+message MatchRoster {
+  // TODO: support teams
+  // message Team { repeated string players = 1; }
+  // repeated Team teams = 1;
+
+  repeated string players = 1;
+}

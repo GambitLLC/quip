@@ -16,19 +16,18 @@ message Request {
   oneof action {
     // TODO: is a keepalive message needed?
 
-    GetStatus get_status = 1; 
+    GetPlayer get_player = 1; 
     StartQueue start_queue = 2;
     StopQueue stop_queue = 3;
   }
 }
 
-// GetStatus gets the current status for the player. If in queue or in a match,
-// will also send the corresponding details in a second message.
-message GetStatus {
+// GetPlayer gets the details for the currently logged in player.
+message GetPlayer {
 }
 
 message StartQueue {
-  GameConfiguration config = 1;
+  QueueConfiguration config = 1;
 }
 
 message StopQueue {
@@ -39,15 +38,10 @@ message Response {
     // error is sent if any request failed.
     google.rpc.Status error = 1;
 
-    // Sent as response to GetStatus or whenever friends' status changes.
-    StatusUpdate status_update = 2;
+    // Response to GetPlayer or any StateUpdate messages for friends.
+    Player player = 2;
 
-    // Queue changes relevant to the current player
-    QueueUpdate queue_update = 3;
+    // Status updates for the current player.
+    StatusUpdate status_update = 4;
   }
-}
-
-message StatusUpdate {
-  string player = 1;
-  Status status = 2;
 }

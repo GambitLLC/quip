@@ -13,13 +13,17 @@ import {
 } from "@grpc/grpc-js";
 import _m0 from "protobufjs/minimal";
 import { Empty } from "../google/protobuf/empty";
-import { GameConfiguration, MatchResults, MatchRoster } from "./messages";
+import { MatchResults, MatchRoster } from "./messages";
 
 export const protobufPackage = "quip.matchmaker";
 
+export interface MatchConfiguration {
+  gamemode: string;
+}
+
 export interface CreateMatchRequest {
   matchId: string;
-  config: GameConfiguration | undefined;
+  config: MatchConfiguration | undefined;
   roster: MatchRoster | undefined;
 }
 
@@ -28,7 +32,7 @@ export interface GetMatchRequest {
 }
 
 export interface GetMatchResponse {
-  config: GameConfiguration | undefined;
+  config: MatchConfiguration | undefined;
   roster: MatchRoster | undefined;
   results?: MatchResults | undefined;
 }
@@ -37,6 +41,64 @@ export interface SetMatchResultsRequest {
   matchId: string;
   results: MatchResults | undefined;
 }
+
+function createBaseMatchConfiguration(): MatchConfiguration {
+  return { gamemode: "" };
+}
+
+export const MatchConfiguration = {
+  encode(message: MatchConfiguration, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.gamemode !== "") {
+      writer.uint32(10).string(message.gamemode);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): MatchConfiguration {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMatchConfiguration();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.gamemode = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MatchConfiguration {
+    return { gamemode: isSet(object.gamemode) ? String(object.gamemode) : "" };
+  },
+
+  toJSON(message: MatchConfiguration): unknown {
+    const obj: any = {};
+    if (message.gamemode !== "") {
+      obj.gamemode = message.gamemode;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MatchConfiguration>, I>>(base?: I): MatchConfiguration {
+    return MatchConfiguration.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<MatchConfiguration>, I>>(object: I): MatchConfiguration {
+    const message = createBaseMatchConfiguration();
+    message.gamemode = object.gamemode ?? "";
+    return message;
+  },
+};
 
 function createBaseCreateMatchRequest(): CreateMatchRequest {
   return { matchId: "", config: undefined, roster: undefined };
@@ -48,7 +110,7 @@ export const CreateMatchRequest = {
       writer.uint32(10).string(message.matchId);
     }
     if (message.config !== undefined) {
-      GameConfiguration.encode(message.config, writer.uint32(18).fork()).ldelim();
+      MatchConfiguration.encode(message.config, writer.uint32(18).fork()).ldelim();
     }
     if (message.roster !== undefined) {
       MatchRoster.encode(message.roster, writer.uint32(26).fork()).ldelim();
@@ -75,7 +137,7 @@ export const CreateMatchRequest = {
             break;
           }
 
-          message.config = GameConfiguration.decode(reader, reader.uint32());
+          message.config = MatchConfiguration.decode(reader, reader.uint32());
           continue;
         case 3:
           if (tag !== 26) {
@@ -96,7 +158,7 @@ export const CreateMatchRequest = {
   fromJSON(object: any): CreateMatchRequest {
     return {
       matchId: isSet(object.matchId) ? String(object.matchId) : "",
-      config: isSet(object.config) ? GameConfiguration.fromJSON(object.config) : undefined,
+      config: isSet(object.config) ? MatchConfiguration.fromJSON(object.config) : undefined,
       roster: isSet(object.roster) ? MatchRoster.fromJSON(object.roster) : undefined,
     };
   },
@@ -107,7 +169,7 @@ export const CreateMatchRequest = {
       obj.matchId = message.matchId;
     }
     if (message.config !== undefined) {
-      obj.config = GameConfiguration.toJSON(message.config);
+      obj.config = MatchConfiguration.toJSON(message.config);
     }
     if (message.roster !== undefined) {
       obj.roster = MatchRoster.toJSON(message.roster);
@@ -123,7 +185,7 @@ export const CreateMatchRequest = {
     const message = createBaseCreateMatchRequest();
     message.matchId = object.matchId ?? "";
     message.config = (object.config !== undefined && object.config !== null)
-      ? GameConfiguration.fromPartial(object.config)
+      ? MatchConfiguration.fromPartial(object.config)
       : undefined;
     message.roster = (object.roster !== undefined && object.roster !== null)
       ? MatchRoster.fromPartial(object.roster)
@@ -197,13 +259,13 @@ function createBaseGetMatchResponse(): GetMatchResponse {
 export const GetMatchResponse = {
   encode(message: GetMatchResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.config !== undefined) {
-      GameConfiguration.encode(message.config, writer.uint32(18).fork()).ldelim();
+      MatchConfiguration.encode(message.config, writer.uint32(10).fork()).ldelim();
     }
     if (message.roster !== undefined) {
-      MatchRoster.encode(message.roster, writer.uint32(26).fork()).ldelim();
+      MatchRoster.encode(message.roster, writer.uint32(18).fork()).ldelim();
     }
     if (message.results !== undefined) {
-      MatchResults.encode(message.results, writer.uint32(34).fork()).ldelim();
+      MatchResults.encode(message.results, writer.uint32(26).fork()).ldelim();
     }
     return writer;
   },
@@ -215,22 +277,22 @@ export const GetMatchResponse = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.config = MatchConfiguration.decode(reader, reader.uint32());
+          continue;
         case 2:
           if (tag !== 18) {
             break;
           }
 
-          message.config = GameConfiguration.decode(reader, reader.uint32());
+          message.roster = MatchRoster.decode(reader, reader.uint32());
           continue;
         case 3:
           if (tag !== 26) {
-            break;
-          }
-
-          message.roster = MatchRoster.decode(reader, reader.uint32());
-          continue;
-        case 4:
-          if (tag !== 34) {
             break;
           }
 
@@ -247,7 +309,7 @@ export const GetMatchResponse = {
 
   fromJSON(object: any): GetMatchResponse {
     return {
-      config: isSet(object.config) ? GameConfiguration.fromJSON(object.config) : undefined,
+      config: isSet(object.config) ? MatchConfiguration.fromJSON(object.config) : undefined,
       roster: isSet(object.roster) ? MatchRoster.fromJSON(object.roster) : undefined,
       results: isSet(object.results) ? MatchResults.fromJSON(object.results) : undefined,
     };
@@ -256,7 +318,7 @@ export const GetMatchResponse = {
   toJSON(message: GetMatchResponse): unknown {
     const obj: any = {};
     if (message.config !== undefined) {
-      obj.config = GameConfiguration.toJSON(message.config);
+      obj.config = MatchConfiguration.toJSON(message.config);
     }
     if (message.roster !== undefined) {
       obj.roster = MatchRoster.toJSON(message.roster);
@@ -274,7 +336,7 @@ export const GetMatchResponse = {
   fromPartial<I extends Exact<DeepPartial<GetMatchResponse>, I>>(object: I): GetMatchResponse {
     const message = createBaseGetMatchResponse();
     message.config = (object.config !== undefined && object.config !== null)
-      ? GameConfiguration.fromPartial(object.config)
+      ? MatchConfiguration.fromPartial(object.config)
       : undefined;
     message.roster = (object.roster !== undefined && object.roster !== null)
       ? MatchRoster.fromPartial(object.roster)
