@@ -8,11 +8,16 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
 type session struct {
-	srv pb.QuipFrontend_ConnectServer
+	srv        pb.QuipFrontend_ConnectServer
+	statestore statestore.Service
+	omfc       *omFrontendClient
+
 	id  string
 	out chan *pb.Response
 }
@@ -81,14 +86,76 @@ func (s *session) getPlayer(req *pb.Request_GetPlayer) error {
 	ctx, cancel := context.WithTimeout(s.srv.Context(), requestTimeout)
 	defer cancel()
 
-	_ = ctx
+	lock := s.statestore.NewMutex(s.id)
+	if err := lock.Lock(ctx); err != nil {
+		return err
+	}
+	// TODO: handle unlock error?
+	defer lock.Unlock(context.Background())
 
-	// TODO: access statestore
+	tid, mid, err := s.statestore.GetPlayer(ctx, s.id)
+	if err != nil {
+		return err
+	}
+
+	if mid != "" {
+		// TODO: get match information from statestore
+		// match, err := s.statestore.GetMatch(ctx, mid)
+
+		s.out <- &pb.Response{
+			Message: &pb.Response_Player{
+				Player: &pb.Player{
+					Id:    s.id,
+					State: pb.PlayerState_PLAYER_STATE_PLAYING,
+					Assignment: &pb.Player_MatchAssignment{
+						MatchAssignment: &pb.MatchAssignment{
+							Id: mid,
+							// TODO: populate match information
+						},
+					},
+				},
+			},
+		}
+		return nil
+	}
+
+	if tid != "" {
+		ticket, err := s.omfc.GetTicket(ctx, tid)
+		if err != nil {
+			// TODO: handle err, e.g. NotFound
+			return err
+		}
+
+		details, err := protoext.OpenMatchTicketDetails(ticket)
+		if err != nil {
+			// TODO: handle err
+			return err
+		}
+
+		s.out <- &pb.Response{
+			Message: &pb.Response_Player{
+				Player: &pb.Player{
+					Id:    s.id,
+					State: pb.PlayerState_PLAYER_STATE_SEARCHING,
+					Assignment: &pb.Player_QueueAssignment{
+						QueueAssignment: &pb.QueueAssignment{
+							Id:        tid,
+							Config:    details.Config,
+							StartTime: ticket.CreateTime,
+							// TODO: get ticket information from open match
+						},
+					},
+				},
+			},
+		}
+		return nil
+	}
+
 	s.out <- &pb.Response{
 		Message: &pb.Response_Player{
 			Player: &pb.Player{
 				Id:    s.id,
-				State: pb.PlayerState_PLAYER_STATE_IDLE,
+				State: pb.PlayerState_PLAYER_STATE_ONLINE,
 			},
 		},
 	}

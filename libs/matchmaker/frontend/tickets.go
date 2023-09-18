@@ -8,8 +8,8 @@ import (
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
+	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/GambitLLC/quip/libs/rpc"
 )
 
@@ -39,15 +39,16 @@ func newOmFrontendClient(cfg config.View) *omFrontendClient {
 }
 
 // CreateTicket sends a CreateTicketRequest to Open Match and returns the updated ticket.
-func (fc *omFrontendClient) CreateTicket(ctx context.Context, req *ipb.TicketDetails) (*ompb.Ticket, error) {
+func (fc *omFrontendClient) CreateTicket(ctx context.Context, req *pb.TicketDetails) (*ompb.Ticket, error) {
 	client, err := fc.cacher.Get()
 	if err != nil {
 		return nil, err
 	}
 
+	// TODO: validate cfg
 	ticket := &ompb.Ticket{
 		SearchFields: &ompb.SearchFields{
-			Tags: []string{fmt.Sprintf("mode.%s", req.Gamemode)},
+			Tags: []string{fmt.Sprintf("mode.%s", req.GetConfig().GetGamemode())},
 		},
 		Extensions: make(map[string]*anypb.Any),
 	}

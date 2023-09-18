@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/rs/xid"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
@@ -50,7 +50,9 @@ func TestGetPlayer(t *testing.T) {
 		}
 
 		resp := requireResponse(t, resps, errs)
-		t.Log(resp)
+		player := resp.GetPlayer()
+		require.NotNil(t, player, "Response should have returned Player")
+		require.Equal(t, id, player.Id, "Response should have been for the current player")
 	})
 }
 
@@ -333,7 +335,7 @@ func newService(t *testing.T, cfg config.Mutable) {
 
 // newClient creates a new QuipFrontendClient with an arbitrary player id.
 func newClient(t *testing.T, cfg config.View) (pb.QuipFrontendClient, string) {
-	id := uuid.NewString()
+	id := xid.New().String()
 	conn, err := rpc.GRPCClientFromConfig(
 		cfg,
 		"matchmaker.frontend",

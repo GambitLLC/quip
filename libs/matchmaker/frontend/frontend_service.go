@@ -14,6 +14,7 @@ import (
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/broker"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
@@ -25,15 +26,19 @@ type Service struct {
 	sessionMapLock sync.RWMutex
 	idToChan       map[string]chan *pb.Response
 
+	statestore statestore.Service
+	omfc       *omFrontendClient
+
 	// closed channel to prevent panics in tests
 	closed chan struct{}
 }
 
 func NewQuipService(cfg config.View) *Service {
 	srv := &Service{
-		idToChan: make(map[string]chan *pb.Response),
-
-		closed: make(chan struct{}),
+		idToChan:   make(map[string]chan *pb.Response),
+		statestore: statestore.New(cfg),
+		omfc:       newOmFrontendClient(cfg),
+		closed:     make(chan struct{}),
 	}
 
 	if err := srv.subscribeToMessages(cfg); err != nil {
@@ -167,9 +172,11 @@ func (s *Service) createSession(srv pb.QuipFrontend_ConnectServer) (*session, er
 	s.idToChan[id] = ch
 
 	return &session{
-		srv: srv,
-		id:  id,
-		out: ch,
+		srv:        srv,
+		statestore: s.statestore,
+		omfc:       s.omfc,
+		id:         id,
+		out:        ch,
 	}, nil
 }
 
