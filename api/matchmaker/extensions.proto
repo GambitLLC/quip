@@ -4,18 +4,29 @@ option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
 
 import "matchmaker/messages.proto";
 
-message OMTicketExtension {
+message TicketDetails {
+  string player_id = 1;
 
+  QueueConfiguration config = 2;
 }
 
-message OMProfileExtension {
+message ProfileDetails {
+  // Name of the current gamemode.
+  string gamemode = 1;
 
+  // Number of teams in the match.
+  uint32 teams = 2;
+
+  // Number of players per team.
+  uint32 players = 3;
 }
 
-message OMMatchExtension {
+// Extension holding details about an ongoing match.
+// Placed in OpenMatch Match extension, Agones Allocation metadata, and statestore.
+message MatchDetails {
+  string match_id = 1;
+  string connection = 2;
 
-}
-
-message AgonesAnnotation {
-
+  MatchConfiguration config = 3;
+  MatchRoster roster = 4;
 }

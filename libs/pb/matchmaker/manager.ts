@@ -13,13 +13,9 @@ import {
 } from "@grpc/grpc-js";
 import _m0 from "protobufjs/minimal";
 import { Empty } from "../google/protobuf/empty";
-import { MatchResults, MatchRoster } from "./messages";
+import { MatchConfiguration, MatchResults, MatchRoster } from "./messages";
 
 export const protobufPackage = "quip.matchmaker";
-
-export interface MatchConfiguration {
-  gamemode: string;
-}
 
 export interface CreateMatchRequest {
   matchId: string;
@@ -41,64 +37,6 @@ export interface SetMatchResultsRequest {
   matchId: string;
   results: MatchResults | undefined;
 }
-
-function createBaseMatchConfiguration(): MatchConfiguration {
-  return { gamemode: "" };
-}
-
-export const MatchConfiguration = {
-  encode(message: MatchConfiguration, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.gamemode !== "") {
-      writer.uint32(10).string(message.gamemode);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): MatchConfiguration {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseMatchConfiguration();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.gamemode = reader.string();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): MatchConfiguration {
-    return { gamemode: isSet(object.gamemode) ? String(object.gamemode) : "" };
-  },
-
-  toJSON(message: MatchConfiguration): unknown {
-    const obj: any = {};
-    if (message.gamemode !== "") {
-      obj.gamemode = message.gamemode;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<MatchConfiguration>, I>>(base?: I): MatchConfiguration {
-    return MatchConfiguration.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<MatchConfiguration>, I>>(object: I): MatchConfiguration {
-    const message = createBaseMatchConfiguration();
-    message.gamemode = object.gamemode ?? "";
-    return message;
-  },
-};
 
 function createBaseCreateMatchRequest(): CreateMatchRequest {
   return { matchId: "", config: undefined, roster: undefined };

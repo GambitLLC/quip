@@ -117,9 +117,9 @@ export interface MatchAssignment {
 export interface StatusUpdate {
   queueStarted?: QueueAssignment | undefined;
   queueStopped?: QueueStopped | undefined;
-  matchFound?: MatchDetails | undefined;
+  matchFound?: MatchFound | undefined;
   matchCancelled?: MatchCancelled | undefined;
-  matchStarted?: MatchConnection | undefined;
+  matchStarted?: MatchStarted | undefined;
   matchFinished?: MatchResults | undefined;
 }
 
@@ -131,11 +131,11 @@ export interface QueueStopped {
 }
 
 /**
- * MatchDetails contains information about a potential match that was found.
+ * MatchFound contains information about a potential match that was found.
  * Sent as intermediate step for players to accept (send match wager) match before
  * allocating a server.
  */
-export interface MatchDetails {
+export interface MatchFound {
   matchId: string;
   time: Date | undefined;
 }
@@ -145,14 +145,18 @@ export interface MatchCancelled {
   reason: Reason;
 }
 
-/** MatchConnection contains necessary match information to identify and connect to a match. */
-export interface MatchConnection {
+/** MatchStarted contains necessary match information to identify and connect to a match. */
+export interface MatchStarted {
   matchId: string;
   connection: string;
 }
 
 export interface MatchResults {
   matchId: string;
+}
+
+export interface MatchConfiguration {
+  gamemode: string;
 }
 
 /** MatchRoster contains necessary information for a gameserver to setup. */
@@ -514,13 +518,13 @@ export const StatusUpdate = {
       QueueStopped.encode(message.queueStopped, writer.uint32(26).fork()).ldelim();
     }
     if (message.matchFound !== undefined) {
-      MatchDetails.encode(message.matchFound, writer.uint32(34).fork()).ldelim();
+      MatchFound.encode(message.matchFound, writer.uint32(34).fork()).ldelim();
     }
     if (message.matchCancelled !== undefined) {
       MatchCancelled.encode(message.matchCancelled, writer.uint32(42).fork()).ldelim();
     }
     if (message.matchStarted !== undefined) {
-      MatchConnection.encode(message.matchStarted, writer.uint32(50).fork()).ldelim();
+      MatchStarted.encode(message.matchStarted, writer.uint32(50).fork()).ldelim();
     }
     if (message.matchFinished !== undefined) {
       MatchResults.encode(message.matchFinished, writer.uint32(58).fork()).ldelim();
@@ -554,7 +558,7 @@ export const StatusUpdate = {
             break;
           }
 
-          message.matchFound = MatchDetails.decode(reader, reader.uint32());
+          message.matchFound = MatchFound.decode(reader, reader.uint32());
           continue;
         case 5:
           if (tag !== 42) {
@@ -568,7 +572,7 @@ export const StatusUpdate = {
             break;
           }
 
-          message.matchStarted = MatchConnection.decode(reader, reader.uint32());
+          message.matchStarted = MatchStarted.decode(reader, reader.uint32());
           continue;
         case 7:
           if (tag !== 58) {
@@ -590,9 +594,9 @@ export const StatusUpdate = {
     return {
       queueStarted: isSet(object.queueStarted) ? QueueAssignment.fromJSON(object.queueStarted) : undefined,
       queueStopped: isSet(object.queueStopped) ? QueueStopped.fromJSON(object.queueStopped) : undefined,
-      matchFound: isSet(object.matchFound) ? MatchDetails.fromJSON(object.matchFound) : undefined,
+      matchFound: isSet(object.matchFound) ? MatchFound.fromJSON(object.matchFound) : undefined,
       matchCancelled: isSet(object.matchCancelled) ? MatchCancelled.fromJSON(object.matchCancelled) : undefined,
-      matchStarted: isSet(object.matchStarted) ? MatchConnection.fromJSON(object.matchStarted) : undefined,
+      matchStarted: isSet(object.matchStarted) ? MatchStarted.fromJSON(object.matchStarted) : undefined,
       matchFinished: isSet(object.matchFinished) ? MatchResults.fromJSON(object.matchFinished) : undefined,
     };
   },
@@ -606,13 +610,13 @@ export const StatusUpdate = {
       obj.queueStopped = QueueStopped.toJSON(message.queueStopped);
     }
     if (message.matchFound !== undefined) {
-      obj.matchFound = MatchDetails.toJSON(message.matchFound);
+      obj.matchFound = MatchFound.toJSON(message.matchFound);
     }
     if (message.matchCancelled !== undefined) {
       obj.matchCancelled = MatchCancelled.toJSON(message.matchCancelled);
     }
     if (message.matchStarted !== undefined) {
-      obj.matchStarted = MatchConnection.toJSON(message.matchStarted);
+      obj.matchStarted = MatchStarted.toJSON(message.matchStarted);
     }
     if (message.matchFinished !== undefined) {
       obj.matchFinished = MatchResults.toJSON(message.matchFinished);
@@ -633,13 +637,13 @@ export const StatusUpdate = {
       ? QueueStopped.fromPartial(object.queueStopped)
       : undefined;
     message.matchFound = (object.matchFound !== undefined && object.matchFound !== null)
-      ? MatchDetails.fromPartial(object.matchFound)
+      ? MatchFound.fromPartial(object.matchFound)
       : undefined;
     message.matchCancelled = (object.matchCancelled !== undefined && object.matchCancelled !== null)
       ? MatchCancelled.fromPartial(object.matchCancelled)
       : undefined;
     message.matchStarted = (object.matchStarted !== undefined && object.matchStarted !== null)
-      ? MatchConnection.fromPartial(object.matchStarted)
+      ? MatchStarted.fromPartial(object.matchStarted)
       : undefined;
     message.matchFinished = (object.matchFinished !== undefined && object.matchFinished !== null)
       ? MatchResults.fromPartial(object.matchFinished)
@@ -738,12 +742,12 @@ export const QueueStopped = {
   },
 };
 
-function createBaseMatchDetails(): MatchDetails {
+function createBaseMatchFound(): MatchFound {
   return { matchId: "", time: undefined };
 }
 
-export const MatchDetails = {
-  encode(message: MatchDetails, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const MatchFound = {
+  encode(message: MatchFound, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.matchId !== "") {
       writer.uint32(10).string(message.matchId);
     }
@@ -753,10 +757,10 @@ export const MatchDetails = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): MatchDetails {
+  decode(input: _m0.Reader | Uint8Array, length?: number): MatchFound {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseMatchDetails();
+    const message = createBaseMatchFound();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -783,14 +787,14 @@ export const MatchDetails = {
     return message;
   },
 
-  fromJSON(object: any): MatchDetails {
+  fromJSON(object: any): MatchFound {
     return {
       matchId: isSet(object.matchId) ? String(object.matchId) : "",
       time: isSet(object.time) ? fromJsonTimestamp(object.time) : undefined,
     };
   },
 
-  toJSON(message: MatchDetails): unknown {
+  toJSON(message: MatchFound): unknown {
     const obj: any = {};
     if (message.matchId !== "") {
       obj.matchId = message.matchId;
@@ -801,12 +805,12 @@ export const MatchDetails = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<MatchDetails>, I>>(base?: I): MatchDetails {
-    return MatchDetails.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<MatchFound>, I>>(base?: I): MatchFound {
+    return MatchFound.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<MatchDetails>, I>>(object: I): MatchDetails {
-    const message = createBaseMatchDetails();
+  fromPartial<I extends Exact<DeepPartial<MatchFound>, I>>(object: I): MatchFound {
+    const message = createBaseMatchFound();
     message.matchId = object.matchId ?? "";
     message.time = object.time ?? undefined;
     return message;
@@ -888,12 +892,12 @@ export const MatchCancelled = {
   },
 };
 
-function createBaseMatchConnection(): MatchConnection {
+function createBaseMatchStarted(): MatchStarted {
   return { matchId: "", connection: "" };
 }
 
-export const MatchConnection = {
-  encode(message: MatchConnection, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const MatchStarted = {
+  encode(message: MatchStarted, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.matchId !== "") {
       writer.uint32(10).string(message.matchId);
     }
@@ -903,10 +907,10 @@ export const MatchConnection = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): MatchConnection {
+  decode(input: _m0.Reader | Uint8Array, length?: number): MatchStarted {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseMatchConnection();
+    const message = createBaseMatchStarted();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -933,14 +937,14 @@ export const MatchConnection = {
     return message;
   },
 
-  fromJSON(object: any): MatchConnection {
+  fromJSON(object: any): MatchStarted {
     return {
       matchId: isSet(object.matchId) ? String(object.matchId) : "",
       connection: isSet(object.connection) ? String(object.connection) : "",
     };
   },
 
-  toJSON(message: MatchConnection): unknown {
+  toJSON(message: MatchStarted): unknown {
     const obj: any = {};
     if (message.matchId !== "") {
       obj.matchId = message.matchId;
@@ -951,12 +955,12 @@ export const MatchConnection = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<MatchConnection>, I>>(base?: I): MatchConnection {
-    return MatchConnection.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<MatchStarted>, I>>(base?: I): MatchStarted {
+    return MatchStarted.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<MatchConnection>, I>>(object: I): MatchConnection {
-    const message = createBaseMatchConnection();
+  fromPartial<I extends Exact<DeepPartial<MatchStarted>, I>>(object: I): MatchStarted {
+    const message = createBaseMatchStarted();
     message.matchId = object.matchId ?? "";
     message.connection = object.connection ?? "";
     return message;
@@ -1017,6 +1021,64 @@ export const MatchResults = {
   fromPartial<I extends Exact<DeepPartial<MatchResults>, I>>(object: I): MatchResults {
     const message = createBaseMatchResults();
     message.matchId = object.matchId ?? "";
+    return message;
+  },
+};
+
+function createBaseMatchConfiguration(): MatchConfiguration {
+  return { gamemode: "" };
+}
+
+export const MatchConfiguration = {
+  encode(message: MatchConfiguration, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.gamemode !== "") {
+      writer.uint32(10).string(message.gamemode);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): MatchConfiguration {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMatchConfiguration();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.gamemode = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MatchConfiguration {
+    return { gamemode: isSet(object.gamemode) ? String(object.gamemode) : "" };
+  },
+
+  toJSON(message: MatchConfiguration): unknown {
+    const obj: any = {};
+    if (message.gamemode !== "") {
+      obj.gamemode = message.gamemode;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MatchConfiguration>, I>>(base?: I): MatchConfiguration {
+    return MatchConfiguration.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<MatchConfiguration>, I>>(object: I): MatchConfiguration {
+    const message = createBaseMatchConfiguration();
+    message.gamemode = object.gamemode ?? "";
     return message;
   },
 };

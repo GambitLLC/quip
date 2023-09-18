@@ -56,9 +56,9 @@ message StatusUpdate {
   oneof update {
     QueueAssignment queue_started = 2;
     QueueStopped queue_stopped = 3;
-    MatchDetails match_found = 4;
+    MatchFound match_found = 4;
     MatchCancelled match_cancelled = 5;
-    MatchConnection match_started = 6;
+    MatchStarted match_started = 6;
     MatchResults match_finished = 7;
   }
 }
@@ -75,10 +75,10 @@ message QueueStopped {
   optional string message = 3;
 }
 
-// MatchDetails contains information about a potential match that was found.
+// MatchFound contains information about a potential match that was found.
 // Sent as intermediate step for players to accept (send match wager) match before
 // allocating a server.
-message MatchDetails {
+message MatchFound {
   string match_id = 1;
   google.protobuf.Timestamp time = 2;
 }
@@ -88,8 +88,8 @@ message MatchCancelled {
   Reason reason = 2;
 }
 
-// MatchConnection contains necessary match information to identify and connect to a match.
-message MatchConnection {
+// MatchStarted contains necessary match information to identify and connect to a match.
+message MatchStarted {
   string match_id = 1;
   string connection = 2;
 }
@@ -98,6 +98,9 @@ message MatchResults {
   string match_id = 1;
 }
 
+message MatchConfiguration {
+  string gamemode = 1;
+}
 
 // MatchRoster contains necessary information for a gameserver to setup.
 message MatchRoster {

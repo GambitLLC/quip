@@ -38,7 +38,7 @@ export interface Response {
   error?:
     | Status
     | undefined;
-  /** Response to GetPlayer. */
+  /** Response to GetPlayer or any StateUpdate messages for friends. */
   player?:
     | Player
     | undefined;
@@ -303,7 +303,7 @@ export const Response = {
       Player.encode(message.player, writer.uint32(18).fork()).ldelim();
     }
     if (message.statusUpdate !== undefined) {
-      StatusUpdate.encode(message.statusUpdate, writer.uint32(26).fork()).ldelim();
+      StatusUpdate.encode(message.statusUpdate, writer.uint32(34).fork()).ldelim();
     }
     return writer;
   },
@@ -329,8 +329,8 @@ export const Response = {
 
           message.player = Player.decode(reader, reader.uint32());
           continue;
-        case 3:
-          if (tag !== 26) {
+        case 4:
+          if (tag !== 34) {
             break;
           }
 

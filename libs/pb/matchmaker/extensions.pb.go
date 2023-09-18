@@ -20,14 +20,17 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type OMTicketExtension struct {
+type TicketDetails struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	PlayerId string              `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	Config   *QueueConfiguration `protobuf:"bytes,2,opt,name=config,proto3" json:"config,omitempty"`
 }
 
-func (x *OMTicketExtension) Reset() {
-	*x = OMTicketExtension{}
+func (x *TicketDetails) Reset() {
+	*x = TicketDetails{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_matchmaker_extensions_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -35,13 +38,13 @@ func (x *OMTicketExtension) Reset() {
 	}
 }
 
-func (x *OMTicketExtension) String() string {
+func (x *TicketDetails) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*OMTicketExtension) ProtoMessage() {}
+func (*TicketDetails) ProtoMessage() {}
 
-func (x *OMTicketExtension) ProtoReflect() protoreflect.Message {
+func (x *TicketDetails) ProtoReflect() protoreflect.Message {
 	mi := &file_matchmaker_extensions_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -53,19 +56,40 @@ func (x *OMTicketExtension) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use OMTicketExtension.ProtoReflect.Descriptor instead.
-func (*OMTicketExtension) Descriptor() ([]byte, []int) {
+// Deprecated: Use TicketDetails.ProtoReflect.Descriptor instead.
+func (*TicketDetails) Descriptor() ([]byte, []int) {
 	return file_matchmaker_extensions_proto_rawDescGZIP(), []int{0}
 }
 
-type OMProfileExtension struct {
+func (x *TicketDetails) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *TicketDetails) GetConfig() *QueueConfiguration {
+	if x != nil {
+		return x.Config
+	}
+	return nil
+}
+
+type ProfileDetails struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	// Name of the current gamemode.
+	Gamemode string `protobuf:"bytes,1,opt,name=gamemode,proto3" json:"gamemode,omitempty"`
+	// Number of teams in the match.
+	Teams uint32 `protobuf:"varint,2,opt,name=teams,proto3" json:"teams,omitempty"`
+	// Number of players per team.
+	Players uint32 `protobuf:"varint,3,opt,name=players,proto3" json:"players,omitempty"`
 }
 
-func (x *OMProfileExtension) Reset() {
-	*x = OMProfileExtension{}
+func (x *ProfileDetails) Reset() {
+	*x = ProfileDetails{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_matchmaker_extensions_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -73,13 +97,13 @@ func (x *OMProfileExtension) Reset() {
 	}
 }
 
-func (x *OMProfileExtension) String() string {
+func (x *ProfileDetails) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*OMProfileExtension) ProtoMessage() {}
+func (*ProfileDetails) ProtoMessage() {}
 
-func (x *OMProfileExtension) ProtoReflect() protoreflect.Message {
+func (x *ProfileDetails) ProtoReflect() protoreflect.Message {
 	mi := &file_matchmaker_extensions_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -91,19 +115,47 @@ func (x *OMProfileExtension) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use OMProfileExtension.ProtoReflect.Descriptor instead.
-func (*OMProfileExtension) Descriptor() ([]byte, []int) {
+// Deprecated: Use ProfileDetails.ProtoReflect.Descriptor instead.
+func (*ProfileDetails) Descriptor() ([]byte, []int) {
 	return file_matchmaker_extensions_proto_rawDescGZIP(), []int{1}
 }
 
-type OMMatchExtension struct {
+func (x *ProfileDetails) GetGamemode() string {
+	if x != nil {
+		return x.Gamemode
+	}
+	return ""
+}
+
+func (x *ProfileDetails) GetTeams() uint32 {
+	if x != nil {
+		return x.Teams
+	}
+	return 0
+}
+
+func (x *ProfileDetails) GetPlayers() uint32 {
+	if x != nil {
+		return x.Players
+	}
+	return 0
+}
+
+// Extension holding details about an ongoing match.
+// Placed in OpenMatch Match extension, Agones Allocation metadata, and statestore.
+type MatchDetails struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	MatchId    string              `protobuf:"bytes,1,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
+	Connection string              `protobuf:"bytes,2,opt,name=connection,proto3" json:"connection,omitempty"`
+	Config     *MatchConfiguration `protobuf:"bytes,3,opt,name=config,proto3" json:"config,omitempty"`
+	Roster     *MatchRoster        `protobuf:"bytes,4,opt,name=roster,proto3" json:"roster,omitempty"`
 }
 
-func (x *OMMatchExtension) Reset() {
-	*x = OMMatchExtension{}
+func (x *MatchDetails) Reset() {
+	*x = MatchDetails{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_matchmaker_extensions_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -111,13 +163,13 @@ func (x *OMMatchExtension) Reset() {
 	}
 }
 
-func (x *OMMatchExtension) String() string {
+func (x *MatchDetails) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*OMMatchExtension) ProtoMessage() {}
+func (*MatchDetails) ProtoMessage() {}
 
-func (x *OMMatchExtension) ProtoReflect() protoreflect.Message {
+func (x *MatchDetails) ProtoReflect() protoreflect.Message {
 	mi := &file_matchmaker_extensions_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -129,47 +181,37 @@ func (x *OMMatchExtension) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use OMMatchExtension.ProtoReflect.Descriptor instead.
-func (*OMMatchExtension) Descriptor() ([]byte, []int) {
+// Deprecated: Use MatchDetails.ProtoReflect.Descriptor instead.
+func (*MatchDetails) Descriptor() ([]byte, []int) {
 	return file_matchmaker_extensions_proto_rawDescGZIP(), []int{2}
 }
 
-type AgonesAnnotation struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *AgonesAnnotation) Reset() {
-	*x = AgonesAnnotation{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_matchmaker_extensions_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
+func (x *MatchDetails) GetMatchId() string {
+	if x != nil {
+		return x.MatchId
 	}
+	return ""
 }
 
-func (x *AgonesAnnotation) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AgonesAnnotation) ProtoMessage() {}
-
-func (x *AgonesAnnotation) ProtoReflect() protoreflect.Message {
-	mi := &file_matchmaker_extensions_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
+func (x *MatchDetails) GetConnection() string {
+	if x != nil {
+		return x.Connection
 	}
-	return mi.MessageOf(x)
+	return ""
 }
 
-// Deprecated: Use AgonesAnnotation.ProtoReflect.Descriptor instead.
-func (*AgonesAnnotation) Descriptor() ([]byte, []int) {
-	return file_matchmaker_extensions_proto_rawDescGZIP(), []int{3}
+func (x *MatchDetails) GetConfig() *MatchConfiguration {
+	if x != nil {
+		return x.Config
+	}
+	return nil
+}
+
+func (x *MatchDetails) GetRoster() *MatchRoster {
+	if x != nil {
+		return x.Roster
+	}
+	return nil
 }
 
 var File_matchmaker_extensions_proto protoreflect.FileDescriptor
@@ -179,16 +221,35 @@ var file_matchmaker_extensions_proto_rawDesc = []byte{
 	0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x0f, 0x71,
 	0x75, 0x69, 0x70, 0x2e, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72, 0x1a, 0x19,
 	0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72, 0x2f, 0x6d, 0x65, 0x73, 0x73, 0x61,
-	0x67, 0x65, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x13, 0x0a, 0x11, 0x4f, 0x4d, 0x54,
-	0x69, 0x63, 0x6b, 0x65, 0x74, 0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x22, 0x14,
-	0x0a, 0x12, 0x4f, 0x4d, 0x50, 0x72, 0x6f, 0x66, 0x69, 0x6c, 0x65, 0x45, 0x78, 0x74, 0x65, 0x6e,
-	0x73, 0x69, 0x6f, 0x6e, 0x22, 0x12, 0x0a, 0x10, 0x4f, 0x4d, 0x4d, 0x61, 0x74, 0x63, 0x68, 0x45,
-	0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x22, 0x12, 0x0a, 0x10, 0x41, 0x67, 0x6f, 0x6e,
-	0x65, 0x73, 0x41, 0x6e, 0x6e, 0x6f, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x2e, 0x5a, 0x2c,
-	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x47, 0x61, 0x6d, 0x62, 0x69,
-	0x74, 0x4c, 0x4c, 0x43, 0x2f, 0x71, 0x75, 0x69, 0x70, 0x2f, 0x6c, 0x69, 0x62, 0x73, 0x2f, 0x70,
-	0x62, 0x2f, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x67, 0x65, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x69, 0x0a, 0x0d, 0x54, 0x69, 0x63,
+	0x6b, 0x65, 0x74, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x12, 0x1b, 0x0a, 0x09, 0x70, 0x6c,
+	0x61, 0x79, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x70,
+	0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x64, 0x12, 0x3b, 0x0a, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69,
+	0x67, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x71, 0x75, 0x69, 0x70, 0x2e, 0x6d,
+	0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72, 0x2e, 0x51, 0x75, 0x65, 0x75, 0x65, 0x43,
+	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x06, 0x63, 0x6f,
+	0x6e, 0x66, 0x69, 0x67, 0x22, 0x5c, 0x0a, 0x0e, 0x50, 0x72, 0x6f, 0x66, 0x69, 0x6c, 0x65, 0x44,
+	0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x12, 0x1a, 0x0a, 0x08, 0x67, 0x61, 0x6d, 0x65, 0x6d, 0x6f,
+	0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x67, 0x61, 0x6d, 0x65, 0x6d, 0x6f,
+	0x64, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x65, 0x61, 0x6d, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x0d, 0x52, 0x05, 0x74, 0x65, 0x61, 0x6d, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x70, 0x6c, 0x61, 0x79,
+	0x65, 0x72, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x07, 0x70, 0x6c, 0x61, 0x79, 0x65,
+	0x72, 0x73, 0x22, 0xbc, 0x01, 0x0a, 0x0c, 0x4d, 0x61, 0x74, 0x63, 0x68, 0x44, 0x65, 0x74, 0x61,
+	0x69, 0x6c, 0x73, 0x12, 0x19, 0x0a, 0x08, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x49, 0x64, 0x12, 0x1e,
+	0x0a, 0x0a, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0a, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x3b,
+	0x0a, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23,
+	0x2e, 0x71, 0x75, 0x69, 0x70, 0x2e, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72,
+	0x2e, 0x4d, 0x61, 0x74, 0x63, 0x68, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x75, 0x72, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x52, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x34, 0x0a, 0x06, 0x72,
+	0x6f, 0x73, 0x74, 0x65, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x71, 0x75,
+	0x69, 0x70, 0x2e, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72, 0x2e, 0x4d, 0x61,
+	0x74, 0x63, 0x68, 0x52, 0x6f, 0x73, 0x74, 0x65, 0x72, 0x52, 0x06, 0x72, 0x6f, 0x73, 0x74, 0x65,
+	0x72, 0x42, 0x2e, 0x5a, 0x2c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
+	0x47, 0x61, 0x6d, 0x62, 0x69, 0x74, 0x4c, 0x4c, 0x43, 0x2f, 0x71, 0x75, 0x69, 0x70, 0x2f, 0x6c,
+	0x69, 0x62, 0x73, 0x2f, 0x70, 0x62, 0x2f, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65,
+	0x72, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -203,19 +264,24 @@ func file_matchmaker_extensions_proto_rawDescGZIP() []byte {
 	return file_matchmaker_extensions_proto_rawDescData
 }
 
-var file_matchmaker_extensions_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_matchmaker_extensions_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_matchmaker_extensions_proto_goTypes = []interface{}{
-	(*OMTicketExtension)(nil),  // 0: quip.matchmaker.OMTicketExtension
-	(*OMProfileExtension)(nil), // 1: quip.matchmaker.OMProfileExtension
-	(*OMMatchExtension)(nil),   // 2: quip.matchmaker.OMMatchExtension
-	(*AgonesAnnotation)(nil),   // 3: quip.matchmaker.AgonesAnnotation
+	(*TicketDetails)(nil),      // 0: quip.matchmaker.TicketDetails
+	(*ProfileDetails)(nil),     // 1: quip.matchmaker.ProfileDetails
+	(*MatchDetails)(nil),       // 2: quip.matchmaker.MatchDetails
+	(*QueueConfiguration)(nil), // 3: quip.matchmaker.QueueConfiguration
+	(*MatchConfiguration)(nil), // 4: quip.matchmaker.MatchConfiguration
+	(*MatchRoster)(nil),        // 5: quip.matchmaker.MatchRoster
 }
 var file_matchmaker_extensions_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	3, // 0: quip.matchmaker.TicketDetails.config:type_name -> quip.matchmaker.QueueConfiguration
+	4, // 1: quip.matchmaker.MatchDetails.config:type_name -> quip.matchmaker.MatchConfiguration
+	5, // 2: quip.matchmaker.MatchDetails.roster:type_name -> quip.matchmaker.MatchRoster
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_matchmaker_extensions_proto_init() }
@@ -226,7 +292,7 @@ func file_matchmaker_extensions_proto_init() {
 	file_matchmaker_messages_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_matchmaker_extensions_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*OMTicketExtension); i {
+			switch v := v.(*TicketDetails); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -238,7 +304,7 @@ func file_matchmaker_extensions_proto_init() {
 			}
 		}
 		file_matchmaker_extensions_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*OMProfileExtension); i {
+			switch v := v.(*ProfileDetails); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -250,19 +316,7 @@ func file_matchmaker_extensions_proto_init() {
 			}
 		}
 		file_matchmaker_extensions_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*OMMatchExtension); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_matchmaker_extensions_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AgonesAnnotation); i {
+			switch v := v.(*MatchDetails); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -280,7 +334,7 @@ func file_matchmaker_extensions_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_matchmaker_extensions_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

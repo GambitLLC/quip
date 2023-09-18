@@ -2,8 +2,8 @@
 import _m0 from "protobufjs/minimal";
 import {
   MatchCancelled,
-  MatchConnection,
   MatchResults,
+  MatchStarted,
   PlayerState,
   playerStateFromJSON,
   playerStateToJSON,
@@ -36,7 +36,7 @@ export interface StatusUpdateMessage {
  */
 export interface MatchUpdateMessage {
   matchCancelled?: MatchCancelled | undefined;
-  matchStarted?: MatchConnection | undefined;
+  matchStarted?: MatchStarted | undefined;
   matchFinished?: MatchResults | undefined;
 }
 
@@ -202,7 +202,7 @@ export const MatchUpdateMessage = {
       MatchCancelled.encode(message.matchCancelled, writer.uint32(10).fork()).ldelim();
     }
     if (message.matchStarted !== undefined) {
-      MatchConnection.encode(message.matchStarted, writer.uint32(18).fork()).ldelim();
+      MatchStarted.encode(message.matchStarted, writer.uint32(18).fork()).ldelim();
     }
     if (message.matchFinished !== undefined) {
       MatchResults.encode(message.matchFinished, writer.uint32(26).fork()).ldelim();
@@ -229,7 +229,7 @@ export const MatchUpdateMessage = {
             break;
           }
 
-          message.matchStarted = MatchConnection.decode(reader, reader.uint32());
+          message.matchStarted = MatchStarted.decode(reader, reader.uint32());
           continue;
         case 3:
           if (tag !== 26) {
@@ -250,7 +250,7 @@ export const MatchUpdateMessage = {
   fromJSON(object: any): MatchUpdateMessage {
     return {
       matchCancelled: isSet(object.matchCancelled) ? MatchCancelled.fromJSON(object.matchCancelled) : undefined,
-      matchStarted: isSet(object.matchStarted) ? MatchConnection.fromJSON(object.matchStarted) : undefined,
+      matchStarted: isSet(object.matchStarted) ? MatchStarted.fromJSON(object.matchStarted) : undefined,
       matchFinished: isSet(object.matchFinished) ? MatchResults.fromJSON(object.matchFinished) : undefined,
     };
   },
@@ -261,7 +261,7 @@ export const MatchUpdateMessage = {
       obj.matchCancelled = MatchCancelled.toJSON(message.matchCancelled);
     }
     if (message.matchStarted !== undefined) {
-      obj.matchStarted = MatchConnection.toJSON(message.matchStarted);
+      obj.matchStarted = MatchStarted.toJSON(message.matchStarted);
     }
     if (message.matchFinished !== undefined) {
       obj.matchFinished = MatchResults.toJSON(message.matchFinished);
@@ -279,7 +279,7 @@ export const MatchUpdateMessage = {
       ? MatchCancelled.fromPartial(object.matchCancelled)
       : undefined;
     message.matchStarted = (object.matchStarted !== undefined && object.matchStarted !== null)
-      ? MatchConnection.fromPartial(object.matchStarted)
+      ? MatchStarted.fromPartial(object.matchStarted)
       : undefined;
     message.matchFinished = (object.matchFinished !== undefined && object.matchFinished !== null)
       ? MatchResults.fromPartial(object.matchFinished)

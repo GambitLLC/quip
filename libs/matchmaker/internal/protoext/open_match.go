@@ -6,7 +6,7 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	ompb "open-match.dev/open-match/pkg/pb"
 
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
+	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
 const extensionDetailsKey string = "details"
@@ -51,7 +51,7 @@ func SetExtensionDetails(dst extendable, src proto.Message) error {
 // }
 
 // OpenMatchTicketDetails gets details from extensions on an Open Match ticket.
-func OpenMatchTicketDetails(src *ompb.Ticket) (*ipb.TicketDetails, error) {
+func OpenMatchTicketDetails(src *ompb.Ticket) (*pb.TicketDetails, error) {
 	ext := src.GetExtensions()
 	if ext == nil {
 		return nil, errors.New(".Extensions is nil")
@@ -62,7 +62,7 @@ func OpenMatchTicketDetails(src *ompb.Ticket) (*ipb.TicketDetails, error) {
 		return nil, errors.Errorf(".Extensions is missing expected key: '%s'", extensionDetailsKey)
 	}
 
-	details := &ipb.TicketDetails{}
+	details := &pb.TicketDetails{}
 	if err := any.UnmarshalTo(details); err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func OpenMatchTicketDetails(src *ompb.Ticket) (*ipb.TicketDetails, error) {
 }
 
 // OpenMatchProfileDetails gets details from extensions on an Open Match MatchProfile.
-func OpenMatchProfileDetails(src *ompb.MatchProfile) (*ipb.ProfileDetails, error) {
+func OpenMatchProfileDetails(src *ompb.MatchProfile) (*pb.ProfileDetails, error) {
 	ext := src.GetExtensions()
 	if ext == nil {
 		return nil, errors.New(".Extensions is nil")
@@ -82,7 +82,7 @@ func OpenMatchProfileDetails(src *ompb.MatchProfile) (*ipb.ProfileDetails, error
 		return nil, errors.Errorf(".Extensions is missing expected key: '%s'", extensionDetailsKey)
 	}
 
-	details := &ipb.ProfileDetails{}
+	details := &pb.ProfileDetails{}
 	if err := any.UnmarshalTo(details); err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func OpenMatchProfileDetails(src *ompb.MatchProfile) (*ipb.ProfileDetails, error
 	return details, nil
 }
 
-func OpenMatchMatchDetails(src *ompb.Match) (*ipb.MatchDetails, error) {
+func OpenMatchMatchDetails(src *ompb.Match) (*pb.MatchDetails, error) {
 	ext := src.GetExtensions()
 	if ext == nil {
 		return nil, errors.New(".Extensions is nil")
@@ -101,7 +101,7 @@ func OpenMatchMatchDetails(src *ompb.Match) (*ipb.MatchDetails, error) {
 		return nil, errors.Errorf(".Extensions is missing expected key: '%s'", extensionDetailsKey)
 	}
 
-	details := &ipb.MatchDetails{}
+	details := &pb.MatchDetails{}
 	if err := any.UnmarshalTo(details); err != nil {
 		return nil, err
 	}

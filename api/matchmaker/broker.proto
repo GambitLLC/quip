@@ -24,7 +24,7 @@ message StatusUpdateMessage {
 message MatchUpdateMessage {
   oneof update {
     MatchCancelled match_cancelled = 1;
-    MatchConnection match_started = 2;
+    MatchStarted match_started = 2;
     MatchResults match_finished = 3;
   }
 }

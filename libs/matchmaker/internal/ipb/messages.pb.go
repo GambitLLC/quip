@@ -85,300 +85,6 @@ func (x *PlayerDetails) GetMatchId() string {
 	return ""
 }
 
-// Internal message for holding relevant ticket information.
-// Placed under Extensions on Open Match tickets.
-type TicketDetails struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	PlayerId string `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
-	Gamemode string `protobuf:"bytes,2,opt,name=gamemode,proto3" json:"gamemode,omitempty"`
-}
-
-func (x *TicketDetails) Reset() {
-	*x = TicketDetails{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_libs_matchmaker_internal_api_messages_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *TicketDetails) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TicketDetails) ProtoMessage() {}
-
-func (x *TicketDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_libs_matchmaker_internal_api_messages_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TicketDetails.ProtoReflect.Descriptor instead.
-func (*TicketDetails) Descriptor() ([]byte, []int) {
-	return file_libs_matchmaker_internal_api_messages_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *TicketDetails) GetPlayerId() string {
-	if x != nil {
-		return x.PlayerId
-	}
-	return ""
-}
-
-func (x *TicketDetails) GetGamemode() string {
-	if x != nil {
-		return x.Gamemode
-	}
-	return ""
-}
-
-// Internal message for holding relevant match profile information.
-// Placed under Extensions on Open Match tickets.
-type ProfileDetails struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// Name of the current gamemode.
-	Gamemode string `protobuf:"bytes,1,opt,name=gamemode,proto3" json:"gamemode,omitempty"`
-	// Number of teams in the match.
-	Teams uint32 `protobuf:"varint,2,opt,name=teams,proto3" json:"teams,omitempty"`
-	// Number of players per team.
-	Players uint32 `protobuf:"varint,3,opt,name=players,proto3" json:"players,omitempty"`
-}
-
-func (x *ProfileDetails) Reset() {
-	*x = ProfileDetails{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_libs_matchmaker_internal_api_messages_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ProfileDetails) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ProfileDetails) ProtoMessage() {}
-
-func (x *ProfileDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_libs_matchmaker_internal_api_messages_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ProfileDetails.ProtoReflect.Descriptor instead.
-func (*ProfileDetails) Descriptor() ([]byte, []int) {
-	return file_libs_matchmaker_internal_api_messages_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *ProfileDetails) GetGamemode() string {
-	if x != nil {
-		return x.Gamemode
-	}
-	return ""
-}
-
-func (x *ProfileDetails) GetTeams() uint32 {
-	if x != nil {
-		return x.Teams
-	}
-	return 0
-}
-
-func (x *ProfileDetails) GetPlayers() uint32 {
-	if x != nil {
-		return x.Players
-	}
-	return 0
-}
-
-// Internal message for holding details about an ongoing match.
-// Placed in statestore and under Metadata on Agones Allocations.
-type MatchDetails struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	MatchId    string                          `protobuf:"bytes,1,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
-	Connection string                          `protobuf:"bytes,2,opt,name=connection,proto3" json:"connection,omitempty"`
-	Roster     *MatchDetails_Roster            `protobuf:"bytes,3,opt,name=roster,proto3" json:"roster,omitempty"`
-	Config     *MatchDetails_GameConfiguration `protobuf:"bytes,4,opt,name=config,proto3" json:"config,omitempty"`
-}
-
-func (x *MatchDetails) Reset() {
-	*x = MatchDetails{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_libs_matchmaker_internal_api_messages_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *MatchDetails) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*MatchDetails) ProtoMessage() {}
-
-func (x *MatchDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_libs_matchmaker_internal_api_messages_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use MatchDetails.ProtoReflect.Descriptor instead.
-func (*MatchDetails) Descriptor() ([]byte, []int) {
-	return file_libs_matchmaker_internal_api_messages_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *MatchDetails) GetMatchId() string {
-	if x != nil {
-		return x.MatchId
-	}
-	return ""
-}
-
-func (x *MatchDetails) GetConnection() string {
-	if x != nil {
-		return x.Connection
-	}
-	return ""
-}
-
-func (x *MatchDetails) GetRoster() *MatchDetails_Roster {
-	if x != nil {
-		return x.Roster
-	}
-	return nil
-}
-
-func (x *MatchDetails) GetConfig() *MatchDetails_GameConfiguration {
-	if x != nil {
-		return x.Config
-	}
-	return nil
-}
-
-type MatchDetails_Roster struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// TODO: Change message type to support teams.
-	Players []string `protobuf:"bytes,1,rep,name=players,proto3" json:"players,omitempty"`
-}
-
-func (x *MatchDetails_Roster) Reset() {
-	*x = MatchDetails_Roster{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_libs_matchmaker_internal_api_messages_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *MatchDetails_Roster) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*MatchDetails_Roster) ProtoMessage() {}
-
-func (x *MatchDetails_Roster) ProtoReflect() protoreflect.Message {
-	mi := &file_libs_matchmaker_internal_api_messages_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use MatchDetails_Roster.ProtoReflect.Descriptor instead.
-func (*MatchDetails_Roster) Descriptor() ([]byte, []int) {
-	return file_libs_matchmaker_internal_api_messages_proto_rawDescGZIP(), []int{3, 0}
-}
-
-func (x *MatchDetails_Roster) GetPlayers() []string {
-	if x != nil {
-		return x.Players
-	}
-	return nil
-}
-
-// Information about the match being played, including gamemode and settings (e.g. wagers).
-type MatchDetails_GameConfiguration struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Gamemode string `protobuf:"bytes,1,opt,name=gamemode,proto3" json:"gamemode,omitempty"`
-}
-
-func (x *MatchDetails_GameConfiguration) Reset() {
-	*x = MatchDetails_GameConfiguration{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_libs_matchmaker_internal_api_messages_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *MatchDetails_GameConfiguration) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*MatchDetails_GameConfiguration) ProtoMessage() {}
-
-func (x *MatchDetails_GameConfiguration) ProtoReflect() protoreflect.Message {
-	mi := &file_libs_matchmaker_internal_api_messages_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use MatchDetails_GameConfiguration.ProtoReflect.Descriptor instead.
-func (*MatchDetails_GameConfiguration) Descriptor() ([]byte, []int) {
-	return file_libs_matchmaker_internal_api_messages_proto_rawDescGZIP(), []int{3, 1}
-}
-
-func (x *MatchDetails_GameConfiguration) GetGamemode() string {
-	if x != nil {
-		return x.Gamemode
-	}
-	return ""
-}
-
 var File_libs_matchmaker_internal_api_messages_proto protoreflect.FileDescriptor
 
 var file_libs_matchmaker_internal_api_messages_proto_rawDesc = []byte{
@@ -395,41 +101,11 @@ var file_libs_matchmaker_internal_api_messages_proto_rawDesc = []byte{
 	0x68, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x48, 0x01, 0x52, 0x07, 0x6d, 0x61,
 	0x74, 0x63, 0x68, 0x49, 0x64, 0x88, 0x01, 0x01, 0x42, 0x0c, 0x0a, 0x0a, 0x5f, 0x74, 0x69, 0x63,
 	0x6b, 0x65, 0x74, 0x5f, 0x69, 0x64, 0x42, 0x0b, 0x0a, 0x09, 0x5f, 0x6d, 0x61, 0x74, 0x63, 0x68,
-	0x5f, 0x69, 0x64, 0x22, 0x48, 0x0a, 0x0d, 0x54, 0x69, 0x63, 0x6b, 0x65, 0x74, 0x44, 0x65, 0x74,
-	0x61, 0x69, 0x6c, 0x73, 0x12, 0x1b, 0x0a, 0x09, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x5f, 0x69,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49,
-	0x64, 0x12, 0x1a, 0x0a, 0x08, 0x67, 0x61, 0x6d, 0x65, 0x6d, 0x6f, 0x64, 0x65, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x08, 0x67, 0x61, 0x6d, 0x65, 0x6d, 0x6f, 0x64, 0x65, 0x22, 0x5c, 0x0a,
-	0x0e, 0x50, 0x72, 0x6f, 0x66, 0x69, 0x6c, 0x65, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x12,
-	0x1a, 0x0a, 0x08, 0x67, 0x61, 0x6d, 0x65, 0x6d, 0x6f, 0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x08, 0x67, 0x61, 0x6d, 0x65, 0x6d, 0x6f, 0x64, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x74,
-	0x65, 0x61, 0x6d, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x74, 0x65, 0x61, 0x6d,
-	0x73, 0x12, 0x18, 0x0a, 0x07, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x73, 0x18, 0x03, 0x20, 0x01,
-	0x28, 0x0d, 0x52, 0x07, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x73, 0x22, 0xb7, 0x02, 0x0a, 0x0c,
-	0x4d, 0x61, 0x74, 0x63, 0x68, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x12, 0x19, 0x0a, 0x08,
-	0x6d, 0x61, 0x74, 0x63, 0x68, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07,
-	0x6d, 0x61, 0x74, 0x63, 0x68, 0x49, 0x64, 0x12, 0x1e, 0x0a, 0x0a, 0x63, 0x6f, 0x6e, 0x6e, 0x65,
-	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x63, 0x6f, 0x6e,
-	0x6e, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x45, 0x0a, 0x06, 0x72, 0x6f, 0x73, 0x74, 0x65,
-	0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2d, 0x2e, 0x71, 0x75, 0x69, 0x70, 0x2e, 0x6d,
-	0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72, 0x2e, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e,
-	0x61, 0x6c, 0x2e, 0x4d, 0x61, 0x74, 0x63, 0x68, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x2e,
-	0x52, 0x6f, 0x73, 0x74, 0x65, 0x72, 0x52, 0x06, 0x72, 0x6f, 0x73, 0x74, 0x65, 0x72, 0x12, 0x50,
-	0x0a, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x38,
-	0x2e, 0x71, 0x75, 0x69, 0x70, 0x2e, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72,
-	0x2e, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2e, 0x4d, 0x61, 0x74, 0x63, 0x68, 0x44,
-	0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x2e, 0x47, 0x61, 0x6d, 0x65, 0x43, 0x6f, 0x6e, 0x66, 0x69,
-	0x67, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x1a, 0x22, 0x0a, 0x06, 0x52, 0x6f, 0x73, 0x74, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x70, 0x6c,
-	0x61, 0x79, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x07, 0x70, 0x6c, 0x61,
-	0x79, 0x65, 0x72, 0x73, 0x1a, 0x2f, 0x0a, 0x11, 0x47, 0x61, 0x6d, 0x65, 0x43, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1a, 0x0a, 0x08, 0x67, 0x61, 0x6d,
-	0x65, 0x6d, 0x6f, 0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x67, 0x61, 0x6d,
-	0x65, 0x6d, 0x6f, 0x64, 0x65, 0x42, 0x38, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e,
-	0x63, 0x6f, 0x6d, 0x2f, 0x47, 0x61, 0x6d, 0x62, 0x69, 0x74, 0x4c, 0x4c, 0x43, 0x2f, 0x71, 0x75,
-	0x69, 0x70, 0x2f, 0x6c, 0x69, 0x62, 0x73, 0x2f, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b,
-	0x65, 0x72, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x69, 0x70, 0x62, 0x62,
-	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x5f, 0x69, 0x64, 0x42, 0x38, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
+	0x6d, 0x2f, 0x47, 0x61, 0x6d, 0x62, 0x69, 0x74, 0x4c, 0x4c, 0x43, 0x2f, 0x71, 0x75, 0x69, 0x70,
+	0x2f, 0x6c, 0x69, 0x62, 0x73, 0x2f, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x6d, 0x61, 0x6b, 0x65, 0x72,
+	0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x69, 0x70, 0x62, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -444,23 +120,16 @@ func file_libs_matchmaker_internal_api_messages_proto_rawDescGZIP() []byte {
 	return file_libs_matchmaker_internal_api_messages_proto_rawDescData
 }
 
-var file_libs_matchmaker_internal_api_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_libs_matchmaker_internal_api_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_libs_matchmaker_internal_api_messages_proto_goTypes = []interface{}{
-	(*PlayerDetails)(nil),                  // 0: quip.matchmaker.internal.PlayerDetails
-	(*TicketDetails)(nil),                  // 1: quip.matchmaker.internal.TicketDetails
-	(*ProfileDetails)(nil),                 // 2: quip.matchmaker.internal.ProfileDetails
-	(*MatchDetails)(nil),                   // 3: quip.matchmaker.internal.MatchDetails
-	(*MatchDetails_Roster)(nil),            // 4: quip.matchmaker.internal.MatchDetails.Roster
-	(*MatchDetails_GameConfiguration)(nil), // 5: quip.matchmaker.internal.MatchDetails.GameConfiguration
+	(*PlayerDetails)(nil), // 0: quip.matchmaker.internal.PlayerDetails
 }
 var file_libs_matchmaker_internal_api_messages_proto_depIdxs = []int32{
-	4, // 0: quip.matchmaker.internal.MatchDetails.roster:type_name -> quip.matchmaker.internal.MatchDetails.Roster
-	5, // 1: quip.matchmaker.internal.MatchDetails.config:type_name -> quip.matchmaker.internal.MatchDetails.GameConfiguration
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	0, // [0:0] is the sub-list for method output_type
+	0, // [0:0] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_libs_matchmaker_internal_api_messages_proto_init() }
@@ -481,66 +150,6 @@ func file_libs_matchmaker_internal_api_messages_proto_init() {
 				return nil
 			}
 		}
-		file_libs_matchmaker_internal_api_messages_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TicketDetails); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_libs_matchmaker_internal_api_messages_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ProfileDetails); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_libs_matchmaker_internal_api_messages_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MatchDetails); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_libs_matchmaker_internal_api_messages_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MatchDetails_Roster); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_libs_matchmaker_internal_api_messages_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MatchDetails_GameConfiguration); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	file_libs_matchmaker_internal_api_messages_proto_msgTypes[0].OneofWrappers = []interface{}{}
 	type x struct{}
@@ -549,7 +158,7 @@ func file_libs_matchmaker_internal_api_messages_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_libs_matchmaker_internal_api_messages_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
