@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
 )
 
 // Service is an interface for talking to a storage backend.
@@ -19,25 +18,16 @@ type Service interface {
 
 	// Player
 
-	CreatePlayer(ctx context.Context, player *ipb.PlayerDetails) error
+	// GetPlayer returns the ticket id tid and match id mid for a given player.
+	GetPlayer(ctx context.Context, id string) (tid, mid string, err error)
 
-	GetPlayer(ctx context.Context, id string) (*ipb.PlayerDetails, error)
+	SetTicketId(ctx context.Context, id string, players []string) (bool, error)
 
-	TrackTicket(ctx context.Context, id string, playerIds []string) error
+	UnsetTicketId(ctx context.Context, players []string) error
 
-	UntrackTicket(ctx context.Context, playerIds []string) error
+	SetMatchId(ctx context.Context, id string, players []string) (bool, error)
 
-	TrackMatch(ctx context.Context, matchId string, playerIds []string) error
-
-	UntrackMatch(ctx context.Context, playerIds []string) error
-
-	// Matches
-
-	CreateMatch(ctx context.Context, match *ipb.MatchDetails) error
-
-	GetMatch(ctx context.Context, id string) (*ipb.MatchDetails, error)
-
-	DeleteMatch(ctx context.Context, id string) error
+	UnsetMatchId(ctx context.Context, players []string) error
 }
 
 func New(cfg config.View) Service {
