@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
+	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -44,15 +45,65 @@ func TestConnect(t *testing.T) {
 }
 
 func TestGetPlayer(t *testing.T) {
-	runFrontendTest(t, func(t *testing.T, id string, reqs chan<- *pb.Request, resps <-chan *pb.Response, errs <-chan error) {
+	runFrontendTest(t, func(t *testing.T, id string, reqs chan<- *pb.Request, resps <-chan *pb.Response) {
 		reqs <- &pb.Request{
 			Action: &pb.Request_GetPlayer{},
 		}
 
-		resp := requireResponse(t, resps, errs)
+		resp := requireResponse(t, resps)
 		player := resp.GetPlayer()
 		require.NotNil(t, player, "Response should have returned Player")
 		require.Equal(t, id, player.Id, "Response should have been for the current player")
+	})
+}
+
+func TestStartQueue(t *testing.T) {
+	runFrontendTest(t, func(t *testing.T, id string, reqs chan<- *pb.Request, resps <-chan *pb.Response) {
+		// invalid argument: missing config
+		reqs <- &pb.Request{
+			Action: &pb.Request_StartQueue{},
+		}
+
+		err := requireError(t, resps)
+		require.EqualValues(t, codes.InvalidArgument, err.Code, "Error code should have been InvalidArgument")
+
+		// invalid argument: missing gamemode
+		reqs <- &pb.Request{
+			Action: &pb.Request_StartQueue{
+				StartQueue: &pb.StartQueue{
+					Config: &pb.QueueConfiguration{},
+				},
+			},
+		}
+
+		err = requireError(t, resps)
+		require.EqualValues(t, codes.InvalidArgument, err.Code, "Error code should have been InvalidArgument")
+
+		reqs <- &pb.Request{
+			Action: &pb.Request_StartQueue{
+				StartQueue: &pb.StartQueue{
+					Config: &pb.QueueConfiguration{
+						Gamemode: "test",
+					},
+				},
+			},
+		}
+
+		resp := requireResponse(t, resps)
+		status := resp.GetStatusUpdate()
+		require.NotNil(t, status, "Response should have returned StatusUpdate")
+		require.NotNil(t, status.GetQueueStarted(), "StatusUpdate should be QueueStarted")
+
+		reqs <- &pb.Request{
+			Action: &pb.Request_GetPlayer{},
+		}
+
+		resp = requireResponse(t, resps)
+		player := resp.GetPlayer()
+		require.NotNil(t, player, "Response should have returned Player")
+		require.Equal(t, id, player.Id, "Response should have been for the current player")
+		queue := player.GetQueueAssignment()
+		require.NotNil(t, queue, "Player should be in queue")
 	})
 }
 
@@ -171,17 +222,18 @@ func TestBrokerMessages(t *testing.T) {
 
 }
 
-type TestCase func(t *testing.T, id string, reqs chan<- *pb.Request, resps <-chan *pb.Response, errs <-chan error)
+type TestCase func(t *testing.T, id string, reqs chan<- *pb.Request, resps <-chan *pb.Response)
 
-func requireResponse(t *testing.T, resps <-chan *pb.Response, errs <-chan error) *pb.Response {
+// requireResponse expects Response Message type to be anything that isn't Error
+func requireResponse(t *testing.T, resps <-chan *pb.Response) *pb.Response {
 	select {
 	case resp, ok := <-resps:
 		if !ok {
 			require.FailNow(t, "response channel closed")
 		}
+
+		require.Nil(t, resp.GetError(), "received response error: %v", resp.GetError())
 		return resp
-	case err := <-errs:
-		require.FailNowf(t, "received error while waiting for response", "err: %v", err)
 	case <-time.After(3 * time.Second):
 		require.FailNow(t, "test timed out waiting for response")
 	}
@@ -189,14 +241,17 @@ func requireResponse(t *testing.T, resps <-chan *pb.Response, errs <-chan error)
 	return nil
 }
 
-func requireError(t *testing.T, resps <-chan *pb.Response, errs <-chan error) error {
+// requireError expects Response Message type to be of Error
+func requireError(t *testing.T, resps <-chan *pb.Response) *rpcstatus.Status {
 	select {
-	case resp := <-resps:
-		require.FailNowf(t, "received response while waiting for error", "resp: %v", resp)
-	case err, ok := <-errs:
+	case resp, ok := <-resps:
 		if !ok {
-			require.FailNow(t, "error channel closed")
+			require.FailNow(t, "response channel closed")
 		}
+
+		err := resp.GetError()
+		require.NotNil(t, err, "received non error message type %T: %v", resp.Message, resp.Message)
+
 		return err
 	case <-time.After(3 * time.Second):
 		require.FailNow(t, "test timed out waiting for response")
@@ -271,7 +326,18 @@ func runFrontendTest(t *testing.T, tc TestCase) {
 		}
 	})
 
-	tc(t, id, reqs, resps, errs)
+	done := make(chan struct{}, 1)
+	eg.Go(func() error {
+		defer close(done)
+		tc(t, id, reqs, resps)
+		return nil
+	})
+
+	select {
+	case <-done:
+	case err := <-errs:
+		require.NoError(t, err)
+	}
 }
 
 func newService(t *testing.T, cfg config.Mutable) {

@@ -2,9 +2,11 @@ package frontend
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"time"
 
+	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -40,6 +42,8 @@ func (s *session) recv() error {
 			return status.Error(codes.Internal, ".Action is nil")
 		case *pb.Request_GetPlayer:
 			err = s.getPlayer(msg)
+		case *pb.Request_StartQueue:
+			err = s.startQueue(msg)
 			// TODO: actually handle the different action types
 		}
 
@@ -179,127 +183,129 @@ end:
 	return nil
 }
 
-// func (s *session) startQueue(req *pb.StartQueueRequest) (*pb.StreamResponse, error) {
-// 	ctx, cancel := context.WithTimeout(s.stream.Context(), requestTimeout)
-// 	defer cancel()
+func (s *session) startQueue(req *pb.Request_StartQueue) error {
+	cfg := req.StartQueue.GetConfig()
+	if cfg == nil {
+		s.out <- &pb.Response{
+			Message: &pb.Response_Error{
+				Error: &rpcstatus.Status{
+					Code:    int32(codes.InvalidArgument),
+					Message: ".Config is required",
+				},
+			},
+		}
+		return nil
+	}
 
-// 	lock := s.srv.store.NewMutex(s.id)
-// 	if err := lock.Lock(ctx); err != nil {
-// 		return nil, err
-// 	}
-// 	defer lock.Unlock(context.Background())
+	if cfg.Gamemode == "" {
+		s.out <- &pb.Response{
+			Message: &pb.Response_Error{
+				Error: &rpcstatus.Status{
+					Code:    int32(codes.InvalidArgument),
+					Message: ".Config.Gamemode is required",
+				},
+			},
+		}
+		return nil
+	}
 
-// 	player, err := s.srv.store.GetPlayer(ctx, s.id)
-// 	if status.Code(err) == codes.NotFound {
-// 		player = &ipb.PlayerDetails{
-// 			PlayerId: s.id,
-// 		}
-// 		err = s.srv.store.CreatePlayer(ctx, player)
-// 	}
+	// TODO: validate config (e.g. check gamemode exists)
 
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	ctx, cancel := context.WithTimeout(s.srv.Context(), requestTimeout)
+	defer cancel()
 
-// 	gameCfg := req.GetConfig()
-// 	if gameCfg == nil {
-// 		return &pb.StreamResponse{
-// 			Message: &pb.StreamResponse_Error{
-// 				Error: &rpcStatus.Status{
-// 					Code:    int32(codes.InvalidArgument),
-// 					Message: ".Config is required",
-// 				},
-// 			},
-// 		}, nil
-// 	}
+	lock := s.statestore.NewMutex(s.id)
+	if err := lock.Lock(ctx); err != nil {
+		return err
+	}
+	// TODO: handle unlock error?
+	defer lock.Unlock(context.Background())
 
-// 	game, err := s.srv.gc.GameDetails(gameCfg.Gamemode)
-// 	if err != nil {
-// 		return nil, status.Error(codes.Internal, err.Error())
-// 	}
+	// Make sure player is not in game and not in queue
+	tid, mid, err := s.statestore.GetPlayer(ctx, s.id)
+	if err != nil {
+		return err
+	}
 
-// 	if game == nil {
-// 		return &pb.StreamResponse{
-// 			Message: &pb.StreamResponse_Error{
-// 				Error: &rpcStatus.Status{
-// 					Code:    int32(codes.InvalidArgument),
-// 					Message: fmt.Sprintf("invalid gamemode: '%s'", gameCfg.Gamemode),
-// 				},
-// 			},
-// 		}, nil
-// 	}
+	if mid != "" {
+		s.out <- &pb.Response{
+			Message: &pb.Response_Error{
+				Error: &rpcstatus.Status{
+					Code:    int32(codes.FailedPrecondition),
+					Message: "Player is in game",
+				},
+			},
+		}
 
-// 	if player.MatchId != nil {
-// 		return &pb.StreamResponse{
-// 			Message: &pb.StreamResponse_Error{
-// 				Error: &rpcStatus.Status{
-// 					Code:    int32(codes.FailedPrecondition),
-// 					Message: "already in game",
-// 				},
-// 			},
-// 		}, nil
-// 	}
+		return nil
+	}
 
-// 	if player.TicketId != nil {
-// 		return &pb.StreamResponse{
-// 			Message: &pb.StreamResponse_Error{
-// 				Error: &rpcStatus.Status{
-// 					Code:    int32(codes.FailedPrecondition),
-// 					Message: "already in queue",
-// 				},
-// 			},
-// 		}, nil
-// 	}
+	if tid != "" {
+		s.out <- &pb.Response{
+			Message: &pb.Response_Error{
+				Error: &rpcstatus.Status{
+					Code:    int32(codes.FailedPrecondition),
+					Message: "Player is in queue",
+				},
+			},
+		}
 
-// 	ticket, err := s.srv.omfc.CreateTicket(ctx, &ipb.TicketDetails{
-// 		PlayerId: player.PlayerId,
-// 		Gamemode: gameCfg.Gamemode,
-// 	})
-// 	if err != nil {
-// 		// TODO: handle error, this probably shouldn't be propagated
-// 		return &pb.StreamResponse{
-// 			Message: &pb.StreamResponse_Error{
-// 				Error: &rpcStatus.Status{
-// 					Code:    int32(status.Code(err)),
-// 					Message: err.Error(),
-// 				},
-// 			},
-// 		}, nil
-// 	}
+		return nil
+	}
 
-// 	players := []string{player.PlayerId}
-// 	err = s.srv.store.TrackTicket(ctx, ticket.Id, players)
-// 	if err != nil {
-// 		// if tracking failed, delete the ticket ...
-// 		go func() {
-// 			// TODO: handle error
-// 			_ = s.srv.omfc.DeleteTicket(context.Background(), player.PlayerId)
-// 		}()
+	ticket, err := s.omfc.CreateTicket(ctx, &pb.TicketDetails{
+		PlayerId: s.id,
+		Config:   cfg,
+	})
+	if err != nil {
+		// TODO: handle error, probably shouldn't propagate to player
+		s.out <- &pb.Response{
+			Message: &pb.Response_Error{
+				Error: &rpcstatus.Status{
+					Code:    int32(codes.Internal),
+					Message: fmt.Sprintf("Failed to create matchmaking ticket: %s", err.Error()),
+				},
+			},
+		}
+	}
 
-// 		return nil, err
-// 	}
+	b, err := s.statestore.SetTicketId(ctx, ticket.Id, []string{s.id})
+	// SetTicketId should never return false because we confirmed tid was not set earlier
+	// but check anyways for sanity
+	if err != nil || !b {
+		// setting ticket id failed -- delete ticket
+		// TODO: handle delete ticket error
+		go s.omfc.DeleteTicket(context.Background(), ticket.Id)
 
-// 	// go s.publish(&pb.StatusUpdate{
-// 	// 	Targets: players,
-// 	// 	Status: &pb.Status{
-// 	// 		State: pb.State_STATE_SEARCHING,
-// 	// 	},
-// 	// })
+		// TODO: handle error, probably shouldn't propagate to player
+		s.out <- &pb.Response{
+			Message: &pb.Response_Error{
+				Error: &rpcstatus.Status{
+					Code:    int32(codes.Internal),
+					Message: fmt.Sprintf("Failed to set ticket id: %s", err.Error()),
+				},
+			},
+		}
+	}
 
-// 	return &pb.StreamResponse{
-// 		Message: &pb.StreamResponse_StatusUpdate{
-// 			StatusUpdate: &pb.Status{
-// 				State: pb.State_STATE_SEARCHING,
-// 				Details: &pb.Status_Searching{
-// 					Searching: &pb.QueueDetails{
-// 						Config:    gameCfg,
-// 						StartTime: ticket.CreateTime,
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}, nil
-// }
+	// TODO: publish status update to broker so friends/party members are notified
+
+	s.out <- &pb.Response{
+		Message: &pb.Response_StatusUpdate{
+			StatusUpdate: &pb.StatusUpdate{
+				Update: &pb.StatusUpdate_QueueStarted{
+					QueueStarted: &pb.QueueAssignment{
+						Id:        ticket.Id,
+						Config:    cfg,
+						StartTime: ticket.CreateTime,
+					},
+				},
+			},
+		},
+	}
+
+	return nil
+}
 
 // func (s *session) stopQueue(req *emptypb.Empty) (*pb.StreamResponse, error) {
 // 	ctx, cancel := context.WithTimeout(s.stream.Context(), requestTimeout)
