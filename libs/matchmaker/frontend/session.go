@@ -44,6 +44,8 @@ func (s *session) recv() error {
 			err = s.getPlayer(msg)
 		case *pb.Request_StartQueue:
 			err = s.startQueue(msg)
+		case *pb.Request_StopQueue:
+			err = s.stopQueue(msg)
 			// TODO: actually handle the different action types
 		}
 
@@ -307,64 +309,52 @@ func (s *session) startQueue(req *pb.Request_StartQueue) error {
 	return nil
 }
 
-// func (s *session) stopQueue(req *emptypb.Empty) (*pb.StreamResponse, error) {
-// 	ctx, cancel := context.WithTimeout(s.stream.Context(), requestTimeout)
-// 	defer cancel()
+func (s *session) stopQueue(req *pb.Request_StopQueue) error {
+	ctx, cancel := context.WithTimeout(s.srv.Context(), requestTimeout)
+	defer cancel()
 
-// 	lock := s.srv.store.NewMutex(s.id)
-// 	if err := lock.Lock(ctx); err != nil {
-// 		return nil, err
-// 	}
-// 	defer lock.Unlock(context.Background())
+	lock := s.statestore.NewMutex(s.id)
+	if err := lock.Lock(ctx); err != nil {
+		return err
+	}
+	// TODO: handle unlock error?
+	defer lock.Unlock(context.Background())
 
-// 	player, err := s.srv.store.GetPlayer(ctx, s.id)
-// 	if status.Code(err) == codes.NotFound {
-// 		return nil, nil
-// 	}
+	tid, _, err := s.statestore.GetPlayer(ctx, s.id)
+	if err != nil {
+		// TODO: handle err
+		return err
+	}
 
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	if tid == "" {
+		return nil
+	}
 
-// 	if player.TicketId == nil {
-// 		return nil, nil
-// 	}
+	err = s.omfc.DeleteTicket(ctx, tid)
+	if err != nil && status.Code(err) != codes.NotFound {
+		// TODO: handle err
+		return err
+	}
 
-// 	err = s.srv.omfc.DeleteTicket(ctx, *player.TicketId)
-// 	if err != nil && status.Code(err) != codes.NotFound {
-// 		return nil, err
-// 	}
+	// TODO: unset for all players on the ticket when that is implemented
+	err = s.statestore.UnsetTicketId(ctx, []string{s.id})
+	if err != nil {
+		// TODO: handle err
+		return err
+	}
 
-// 	// TODO: get relevant players from ticket when multiple players is supported
-// 	players := []string{player.PlayerId}
+	s.out <- &pb.Response{
+		Message: &pb.Response_StatusUpdate{
+			StatusUpdate: &pb.StatusUpdate{
+				Update: &pb.StatusUpdate_QueueStopped{
+					QueueStopped: &pb.QueueStopped{
+						Id:     tid,
+						Reason: pb.Reason_REASON_PLAYER,
+					},
+				},
+			},
+		},
+	}
 
-// 	err = s.srv.store.UntrackTicket(ctx, players)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	// go s.publish(&pb.StatusUpdate{
-// 	// 	Targets: players,
-// 	// 	Status: &pb.Status{
-// 	// 		State: pb.State_STATE_IDLE,
-// 	// 		Details: &pb.Status_Stopped{
-// 	// 			Stopped: &pb.QueueStopped{
-// 	// 				Message: fmt.Sprintf("%s stopped matchmaking", player.PlayerId),
-// 	// 			},
-// 	// 		},
-// 	// 	},
-// 	// })
-
-// 	return &pb.StreamResponse{
-// 		Message: &pb.StreamResponse_StatusUpdate{
-// 			StatusUpdate: &pb.Status{
-// 				State: pb.State_STATE_IDLE,
-// 				Details: &pb.Status_Stopped{
-// 					Stopped: &pb.QueueStopped{
-// 						Message: fmt.Sprintf("%s stopped matchmaking", player.PlayerId),
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}, nil
-// }
+	return nil
+}

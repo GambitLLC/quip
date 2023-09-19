@@ -57,7 +57,7 @@ func TestGetPlayer(t *testing.T) {
 	})
 }
 
-func TestStartQueue(t *testing.T) {
+func TestQueue(t *testing.T) {
 	runFrontendTest(t, func(t *testing.T, id string, reqs chan<- *pb.Request, resps <-chan *pb.Response) {
 		// invalid argument: missing config
 		reqs <- &pb.Request{
@@ -104,6 +104,15 @@ func TestStartQueue(t *testing.T) {
 		require.Equal(t, id, player.Id, "Response should have been for the current player")
 		queue := player.GetQueueAssignment()
 		require.NotNil(t, queue, "Player should be in queue")
+
+		reqs <- &pb.Request{
+			Action: &pb.Request_StopQueue{},
+		}
+
+		resp = requireResponse(t, resps)
+		status = resp.GetStatusUpdate()
+		require.NotNil(t, status, "Response should have returned StatusUpdate")
+		require.NotNil(t, status.GetQueueStopped(), "StatusUpdate should be QueueStopped")
 	})
 }
 
