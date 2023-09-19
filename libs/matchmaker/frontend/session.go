@@ -122,8 +122,23 @@ func (s *session) getPlayer(req *pb.Request_GetPlayer) error {
 	if tid != "" {
 		ticket, err := s.omfc.GetTicket(ctx, tid)
 		if err != nil {
-			// TODO: handle err, e.g. NotFound
+			if status.Code(err) == codes.NotFound {
+				// ticket was deleted already, unset ticket
+				// TODO: handle error
+				go s.statestore.UnsetTicketId(context.Background(), []string{s.id})
+				goto end
+			}
+
+			// TODO: handle err
 			return err
+		}
+
+		// ticket has been assigned, unset ticket
+		if ticket.GetAssignment().GetConnection() != "" {
+			go s.statestore.UnsetTicketId(context.Background(), []string{s.id})
+			// TODO: maybe add a safety check for if the match is ongoing?
+			// should be unnecessary in most cases...
+			goto end
 		}
 
 		details, err := protoext.OpenMatchTicketDetails(ticket)
@@ -151,6 +166,7 @@ func (s *session) getPlayer(req *pb.Request_GetPlayer) error {
 		return nil
 	}
 
+end:
 	s.out <- &pb.Response{
 		Message: &pb.Response_Player{
 			Player: &pb.Player{
@@ -162,124 +178,6 @@ func (s *session) getPlayer(req *pb.Request_GetPlayer) error {
 
 	return nil
 }
-
-// func (s *session) getStatus(req *pb.GetStatusRequest) (*pb.StreamResponse, error) {
-// 	ctx, cancel := context.WithTimeout(s.stream.Context(), requestTimeout)
-// 	defer cancel()
-
-// 	lock := s.srv.store.NewMutex(s.id)
-// 	if err := lock.Lock(ctx); err != nil {
-// 		return nil, err
-// 	}
-// 	defer lock.Unlock(context.Background())
-
-// 	status, err := getStatusDetails(ctx, s.id, s.srv.store, s.srv.omfc)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return &pb.StreamResponse{
-// 		Message: &pb.StreamResponse_StatusUpdate{
-// 			StatusUpdate: status,
-// 		},
-// 	}, nil
-// }
-
-// func getStatusDetails(ctx context.Context, id string, store statestore.Service, omfc *omFrontendClient) (*pb.Status, error) {
-// 	player, err := store.GetPlayer(ctx, id)
-// 	if err != nil {
-// 		if status.Code(err) == codes.NotFound {
-// 			return &pb.Status{
-// 				State: pb.State_STATE_IDLE,
-// 			}, nil
-// 		}
-
-// 		return nil, err
-// 	}
-
-// 	if player.MatchId != nil {
-// 		match, err := store.GetMatch(ctx, *player.MatchId)
-// 		if err != nil {
-// 			if status.Code(err) == codes.NotFound {
-// 				go func() {
-// 					// TODO: handle error
-// 					_ = store.UntrackMatch(context.Background(), []string{player.PlayerId})
-// 				}()
-
-// 				return &pb.Status{
-// 					State: pb.State_STATE_IDLE,
-// 				}, nil
-// 			}
-
-// 			// TODO: handle err instead of propagating
-// 			return nil, err
-// 		}
-
-// 		return &pb.Status{
-// 			State: pb.State_STATE_PLAYING,
-// 			Details: &pb.Status_Matched{
-// 				Matched: &pb.MatchDetails{
-// 					MatchId:    match.MatchId,
-// 					Connection: match.Connection,
-// 				},
-// 			},
-// 		}, nil
-// 	}
-
-// 	if player.TicketId != nil {
-// 		ticket, err := omfc.GetTicket(ctx, *player.TicketId)
-// 		if err != nil {
-// 			if status.Code(err) == codes.NotFound {
-// 				go func() {
-// 					// TODO: handle error
-// 					_ = store.UntrackTicket(context.Background(), []string{player.PlayerId})
-// 				}()
-
-// 				return &pb.Status{
-// 					State: pb.State_STATE_IDLE,
-// 				}, nil
-// 			}
-
-// 			// TODO: handle err instead of propagating
-// 			return nil, err
-// 		}
-
-// 		// if ticket has been assigned, untrack it and assume player is idle
-// 		// OpenMatch should have expired the ticket by this time
-// 		if ticket.GetAssignment().GetConnection() != "" {
-// 			go func() {
-// 				// TODO: handle error
-// 				_ = store.UntrackTicket(context.Background(), []string{player.PlayerId})
-// 			}()
-
-// 			return &pb.Status{
-// 				State: pb.State_STATE_IDLE,
-// 			}, nil
-// 		}
-
-// 		details, err := protoext.OpenMatchTicketDetails(ticket)
-// 		if err != nil {
-// 			// TODO: handle err instead of propagating
-// 			return nil, err
-// 		}
-
-// 		return &pb.Status{
-// 			State: pb.State_STATE_SEARCHING,
-// 			Details: &pb.Status_Searching{
-// 				Searching: &pb.QueueDetails{
-// 					Config: &pb.GameConfiguration{
-// 						Gamemode: details.Gamemode,
-// 					},
-// 					StartTime: ticket.CreateTime,
-// 				},
-// 			},
-// 		}, nil
-// 	}
-
-// 	return &pb.Status{
-// 		State: pb.State_STATE_IDLE,
-// 	}, nil
-// }
 
 // func (s *session) startQueue(req *pb.StartQueueRequest) (*pb.StreamResponse, error) {
 // 	ctx, cancel := context.WithTimeout(s.stream.Context(), requestTimeout)
