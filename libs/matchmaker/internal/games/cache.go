@@ -1,120 +1,141 @@
 package games
 
 import (
-	"fmt"
+	"os"
+	"path/filepath"
+	"sync"
 
-	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
-	ompb "open-match.dev/open-match/pkg/pb"
-
-	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
+	"github.com/fsnotify/fsnotify"
 )
 
-type MatchProfileCache struct {
-	config.Cacher
+type newInstanceFunc func(bs []byte) (obj interface{}, close func(), err error)
+
+// fileCacher is used to cache the construction of some object using a file.
+// It will watch the file for changes and return the new object when changed.
+type fileCacher struct {
+	filename    string
+	newInstance newInstanceFunc
+	m           sync.Mutex
+
+	v            interface{}
+	close        func()
+	onFileChange func(fsnotify.Event)
 }
 
-func NewMatchProfileCache() *MatchProfileCache {
-	newInstance := func(cfg config.View) (interface{}, func(), error) {
-		details, err := parseGameDetails(cfg)
+func newFileCacher(filename string, newInstance newInstanceFunc) *fileCacher {
+	cacher := &fileCacher{
+		filename:    filename,
+		newInstance: newInstance,
+	}
+
+	cacher.watchFile()
+
+	return cacher
+}
+
+func (c *fileCacher) Get() (interface{}, error) {
+	c.m.Lock()
+	defer c.m.Unlock()
+
+	if c.v == nil {
+		c.locklessReset()
+
+		bs, err := os.ReadFile(c.filename)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
+		c.v, c.close, err = c.newInstance(bs)
+		if err != nil {
+			c.locklessReset()
+			return nil, err
+		}
+	}
 
-		profiles := make([]*ompb.MatchProfile, 0, len(details))
-		for name, details := range details {
-			profile := &ompb.MatchProfile{
-				Name: fmt.Sprintf("profile-%s", name),
-				Pools: []*ompb.Pool{
-					{
-						Name: "all",
-						TagPresentFilters: []*ompb.TagPresentFilter{
-							{Tag: fmt.Sprintf("mode.%s", name)},
-						},
-					},
-				},
-				Extensions: make(map[string]*anypb.Any),
+	return c.v, nil
+}
+
+func (c *fileCacher) ForceReset() {
+	c.m.Lock()
+	defer c.m.Unlock()
+	c.locklessReset()
+}
+
+func (c *fileCacher) OnFileChange(f func(fsnotify.Event)) {
+	c.onFileChange = f
+}
+
+func (c *fileCacher) locklessReset() {
+	if c.close != nil {
+		c.close()
+	}
+	c.close = nil
+	c.v = nil
+}
+
+func (c *fileCacher) watchFile() {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		watcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			panic("failed to create new file watcher")
+		}
+		defer watcher.Close()
+
+		file := filepath.Clean(c.filename)
+		dir, _ := filepath.Split(file)
+		// TODO: handle err?
+		realFile, _ := filepath.EvalSymlinks(c.filename)
+
+		watcherWg := sync.WaitGroup{}
+		watcherWg.Add(1)
+		go func() {
+			defer watcherWg.Done()
+			for {
+				select {
+				case event, ok := <-watcher.Events:
+					if !ok {
+						// Events channel closed
+						return
+					}
+
+					currFile, _ := filepath.EvalSymlinks(c.filename)
+					// watch file for the following events:
+					// 1. file was created or modified
+					// 2. real path to file was changed (e.g. k8s config map replacement)
+					if (filepath.Clean(event.Name) == file &&
+						(event.Has(fsnotify.Create) || event.Has(fsnotify.Write))) ||
+						(currFile != "" && currFile != realFile) {
+						realFile = currFile
+
+						c.m.Lock()
+						c.v = nil
+						c.m.Unlock()
+
+						if c.onFileChange != nil {
+							c.onFileChange(event)
+						}
+
+					} else if filepath.Clean(event.Name) == file && event.Has(fsnotify.Remove) {
+						return
+					}
+
+				case err, ok := <-watcher.Errors:
+					if !ok {
+						// Error channel closed
+						return
+					}
+					// TODO: handle err
+					_ = err
+				}
 			}
-			if err := protoext.SetExtensionDetails(profile, details); err != nil {
-				return nil, nil, err
-			}
+		}()
 
-			profiles = append(profiles, profile)
-		}
+		watcher.Add(dir)
+		wg.Done()        // done initializing
+		watcherWg.Wait() // wait for watcher loop to end in this goroutine
+	}()
 
-		return profiles, nil, nil
-	}
-
-	return &MatchProfileCache{
-		Cacher: config.NewFileCacher("games", newInstance),
-	}
-}
-
-func (c *MatchProfileCache) Profiles() ([]*ompb.MatchProfile, error) {
-	profiles, err := c.Cacher.Get()
-	if err != nil {
-		return nil, err
-	}
-
-	return profiles.([]*ompb.MatchProfile), nil
-}
-
-type GameDetailCache struct {
-	config.Cacher
-}
-
-func NewGameDetailCache() *GameDetailCache {
-	newInstance := func(cfg config.View) (interface{}, func(), error) {
-		details, err := parseGameDetails(cfg)
-		return details, nil, err
-	}
-
-	return &GameDetailCache{
-		Cacher: config.NewFileCacher("games", newInstance),
-	}
-}
-
-func (c *GameDetailCache) GameDetails(name string) (*ipb.ProfileDetails, error) {
-	games, err := c.Cacher.Get()
-	if err != nil {
-		return nil, err
-	}
-
-	return games.(map[string]*ipb.ProfileDetails)[name], nil
-}
-
-func parseGameDetails(cfg config.View) (map[string]*ipb.ProfileDetails, error) {
-	games, ok := cfg.Get("games").(map[string]interface{})
-	if !ok {
-		return nil, errors.New("failed to read 'games' from config")
-	}
-
-	gameDetails := make(map[string]*ipb.ProfileDetails, len(games))
-
-	for name, details := range games {
-		detailMap, ok := details.(map[string]interface{})
-		if !ok {
-			return nil, errors.Errorf("'games.%s' is malformed: should be map", name)
-		}
-
-		teams, ok := detailMap["teams"].(int)
-		if !ok || teams <= 0 {
-			return nil, errors.Errorf("'games.%s' is missing valid teams value: should be int >= 0", name)
-		}
-
-		players, ok := detailMap["players"].(int)
-		if !ok || players <= 0 {
-			return nil, errors.Errorf("'games.%s' is missing valid players value: should be int >= 0", name)
-		}
-
-		gameDetails[name] = &ipb.ProfileDetails{
-			Gamemode: name,
-			Teams:    uint32(teams),
-			Players:  uint32(players),
-		}
-	}
-
-	return gameDetails, nil
+	// wait for watcher to finish initializing
+	wg.Wait()
 }
