@@ -7,42 +7,8 @@ import (
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
-	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/GambitLLC/quip/libs/rpc"
 )
-
-type backendClient struct {
-	cacher config.Cacher
-}
-
-func newBackendClient(cfg config.View) *backendClient {
-	var newInstance config.NewInstanceFunc = func(cfg config.View) (interface{}, func(), error) {
-		conn, err := rpc.GRPCClientFromConfig(cfg, "matchmaker.backend")
-		if err != nil {
-			return nil, nil, err
-		}
-
-		close := func() {
-			// TODO: handle error
-			_ = conn.Close()
-		}
-
-		return pb.NewBackendClient(conn), close, nil
-	}
-
-	return &backendClient{
-		cacher: config.NewViewCacher(cfg, newInstance),
-	}
-}
-
-func (bc *backendClient) AllocateMatch(ctx context.Context, req *pb.AllocateMatchRequest) (*pb.MatchDetails, error) {
-	client, err := bc.cacher.Get()
-	if err != nil {
-		return nil, err
-	}
-
-	return client.(pb.BackendClient).AllocateMatch(ctx, req)
-}
 
 // omBackendClient caches an open match BackendServiceClient.
 type omBackendClient struct {

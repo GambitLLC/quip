@@ -134,13 +134,13 @@ func makeMatches(p *ompb.MatchProfile, poolTickets map[string][]*ompb.Ticket) ([
 func CreateMatchRoster(tickets []*ompb.Ticket) (*pb.MatchRoster, error) {
 	// teams := make([]*pb.MatchDetails_Team, len(tickets))
 	players := make([]string, len(tickets))
-	for _, ticket := range tickets {
+	for i, ticket := range tickets {
 		details, err := protoext.OpenMatchTicketDetails(ticket)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "failed to read details on ticket '%s", ticket.Id)
 		}
 
-		players = append(players, details.PlayerId)
+		players[i] = details.PlayerId
 	}
 
 	return &pb.MatchRoster{

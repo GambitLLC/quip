@@ -11,8 +11,8 @@ import (
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/appmain"
-	"github.com/GambitLLC/quip/libs/broker"
 	"github.com/GambitLLC/quip/libs/config"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/broker"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
@@ -28,9 +28,8 @@ type Service struct {
 	cfg       config.View
 	store     statestore.Service
 	omBackend *omBackendClient
-	backend   *backendClient
-	broker    broker.Client
-	pc        *games.MatchProfileCache
+	broker    *broker.RedisBroker
+	profiles  *games.MatchProfileCache
 }
 
 func New(cfg config.View) appmain.Daemon {
@@ -38,9 +37,8 @@ func New(cfg config.View) appmain.Daemon {
 		cfg:       cfg,
 		store:     statestore.New(cfg),
 		omBackend: newOMBackendClient(cfg),
-		backend:   newBackendClient(cfg),
-		broker:    broker.NewRedis(cfg),
-		pc:        games.NewMatchProfileCache(),
+		broker:    broker.NewRedisBroker(cfg),
+		profiles:  games.NewMatchProfileCache(cfg.GetString("matchmaker.gamesFile")),
 	}
 }
 
@@ -54,7 +52,7 @@ func (s *Service) Start(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			profiles, err := s.pc.Profiles()
+			profiles, err := s.profiles.Get()
 			if err != nil {
 				return err
 			}
@@ -105,19 +103,12 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 		return err
 	}
 
-	resp, err := s.backend.AllocateMatch(ctx, &pb.AllocateMatchRequest{
-		MatchId: match.MatchId,
-		GameConfig: &pb.GameConfiguration{
-			Gamemode: details.GetConfig().Gamemode,
-		},
-		Roster: &pb.MatchRoster{
-			Players: details.GetRoster().Players,
-		},
-	})
+	if details.GetMatchId() == "" {
+		return errors.Errorf("match details is missing match id: %v", details)
+	}
 
-	if err != nil {
-		// TODO: release tickets
-		return err
+	if len(details.GetRoster().GetPlayers()) == 0 {
+		return errors.Errorf("match details has zero length players: %v", details)
 	}
 
 	ticketIds := make([]string, len(match.Tickets))
@@ -125,14 +116,41 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 		ticketIds[i] = ticket.Id
 	}
 
-	go s.broker.PublishStatusUpdate(context.Background(), &pb.StatusUpdate{
-		Targets: details.GetRoster().Players,
-		Status: &pb.Status{
-			State: pb.State_STATE_PLAYING,
-			Details: &pb.Status_Matched{
-				Matched: &pb.MatchDetails{
-					MatchId:    match.MatchId,
-					Connection: resp.Connection,
+	b, err := s.store.SetMatchId(ctx, details.MatchId, details.Roster.Players)
+	if err != nil {
+		// TODO: release tickets
+		return err
+	}
+
+	if !b {
+		// TODO: release tickets
+		return errors.New("failed to set match id for some players")
+	}
+
+	// TODO: allocate match
+
+	// resp, err := s.backend.AllocateMatch(ctx, &pb.AllocateMatchRequest{
+	// 	MatchId: match.MatchId,
+	// 	GameConfig: &pb.GameConfiguration{
+	// 		Gamemode: details.GetConfig().Gamemode,
+	// 	},
+	// 	Roster: &pb.MatchRoster{
+	// 		Players: details.GetRoster().Players,
+	// 	},
+	// })
+
+	// if err != nil {
+	// 	// TODO: release tickets
+	// 	return err
+	// }
+
+	// TODO: handle publish error
+	go s.broker.Publish(context.Background(), broker.StatusUpdateRoute, &pb.StatusUpdateMessage{
+		Targets: details.Roster.Players,
+		Update: &pb.StatusUpdate{
+			Update: &pb.StatusUpdate_MatchFound{
+				MatchFound: &pb.MatchFound{
+					MatchId: details.MatchId,
 				},
 			},
 		},
@@ -143,7 +161,7 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 			{
 				TicketIds: ticketIds,
 				Assignment: &ompb.Assignment{
-					Connection: resp.Connection,
+					Connection: "temporary connection",
 				},
 			},
 		},

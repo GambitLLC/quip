@@ -13,74 +13,53 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	ompb "open-match.dev/open-match/pkg/pb"
 
+	"github.com/GambitLLC/quip/libs/appmain"
+	"github.com/GambitLLC/quip/libs/appmain/apptest"
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/ipb"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/broker"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
-	statestoreTesting "github.com/GambitLLC/quip/libs/matchmaker/internal/statestore/testing"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/test"
 	"github.com/GambitLLC/quip/libs/matchmaker/matchfunction"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
 func TestMatchFound(t *testing.T) {
-	srv := newService(t)
+	cfg := viper.New()
+	newService(t, cfg)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	updates, close, err := srv.broker.ConsumeStatusUpdate(ctx)
-	require.NoError(t, err, "ConsumeStatusUpdate failed")
-	t.Cleanup(func() { _ = close() })
-
-	errs := make(chan error, 1)
-
-	go func() {
-		if err := srv.Start(ctx); err != nil {
-			errs <- err
-		}
-	}()
+	b := broker.NewRedisBroker(cfg)
+	statusSub := b.SubscribeStatusUpdate(ctx)
+	t.Cleanup(func() { _ = statusSub.Close() })
 
 	for {
 		select {
 		case <-ctx.Done():
-			t.Fatal("test finished without receiving match found update")
-		case err := <-errs:
-			t.Fatalf("service.Start failed: %s", err.Error())
-		case update, ok := <-updates:
+			t.Fatal("test timed out without receiving match found update")
+		case update, ok := <-statusSub.Channel():
 			if !ok {
 				t.Fatal("queue update channel closed")
 			}
 
 			// got some match found, test finished
-			if update.GetStatus().GetMatched() != nil {
+			if update.GetUpdate().GetMatchFound() != nil {
 				return
 			}
 		}
 	}
 }
 
-func newService(t *testing.T) *Service {
-	cfg := viper.New()
-
-	_ = statestoreTesting.NewService(t, cfg)
-	cfg.Set("broker.hostname", cfg.Get("matchmaker.redis.hostname"))
-	cfg.Set("broker.port", cfg.Get("matchmaker.redis.port"))
-
+func newService(t *testing.T, cfg config.Mutable) {
+	test.NewRedis(t, cfg)
+	test.NewGamesFile(t, cfg)
 	newOMBackend(t, cfg)
-	newBackend(t, cfg)
 
-	srv := New(cfg).(*Service)
-
-	srv.pc = &games.MatchProfileCache{
-		Cacher: config.NewViewCacher(cfg, func(cfg config.View) (interface{}, func(), error) {
-			return []*ompb.MatchProfile{
-				{
-					Name: "all",
-				},
-			}, nil, nil
-		}),
-	}
-
-	return srv
+	apptest.TestDaemon(t, cfg, func(v config.View) appmain.Daemon {
+		svc := New(cfg)
+		return svc
+	})
 }
 
 func newOMBackend(t *testing.T, cfg config.Mutable) {
@@ -90,20 +69,31 @@ func newOMBackend(t *testing.T, cfg config.Mutable) {
 	_, port, err := net.SplitHostPort(ln.Addr().String())
 	require.NoError(t, err, "net.SplitHostPort failed")
 
-	cfg.Set("openmatch.backend.hostname", "localhost")
-	cfg.Set("openmatch.backend.port", port)
+	services := []string{
+		apptest.ServiceName,
+		"openmatch.backend",
+	}
+	for _, svc := range services {
+		cfg.Set(svc+".hostname", "localhost")
+		cfg.Set(svc+".port", port)
+	}
 
-	s := grpc.NewServer()
-	ompb.RegisterBackendServiceServer(s, &stubOMBackendService{})
+	apptest.TestGRPCService(
+		t,
+		cfg,
+		[]net.Listener{ln},
+		BindOpenMatchBackend,
+	)
+}
 
-	go func() {
-		err := s.Serve(ln)
-		if err != nil {
-			t.Error(err)
-		}
-	}()
+func BindOpenMatchBackend(cfg config.View, b *appmain.GRPCBindings) error {
+	svc := &stubOMBackendService{}
 
-	t.Cleanup(s.Stop)
+	b.AddHandler(func(s *grpc.Server) {
+		ompb.RegisterBackendServiceServer(s, svc)
+	})
+
+	return nil
 }
 
 type stubOMBackendService struct {
@@ -120,9 +110,11 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 			Extensions: make(map[string]*anypb.Any),
 		}
 
-		details := &ipb.TicketDetails{
+		details := &pb.TicketDetails{
 			PlayerId: xid.New().String(),
-			Gamemode: "test",
+			Config: &pb.QueueConfiguration{
+				Gamemode: "test",
+			},
 		}
 
 		if err := protoext.SetExtensionDetails(ticket, details); err != nil {
@@ -144,10 +136,10 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 		Tickets:       tickets,
 		Extensions:    make(map[string]*anypb.Any),
 	}
-	err = protoext.SetExtensionDetails(match, &ipb.MatchDetails{
+	err = protoext.SetExtensionDetails(match, &pb.MatchDetails{
 		MatchId: match.MatchId,
 		Roster:  roster,
-		Config: &ipb.MatchDetails_GameConfiguration{
+		Config: &pb.MatchConfiguration{
 			Gamemode: "test",
 		},
 	})
@@ -163,35 +155,4 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 
 func (s *stubOMBackendService) AssignTickets(context.Context, *ompb.AssignTicketsRequest) (*ompb.AssignTicketsResponse, error) {
 	return &ompb.AssignTicketsResponse{}, nil
-}
-
-func newBackend(t *testing.T, cfg config.Mutable) {
-	ln, err := net.Listen("tcp", ":0")
-	require.NoError(t, err, "net.Listen failed")
-
-	_, port, err := net.SplitHostPort(ln.Addr().String())
-	require.NoError(t, err, "net.SplitHostPort failed")
-
-	cfg.Set("matchmaker.backend.hostname", "localhost")
-	cfg.Set("matchmaker.backend.port", port)
-
-	s := grpc.NewServer()
-	pb.RegisterBackendServer(s, &stubBackendService{})
-
-	go func() {
-		err := s.Serve(ln)
-		if err != nil {
-			t.Error(err)
-		}
-	}()
-
-	t.Cleanup(s.Stop)
-}
-
-type stubBackendService struct {
-	pb.UnimplementedBackendServer
-}
-
-func (s *stubBackendService) AllocateMatch(ctx context.Context, req *pb.AllocateMatchRequest) (*pb.MatchDetails, error) {
-	return &pb.MatchDetails{MatchId: req.MatchId, Connection: "127.0.0.1:27394"}, nil
 }
