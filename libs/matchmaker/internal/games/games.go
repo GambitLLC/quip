@@ -16,6 +16,8 @@ type GameListingCache struct {
 	*fileCacher
 }
 
+// NewGameListingCache reads a GameListing from filename as a JSON object.
+// Will automatically update whenever filename is changed.
 func NewGameListingCache(filename string) *GameListingCache {
 	newInstance := func(bs []byte) (obj interface{}, close func(), err error) {
 		obj = GameListing{}

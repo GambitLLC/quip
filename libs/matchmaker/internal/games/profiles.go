@@ -15,6 +15,9 @@ type MatchProfileCache struct {
 	*fileCacher
 }
 
+// NewGameListingCache reads a GameListing from filename as a JSON object
+// and constructs Open Match profiles for every game.
+// Will automatically update whenever filename is changed.
 func NewMatchProfileCache(filename string) *MatchProfileCache {
 	newInstance := func(bs []byte) (obj interface{}, close func(), err error) {
 		listing := GameListing{}
