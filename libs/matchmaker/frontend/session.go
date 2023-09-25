@@ -11,14 +11,13 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
+	"github.com/pkg/errors"
 )
 
 type session struct {
-	srv        pb.QuipFrontend_ConnectServer
-	statestore statestore.Service
-	omfc       *omFrontendClient
+	srv pb.QuipFrontend_ConnectServer
+	svc *Service
 
 	id  string
 	out chan *pb.Response
@@ -37,21 +36,20 @@ func (s *session) recv() error {
 
 		switch msg := in.Action.(type) {
 		default:
-			return status.Errorf(codes.Internal, ".Action type '%T' is not supported", msg)
+			return status.Errorf(codes.InvalidArgument, ".Action type '%T' is not supported", msg)
 		case nil:
-			return status.Error(codes.Internal, ".Action is nil")
+			return status.Error(codes.InvalidArgument, ".Action is nil")
 		case *pb.Request_GetPlayer:
 			err = s.getPlayer(msg)
 		case *pb.Request_StartQueue:
 			err = s.startQueue(msg)
 		case *pb.Request_StopQueue:
 			err = s.stopQueue(msg)
-			// TODO: actually handle the different action types
 		}
 
-		// TODO: handle err
 		if err != nil {
-			return err
+			logger.Err(err).Msgf("Failed to handle %T: %v", in.Action, in.Action)
+			return status.Error(codes.Internal, "action failed to complete")
 		}
 	}
 }
@@ -92,14 +90,14 @@ func (s *session) getPlayer(req *pb.Request_GetPlayer) error {
 	ctx, cancel := context.WithTimeout(s.srv.Context(), requestTimeout)
 	defer cancel()
 
-	lock := s.statestore.NewMutex(s.id)
+	lock := s.svc.statestore.NewMutex(s.id)
 	if err := lock.Lock(ctx); err != nil {
 		return err
 	}
 	// TODO: handle unlock error?
 	defer lock.Unlock(context.Background())
 
-	tid, mid, err := s.statestore.GetPlayer(ctx, s.id)
+	tid, mid, err := s.svc.statestore.GetPlayer(ctx, s.id)
 	if err != nil {
 		return err
 	}
@@ -126,12 +124,11 @@ func (s *session) getPlayer(req *pb.Request_GetPlayer) error {
 	}
 
 	if tid != "" {
-		ticket, err := s.omfc.GetTicket(ctx, tid)
+		ticket, err := s.svc.omfc.GetTicket(ctx, tid)
 		if err != nil {
 			if status.Code(err) == codes.NotFound {
 				// ticket was deleted already, unset ticket
-				// TODO: handle error
-				go s.statestore.UnsetTicketId(context.Background(), []string{s.id})
+				go s.svc.statestore.UnsetTicketId(context.Background(), []string{s.id})
 				goto end
 			}
 
@@ -141,7 +138,7 @@ func (s *session) getPlayer(req *pb.Request_GetPlayer) error {
 
 		// ticket has been assigned, unset ticket
 		if ticket.GetAssignment().GetConnection() != "" {
-			go s.statestore.UnsetTicketId(context.Background(), []string{s.id})
+			go s.svc.statestore.UnsetTicketId(context.Background(), []string{s.id})
 			// TODO: maybe add a safety check for if the match is ongoing?
 			// should be unnecessary in most cases...
 			goto end
@@ -211,12 +208,29 @@ func (s *session) startQueue(req *pb.Request_StartQueue) error {
 		return nil
 	}
 
-	// TODO: validate config (e.g. check gamemode exists)
+	gamesListing, err := s.svc.games.Get()
+	if err != nil {
+		return errors.WithMessage(err, "failed to get game listing")
+	}
+
+	// TODO: when parties are available, confirm party size < team size
+	_, ok := gamesListing[cfg.Gamemode]
+	if !ok {
+		s.out <- &pb.Response{
+			Message: &pb.Response_Error{
+				Error: &rpcstatus.Status{
+					Code:    int32(codes.InvalidArgument),
+					Message: fmt.Sprintf("invalid gamemode '%s'", cfg.Gamemode),
+				},
+			},
+		}
+		return nil
+	}
 
 	ctx, cancel := context.WithTimeout(s.srv.Context(), requestTimeout)
 	defer cancel()
 
-	lock := s.statestore.NewMutex(s.id)
+	lock := s.svc.statestore.NewMutex(s.id)
 	if err := lock.Lock(ctx); err != nil {
 		return err
 	}
@@ -224,7 +238,7 @@ func (s *session) startQueue(req *pb.Request_StartQueue) error {
 	defer lock.Unlock(context.Background())
 
 	// Make sure player is not in game and not in queue
-	tid, mid, err := s.statestore.GetPlayer(ctx, s.id)
+	tid, mid, err := s.svc.statestore.GetPlayer(ctx, s.id)
 	if err != nil {
 		return err
 	}
@@ -255,7 +269,7 @@ func (s *session) startQueue(req *pb.Request_StartQueue) error {
 		return nil
 	}
 
-	ticket, err := s.omfc.CreateTicket(ctx, &pb.TicketDetails{
+	ticket, err := s.svc.omfc.CreateTicket(ctx, &pb.TicketDetails{
 		PlayerId: s.id,
 		Config:   cfg,
 	})
@@ -271,13 +285,13 @@ func (s *session) startQueue(req *pb.Request_StartQueue) error {
 		}
 	}
 
-	b, err := s.statestore.SetTicketId(ctx, ticket.Id, []string{s.id})
+	b, err := s.svc.statestore.SetTicketId(ctx, ticket.Id, []string{s.id})
 	// SetTicketId should never return false because we confirmed tid was not set earlier
 	// but check anyways for sanity
 	if err != nil || !b {
 		// setting ticket id failed -- delete ticket
 		// TODO: handle delete ticket error
-		go s.omfc.DeleteTicket(context.Background(), ticket.Id)
+		go s.svc.omfc.DeleteTicket(context.Background(), ticket.Id)
 
 		// TODO: handle error, probably shouldn't propagate to player
 		s.out <- &pb.Response{
@@ -313,14 +327,14 @@ func (s *session) stopQueue(req *pb.Request_StopQueue) error {
 	ctx, cancel := context.WithTimeout(s.srv.Context(), requestTimeout)
 	defer cancel()
 
-	lock := s.statestore.NewMutex(s.id)
+	lock := s.svc.statestore.NewMutex(s.id)
 	if err := lock.Lock(ctx); err != nil {
 		return err
 	}
 	// TODO: handle unlock error?
 	defer lock.Unlock(context.Background())
 
-	tid, _, err := s.statestore.GetPlayer(ctx, s.id)
+	tid, _, err := s.svc.statestore.GetPlayer(ctx, s.id)
 	if err != nil {
 		// TODO: handle err
 		return err
@@ -330,14 +344,14 @@ func (s *session) stopQueue(req *pb.Request_StopQueue) error {
 		return nil
 	}
 
-	err = s.omfc.DeleteTicket(ctx, tid)
+	err = s.svc.omfc.DeleteTicket(ctx, tid)
 	if err != nil && status.Code(err) != codes.NotFound {
 		// TODO: handle err
 		return err
 	}
 
 	// TODO: unset for all players on the ticket when that is implemented
-	err = s.statestore.UnsetTicketId(ctx, []string{s.id})
+	err = s.svc.statestore.UnsetTicketId(ctx, []string{s.id})
 	if err != nil {
 		// TODO: handle err
 		return err

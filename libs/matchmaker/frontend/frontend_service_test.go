@@ -79,6 +79,20 @@ func TestQueue(t *testing.T) {
 		err = requireError(t, resps)
 		require.EqualValues(t, codes.InvalidArgument, err.Code, "Error code should have been InvalidArgument")
 
+		// invalid argument: invalid gamemode
+		reqs <- &pb.Request{
+			Action: &pb.Request_StartQueue{
+				StartQueue: &pb.StartQueue{
+					Config: &pb.QueueConfiguration{
+						Gamemode: xid.New().String(),
+					},
+				},
+			},
+		}
+
+		err = requireError(t, resps)
+		require.EqualValues(t, codes.InvalidArgument, err.Code, "Error code should have been InvalidArgument")
+
 		reqs <- &pb.Request{
 			Action: &pb.Request_StartQueue{
 				StartQueue: &pb.StartQueue{
@@ -116,6 +130,7 @@ func TestQueue(t *testing.T) {
 	})
 }
 
+// TODO: this test fails occasionally -- figure out why
 func TestBrokerMessages(t *testing.T) {
 	tt := []struct {
 		name     string
@@ -351,6 +366,7 @@ func runFrontendTest(t *testing.T, tc TestCase) {
 
 func newService(t *testing.T, cfg config.Mutable) {
 	test.NewRedis(t, cfg)
+	test.NewGamesFile(t, cfg)
 
 	ln, err := net.Listen("tcp", ":0")
 	require.NoError(t, err, "net.Listen failed")

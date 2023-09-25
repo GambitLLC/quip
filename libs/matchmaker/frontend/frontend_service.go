@@ -14,6 +14,7 @@ import (
 
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/broker"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
@@ -26,6 +27,7 @@ type Service struct {
 	sessionMapLock sync.RWMutex
 	idToChan       map[string]chan *pb.Response
 
+	games      *games.GameListingCache
 	statestore statestore.Service
 	omfc       *omFrontendClient
 
@@ -36,6 +38,7 @@ type Service struct {
 func NewQuipService(cfg config.View) *Service {
 	srv := &Service{
 		idToChan:   make(map[string]chan *pb.Response),
+		games:      games.NewGameListingCache(cfg.GetString("matchmaker.gamesFile")),
 		statestore: statestore.New(cfg),
 		omfc:       newOmFrontendClient(cfg),
 		closed:     make(chan struct{}),
@@ -172,11 +175,10 @@ func (s *Service) createSession(srv pb.QuipFrontend_ConnectServer) (*session, er
 	s.idToChan[id] = ch
 
 	return &session{
-		srv:        srv,
-		statestore: s.statestore,
-		omfc:       s.omfc,
-		id:         id,
-		out:        ch,
+		srv: srv,
+		svc: s,
+		id:  id,
+		out: ch,
 	}, nil
 }
 

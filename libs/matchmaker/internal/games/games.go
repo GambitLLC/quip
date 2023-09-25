@@ -1,6 +1,8 @@
 package games
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // GameListing is a map of gamemode names to GameDetails
 type GameListing map[string]GameDetails
@@ -20,9 +22,9 @@ type GameListingCache struct {
 // Will automatically update whenever filename is changed.
 func NewGameListingCache(filename string) *GameListingCache {
 	newInstance := func(bs []byte) (obj interface{}, close func(), err error) {
-		obj = GameListing{}
-		err = json.Unmarshal(bs, &obj)
-		return
+		listing := GameListing{}
+		err = json.Unmarshal(bs, &listing)
+		return listing, nil, err
 	}
 
 	return &GameListingCache{

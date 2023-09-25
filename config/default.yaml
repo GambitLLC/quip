@@ -13,6 +13,7 @@ api:
     rootCertificateFile:
 
 matchmaker:
+  gamesFile: config/games.json
   frontend:
     hostname:
     port: 50051
