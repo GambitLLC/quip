@@ -21,7 +21,6 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	QuipManager_CreateMatch_FullMethodName = "/quip.matchmaker.QuipManager/CreateMatch"
-	QuipManager_StartMatch_FullMethodName  = "/quip.matchmaker.QuipManager/StartMatch"
 	QuipManager_CancelMatch_FullMethodName = "/quip.matchmaker.QuipManager/CancelMatch"
 	QuipManager_FinishMatch_FullMethodName = "/quip.matchmaker.QuipManager/FinishMatch"
 )
@@ -33,9 +32,6 @@ type QuipManagerClient interface {
 	// CreateMatch should be called by gameservers when they are allocated. It will attempt
 	// to mark all players in the roster as participants in the match.
 	CreateMatch(ctx context.Context, in *CreateMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// StartMatch should be called when gameservers actually begin play.
-	// For matches with a wager, this means after collecting the wager from all players.
-	StartMatch(ctx context.Context, in *StartMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// CancelMatch should be called if gameservers do not start play for any reason.
 	CancelMatch(ctx context.Context, in *CancelMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// FinishMatch should be called when gameservers finish play.
@@ -53,15 +49,6 @@ func NewQuipManagerClient(cc grpc.ClientConnInterface) QuipManagerClient {
 func (c *quipManagerClient) CreateMatch(ctx context.Context, in *CreateMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, QuipManager_CreateMatch_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *quipManagerClient) StartMatch(ctx context.Context, in *StartMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, QuipManager_StartMatch_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -93,9 +80,6 @@ type QuipManagerServer interface {
 	// CreateMatch should be called by gameservers when they are allocated. It will attempt
 	// to mark all players in the roster as participants in the match.
 	CreateMatch(context.Context, *CreateMatchRequest) (*emptypb.Empty, error)
-	// StartMatch should be called when gameservers actually begin play.
-	// For matches with a wager, this means after collecting the wager from all players.
-	StartMatch(context.Context, *StartMatchRequest) (*emptypb.Empty, error)
 	// CancelMatch should be called if gameservers do not start play for any reason.
 	CancelMatch(context.Context, *CancelMatchRequest) (*emptypb.Empty, error)
 	// FinishMatch should be called when gameservers finish play.
@@ -108,9 +92,6 @@ type UnimplementedQuipManagerServer struct {
 
 func (UnimplementedQuipManagerServer) CreateMatch(context.Context, *CreateMatchRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateMatch not implemented")
-}
-func (UnimplementedQuipManagerServer) StartMatch(context.Context, *StartMatchRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StartMatch not implemented")
 }
 func (UnimplementedQuipManagerServer) CancelMatch(context.Context, *CancelMatchRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelMatch not implemented")
@@ -144,24 +125,6 @@ func _QuipManager_CreateMatch_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(QuipManagerServer).CreateMatch(ctx, req.(*CreateMatchRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _QuipManager_StartMatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StartMatchRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QuipManagerServer).StartMatch(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: QuipManager_StartMatch_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QuipManagerServer).StartMatch(ctx, req.(*StartMatchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -212,10 +175,6 @@ var QuipManager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateMatch",
 			Handler:    _QuipManager_CreateMatch_Handler,
-		},
-		{
-			MethodName: "StartMatch",
-			Handler:    _QuipManager_StartMatch_Handler,
 		},
 		{
 			MethodName: "CancelMatch",

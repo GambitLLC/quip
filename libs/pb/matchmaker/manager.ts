@@ -23,10 +23,6 @@ export interface CreateMatchRequest {
   roster: MatchRoster | undefined;
 }
 
-export interface StartMatchRequest {
-  matchId: string;
-}
-
 export interface CancelMatchRequest {
   matchId: string;
 }
@@ -126,64 +122,6 @@ export const CreateMatchRequest = {
     message.roster = (object.roster !== undefined && object.roster !== null)
       ? MatchRoster.fromPartial(object.roster)
       : undefined;
-    return message;
-  },
-};
-
-function createBaseStartMatchRequest(): StartMatchRequest {
-  return { matchId: "" };
-}
-
-export const StartMatchRequest = {
-  encode(message: StartMatchRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.matchId !== "") {
-      writer.uint32(10).string(message.matchId);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): StartMatchRequest {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseStartMatchRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.matchId = reader.string();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): StartMatchRequest {
-    return { matchId: isSet(object.matchId) ? String(object.matchId) : "" };
-  },
-
-  toJSON(message: StartMatchRequest): unknown {
-    const obj: any = {};
-    if (message.matchId !== "") {
-      obj.matchId = message.matchId;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<StartMatchRequest>, I>>(base?: I): StartMatchRequest {
-    return StartMatchRequest.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<StartMatchRequest>, I>>(object: I): StartMatchRequest {
-    const message = createBaseStartMatchRequest();
-    message.matchId = object.matchId ?? "";
     return message;
   },
 };
@@ -342,19 +280,6 @@ export const QuipManagerService = {
     responseSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
     responseDeserialize: (value: Buffer) => Empty.decode(value),
   },
-  /**
-   * StartMatch should be called when gameservers actually begin play.
-   * For matches with a wager, this means after collecting the wager from all players.
-   */
-  startMatch: {
-    path: "/quip.matchmaker.QuipManager/StartMatch",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: StartMatchRequest) => Buffer.from(StartMatchRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer) => StartMatchRequest.decode(value),
-    responseSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
-    responseDeserialize: (value: Buffer) => Empty.decode(value),
-  },
   /** CancelMatch should be called if gameservers do not start play for any reason. */
   cancelMatch: {
     path: "/quip.matchmaker.QuipManager/CancelMatch",
@@ -383,11 +308,6 @@ export interface QuipManagerServer extends UntypedServiceImplementation {
    * to mark all players in the roster as participants in the match.
    */
   createMatch: handleUnaryCall<CreateMatchRequest, Empty>;
-  /**
-   * StartMatch should be called when gameservers actually begin play.
-   * For matches with a wager, this means after collecting the wager from all players.
-   */
-  startMatch: handleUnaryCall<StartMatchRequest, Empty>;
   /** CancelMatch should be called if gameservers do not start play for any reason. */
   cancelMatch: handleUnaryCall<CancelMatchRequest, Empty>;
   /** FinishMatch should be called when gameservers finish play. */
@@ -410,25 +330,6 @@ export interface QuipManagerClient extends Client {
   ): ClientUnaryCall;
   createMatch(
     request: CreateMatchRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: Empty) => void,
-  ): ClientUnaryCall;
-  /**
-   * StartMatch should be called when gameservers actually begin play.
-   * For matches with a wager, this means after collecting the wager from all players.
-   */
-  startMatch(
-    request: StartMatchRequest,
-    callback: (error: ServiceError | null, response: Empty) => void,
-  ): ClientUnaryCall;
-  startMatch(
-    request: StartMatchRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: Empty) => void,
-  ): ClientUnaryCall;
-  startMatch(
-    request: StartMatchRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: Empty) => void,

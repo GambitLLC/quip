@@ -12,10 +12,6 @@ service QuipManager {
   // to mark all players in the roster as participants in the match.
   rpc CreateMatch(CreateMatchRequest) returns (google.protobuf.Empty);
 
-  // StartMatch should be called when gameservers actually begin play.
-  // For matches with a wager, this means after collecting the wager from all players.
-  rpc StartMatch(StartMatchRequest) returns (google.protobuf.Empty);
-
   // CancelMatch should be called if gameservers do not start play for any reason.
   rpc CancelMatch(CancelMatchRequest) returns (google.protobuf.Empty);
 
@@ -27,10 +23,6 @@ message CreateMatchRequest {
   string match_id = 1;
   MatchConfiguration config = 2;
   MatchRoster roster = 3;
-}
-
-message StartMatchRequest {
-  string match_id = 1;
 }
 
 message CancelMatchRequest {

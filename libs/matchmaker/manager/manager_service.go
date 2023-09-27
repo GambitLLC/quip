@@ -95,24 +95,6 @@ func (s *Service) CreateMatch(ctx context.Context, req *pb.CreateMatchRequest) (
 	return &emptypb.Empty{}, nil
 }
 
-// StartMatch should be called when gameservers actually begin play.
-// For matches with a wager, this means after collecting the wager from all players.
-func (s *Service) StartMatch(ctx context.Context, req *pb.StartMatchRequest) (*emptypb.Empty, error) {
-	// TODO: update match state in statestore
-	go s.broker.Publish(context.Background(), broker.StatusUpdateRoute, &pb.StatusUpdateMessage{
-		Targets: []string{}, // TODO: get targets from statestore
-		Update: &pb.StatusUpdate{
-			Update: &pb.StatusUpdate_MatchStarted{
-				MatchStarted: &pb.MatchStarted{
-					MatchId: req.MatchId,
-				},
-			},
-		},
-	})
-
-	return &emptypb.Empty{}, nil
-}
-
 // CancelMatch should be called if gameservers do not start play for any reason.
 func (s *Service) CancelMatch(ctx context.Context, req *pb.CancelMatchRequest) (*emptypb.Empty, error) {
 	// TODO: update match state in statestore
