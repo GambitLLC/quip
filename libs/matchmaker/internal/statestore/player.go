@@ -34,12 +34,12 @@ func (rb *redisBackend) SetTicketId(ctx context.Context, id string, players []st
 }
 
 func (rb *redisBackend) UnsetTicketId(ctx context.Context, players []string) error {
-	vals := make([]string, len(players))
+	keys := make([]string, len(players))
 	for i, player := range players {
-		vals[i] = fmt.Sprintf(ticketIdFmt, player)
+		keys[i] = fmt.Sprintf(ticketIdFmt, player)
 	}
 
-	return rb.redisClient.Del(ctx, vals...).Err()
+	return rb.redisClient.Del(ctx, keys...).Err()
 }
 
 func (rb *redisBackend) SetMatchId(ctx context.Context, id string, players []string) (bool, error) {
@@ -53,10 +53,30 @@ func (rb *redisBackend) SetMatchId(ctx context.Context, id string, players []str
 }
 
 func (rb *redisBackend) UnsetMatchId(ctx context.Context, players []string) error {
-	vals := make([]string, len(players))
+	keys := make([]string, len(players))
 	for i, player := range players {
-		vals[i] = fmt.Sprintf(matchIdFmt, player)
+		keys[i] = fmt.Sprintf(matchIdFmt, player)
 	}
 
-	return rb.redisClient.Del(ctx, vals...).Err()
+	return rb.redisClient.Del(ctx, keys...).Err()
+}
+
+func (rb *redisBackend) GetTicketIds(ctx context.Context, players []string) ([]string, error) {
+	keys := make([]string, len(players))
+	for i, player := range players {
+		keys[i] = fmt.Sprintf(ticketIdFmt, player)
+	}
+
+	vals, err := rb.redisClient.MGet(ctx, keys...).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make([]string, len(vals))
+	for i, val := range vals {
+		// type assert value into string -- wrong types just default to empty string
+		ret[i], _ = val.(string)
+	}
+
+	return ret, nil
 }

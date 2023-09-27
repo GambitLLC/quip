@@ -17,14 +17,6 @@
   ],
   "paths": {},
   "definitions": {
-    "matchmakerCreateMatchResponse": {
-      "type": "object",
-      "properties": {
-        "success": {
-          "type": "boolean"
-        }
-      }
-    },
     "matchmakerMatchConfiguration": {
       "type": "object",
       "properties": {

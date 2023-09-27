@@ -28,6 +28,10 @@ type Service interface {
 	SetMatchId(ctx context.Context, id string, players []string) (bool, error)
 
 	UnsetMatchId(ctx context.Context, players []string) error
+
+	// Batch
+
+	GetTicketIds(ctx context.Context, players []string) ([]string, error)
 }
 
 func New(cfg config.View) Service {

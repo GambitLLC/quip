@@ -23,10 +23,6 @@ export interface CreateMatchRequest {
   roster: MatchRoster | undefined;
 }
 
-export interface CreateMatchResponse {
-  success: boolean;
-}
-
 export interface StartMatchRequest {
   matchId: string;
 }
@@ -130,64 +126,6 @@ export const CreateMatchRequest = {
     message.roster = (object.roster !== undefined && object.roster !== null)
       ? MatchRoster.fromPartial(object.roster)
       : undefined;
-    return message;
-  },
-};
-
-function createBaseCreateMatchResponse(): CreateMatchResponse {
-  return { success: false };
-}
-
-export const CreateMatchResponse = {
-  encode(message: CreateMatchResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.success === true) {
-      writer.uint32(8).bool(message.success);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): CreateMatchResponse {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCreateMatchResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 8) {
-            break;
-          }
-
-          message.success = reader.bool();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): CreateMatchResponse {
-    return { success: isSet(object.success) ? Boolean(object.success) : false };
-  },
-
-  toJSON(message: CreateMatchResponse): unknown {
-    const obj: any = {};
-    if (message.success === true) {
-      obj.success = message.success;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<CreateMatchResponse>, I>>(base?: I): CreateMatchResponse {
-    return CreateMatchResponse.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<CreateMatchResponse>, I>>(object: I): CreateMatchResponse {
-    const message = createBaseCreateMatchResponse();
-    message.success = object.success ?? false;
     return message;
   },
 };
@@ -401,8 +339,8 @@ export const QuipManagerService = {
     responseStream: false,
     requestSerialize: (value: CreateMatchRequest) => Buffer.from(CreateMatchRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer) => CreateMatchRequest.decode(value),
-    responseSerialize: (value: CreateMatchResponse) => Buffer.from(CreateMatchResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer) => CreateMatchResponse.decode(value),
+    responseSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => Empty.decode(value),
   },
   /**
    * StartMatch should be called when gameservers actually begin play.
@@ -444,7 +382,7 @@ export interface QuipManagerServer extends UntypedServiceImplementation {
    * CreateMatch should be called by gameservers when they are allocated. It will attempt
    * to mark all players in the roster as participants in the match.
    */
-  createMatch: handleUnaryCall<CreateMatchRequest, CreateMatchResponse>;
+  createMatch: handleUnaryCall<CreateMatchRequest, Empty>;
   /**
    * StartMatch should be called when gameservers actually begin play.
    * For matches with a wager, this means after collecting the wager from all players.
@@ -463,18 +401,18 @@ export interface QuipManagerClient extends Client {
    */
   createMatch(
     request: CreateMatchRequest,
-    callback: (error: ServiceError | null, response: CreateMatchResponse) => void,
+    callback: (error: ServiceError | null, response: Empty) => void,
   ): ClientUnaryCall;
   createMatch(
     request: CreateMatchRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: CreateMatchResponse) => void,
+    callback: (error: ServiceError | null, response: Empty) => void,
   ): ClientUnaryCall;
   createMatch(
     request: CreateMatchRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: CreateMatchResponse) => void,
+    callback: (error: ServiceError | null, response: Empty) => void,
   ): ClientUnaryCall;
   /**
    * StartMatch should be called when gameservers actually begin play.

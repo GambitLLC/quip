@@ -32,7 +32,7 @@ const (
 type QuipManagerClient interface {
 	// CreateMatch should be called by gameservers when they are allocated. It will attempt
 	// to mark all players in the roster as participants in the match.
-	CreateMatch(ctx context.Context, in *CreateMatchRequest, opts ...grpc.CallOption) (*CreateMatchResponse, error)
+	CreateMatch(ctx context.Context, in *CreateMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// StartMatch should be called when gameservers actually begin play.
 	// For matches with a wager, this means after collecting the wager from all players.
 	StartMatch(ctx context.Context, in *StartMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -50,8 +50,8 @@ func NewQuipManagerClient(cc grpc.ClientConnInterface) QuipManagerClient {
 	return &quipManagerClient{cc}
 }
 
-func (c *quipManagerClient) CreateMatch(ctx context.Context, in *CreateMatchRequest, opts ...grpc.CallOption) (*CreateMatchResponse, error) {
-	out := new(CreateMatchResponse)
+func (c *quipManagerClient) CreateMatch(ctx context.Context, in *CreateMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, QuipManager_CreateMatch_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (c *quipManagerClient) FinishMatch(ctx context.Context, in *FinishMatchRequ
 type QuipManagerServer interface {
 	// CreateMatch should be called by gameservers when they are allocated. It will attempt
 	// to mark all players in the roster as participants in the match.
-	CreateMatch(context.Context, *CreateMatchRequest) (*CreateMatchResponse, error)
+	CreateMatch(context.Context, *CreateMatchRequest) (*emptypb.Empty, error)
 	// StartMatch should be called when gameservers actually begin play.
 	// For matches with a wager, this means after collecting the wager from all players.
 	StartMatch(context.Context, *StartMatchRequest) (*emptypb.Empty, error)
@@ -106,7 +106,7 @@ type QuipManagerServer interface {
 type UnimplementedQuipManagerServer struct {
 }
 
-func (UnimplementedQuipManagerServer) CreateMatch(context.Context, *CreateMatchRequest) (*CreateMatchResponse, error) {
+func (UnimplementedQuipManagerServer) CreateMatch(context.Context, *CreateMatchRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateMatch not implemented")
 }
 func (UnimplementedQuipManagerServer) StartMatch(context.Context, *StartMatchRequest) (*emptypb.Empty, error) {
