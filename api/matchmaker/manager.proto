@@ -6,12 +6,21 @@ import "google/protobuf/empty.proto";
 import "matchmaker/messages.proto";
 
 // Manager service to keep track of match details (in-progress and completed).
-// Should only be used by Director or some subscriber who is listening to
-// messages for when matches begin and finish.
+// Should only be called by gameservers to update match progress.
 service QuipManager {
-  rpc CreateMatch(CreateMatchRequest) returns (google.protobuf.Empty);
-  rpc GetMatch(GetMatchRequest) returns (GetMatchResponse);
-  rpc SetMatchResults(SetMatchResultsRequest) returns (google.protobuf.Empty);
+  // CreateMatch should be called by gameservers when they are allocated. It will attempt
+  // to mark all players in the roster as participants in the match.
+  rpc CreateMatch(CreateMatchRequest) returns (CreateMatchResponse);
+
+  // StartMatch should be called when gameservers actually begin play.
+  // For matches with a wager, this means after collecting the wager from all players.
+  rpc StartMatch(StartMatchRequest) returns (google.protobuf.Empty);
+
+  // CancelMatch should be called if gameservers do not start play for any reason.
+  rpc CancelMatch(CancelMatchRequest) returns (google.protobuf.Empty);
+
+  // FinishMatch should be called when gameservers finish play.
+  rpc FinishMatch(FinishMatchRequest) returns (google.protobuf.Empty);
 }
 
 message CreateMatchRequest {
@@ -20,17 +29,19 @@ message CreateMatchRequest {
   MatchRoster roster = 3;
 }
 
-message GetMatchRequest {
+message CreateMatchResponse {
+  bool success = 1;
+}
+
+message StartMatchRequest {
   string match_id = 1;
 }
 
-message GetMatchResponse {
-  MatchConfiguration config = 1;
-  MatchRoster roster = 2;
-  optional MatchResults results = 3;
+message CancelMatchRequest {
+  string match_id = 1;
 }
 
-message SetMatchResultsRequest {
+message FinishMatchRequest {
   string match_id = 1;
   MatchResults results = 2;
 }

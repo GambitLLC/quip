@@ -23,17 +23,19 @@ export interface CreateMatchRequest {
   roster: MatchRoster | undefined;
 }
 
-export interface GetMatchRequest {
+export interface CreateMatchResponse {
+  success: boolean;
+}
+
+export interface StartMatchRequest {
   matchId: string;
 }
 
-export interface GetMatchResponse {
-  config: MatchConfiguration | undefined;
-  roster: MatchRoster | undefined;
-  results?: MatchResults | undefined;
+export interface CancelMatchRequest {
+  matchId: string;
 }
 
-export interface SetMatchResultsRequest {
+export interface FinishMatchRequest {
   matchId: string;
   results: MatchResults | undefined;
 }
@@ -132,22 +134,80 @@ export const CreateMatchRequest = {
   },
 };
 
-function createBaseGetMatchRequest(): GetMatchRequest {
+function createBaseCreateMatchResponse(): CreateMatchResponse {
+  return { success: false };
+}
+
+export const CreateMatchResponse = {
+  encode(message: CreateMatchResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.success === true) {
+      writer.uint32(8).bool(message.success);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateMatchResponse {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateMatchResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateMatchResponse {
+    return { success: isSet(object.success) ? Boolean(object.success) : false };
+  },
+
+  toJSON(message: CreateMatchResponse): unknown {
+    const obj: any = {};
+    if (message.success === true) {
+      obj.success = message.success;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateMatchResponse>, I>>(base?: I): CreateMatchResponse {
+    return CreateMatchResponse.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CreateMatchResponse>, I>>(object: I): CreateMatchResponse {
+    const message = createBaseCreateMatchResponse();
+    message.success = object.success ?? false;
+    return message;
+  },
+};
+
+function createBaseStartMatchRequest(): StartMatchRequest {
   return { matchId: "" };
 }
 
-export const GetMatchRequest = {
-  encode(message: GetMatchRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const StartMatchRequest = {
+  encode(message: StartMatchRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.matchId !== "") {
       writer.uint32(10).string(message.matchId);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetMatchRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): StartMatchRequest {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetMatchRequest();
+    const message = createBaseStartMatchRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -167,11 +227,11 @@ export const GetMatchRequest = {
     return message;
   },
 
-  fromJSON(object: any): GetMatchRequest {
+  fromJSON(object: any): StartMatchRequest {
     return { matchId: isSet(object.matchId) ? String(object.matchId) : "" };
   },
 
-  toJSON(message: GetMatchRequest): unknown {
+  toJSON(message: StartMatchRequest): unknown {
     const obj: any = {};
     if (message.matchId !== "") {
       obj.matchId = message.matchId;
@@ -179,39 +239,33 @@ export const GetMatchRequest = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<GetMatchRequest>, I>>(base?: I): GetMatchRequest {
-    return GetMatchRequest.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<StartMatchRequest>, I>>(base?: I): StartMatchRequest {
+    return StartMatchRequest.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetMatchRequest>, I>>(object: I): GetMatchRequest {
-    const message = createBaseGetMatchRequest();
+  fromPartial<I extends Exact<DeepPartial<StartMatchRequest>, I>>(object: I): StartMatchRequest {
+    const message = createBaseStartMatchRequest();
     message.matchId = object.matchId ?? "";
     return message;
   },
 };
 
-function createBaseGetMatchResponse(): GetMatchResponse {
-  return { config: undefined, roster: undefined, results: undefined };
+function createBaseCancelMatchRequest(): CancelMatchRequest {
+  return { matchId: "" };
 }
 
-export const GetMatchResponse = {
-  encode(message: GetMatchResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.config !== undefined) {
-      MatchConfiguration.encode(message.config, writer.uint32(10).fork()).ldelim();
-    }
-    if (message.roster !== undefined) {
-      MatchRoster.encode(message.roster, writer.uint32(18).fork()).ldelim();
-    }
-    if (message.results !== undefined) {
-      MatchResults.encode(message.results, writer.uint32(26).fork()).ldelim();
+export const CancelMatchRequest = {
+  encode(message: CancelMatchRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.matchId !== "") {
+      writer.uint32(10).string(message.matchId);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetMatchResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): CancelMatchRequest {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetMatchResponse();
+    const message = createBaseCancelMatchRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -220,21 +274,7 @@ export const GetMatchResponse = {
             break;
           }
 
-          message.config = MatchConfiguration.decode(reader, reader.uint32());
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.roster = MatchRoster.decode(reader, reader.uint32());
-          continue;
-        case 3:
-          if (tag !== 26) {
-            break;
-          }
-
-          message.results = MatchResults.decode(reader, reader.uint32());
+          message.matchId = reader.string();
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -245,53 +285,35 @@ export const GetMatchResponse = {
     return message;
   },
 
-  fromJSON(object: any): GetMatchResponse {
-    return {
-      config: isSet(object.config) ? MatchConfiguration.fromJSON(object.config) : undefined,
-      roster: isSet(object.roster) ? MatchRoster.fromJSON(object.roster) : undefined,
-      results: isSet(object.results) ? MatchResults.fromJSON(object.results) : undefined,
-    };
+  fromJSON(object: any): CancelMatchRequest {
+    return { matchId: isSet(object.matchId) ? String(object.matchId) : "" };
   },
 
-  toJSON(message: GetMatchResponse): unknown {
+  toJSON(message: CancelMatchRequest): unknown {
     const obj: any = {};
-    if (message.config !== undefined) {
-      obj.config = MatchConfiguration.toJSON(message.config);
-    }
-    if (message.roster !== undefined) {
-      obj.roster = MatchRoster.toJSON(message.roster);
-    }
-    if (message.results !== undefined) {
-      obj.results = MatchResults.toJSON(message.results);
+    if (message.matchId !== "") {
+      obj.matchId = message.matchId;
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<GetMatchResponse>, I>>(base?: I): GetMatchResponse {
-    return GetMatchResponse.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<CancelMatchRequest>, I>>(base?: I): CancelMatchRequest {
+    return CancelMatchRequest.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetMatchResponse>, I>>(object: I): GetMatchResponse {
-    const message = createBaseGetMatchResponse();
-    message.config = (object.config !== undefined && object.config !== null)
-      ? MatchConfiguration.fromPartial(object.config)
-      : undefined;
-    message.roster = (object.roster !== undefined && object.roster !== null)
-      ? MatchRoster.fromPartial(object.roster)
-      : undefined;
-    message.results = (object.results !== undefined && object.results !== null)
-      ? MatchResults.fromPartial(object.results)
-      : undefined;
+  fromPartial<I extends Exact<DeepPartial<CancelMatchRequest>, I>>(object: I): CancelMatchRequest {
+    const message = createBaseCancelMatchRequest();
+    message.matchId = object.matchId ?? "";
     return message;
   },
 };
 
-function createBaseSetMatchResultsRequest(): SetMatchResultsRequest {
+function createBaseFinishMatchRequest(): FinishMatchRequest {
   return { matchId: "", results: undefined };
 }
 
-export const SetMatchResultsRequest = {
-  encode(message: SetMatchResultsRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const FinishMatchRequest = {
+  encode(message: FinishMatchRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.matchId !== "") {
       writer.uint32(10).string(message.matchId);
     }
@@ -301,10 +323,10 @@ export const SetMatchResultsRequest = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): SetMatchResultsRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): FinishMatchRequest {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSetMatchResultsRequest();
+    const message = createBaseFinishMatchRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -331,14 +353,14 @@ export const SetMatchResultsRequest = {
     return message;
   },
 
-  fromJSON(object: any): SetMatchResultsRequest {
+  fromJSON(object: any): FinishMatchRequest {
     return {
       matchId: isSet(object.matchId) ? String(object.matchId) : "",
       results: isSet(object.results) ? MatchResults.fromJSON(object.results) : undefined,
     };
   },
 
-  toJSON(message: SetMatchResultsRequest): unknown {
+  toJSON(message: FinishMatchRequest): unknown {
     const obj: any = {};
     if (message.matchId !== "") {
       obj.matchId = message.matchId;
@@ -349,12 +371,12 @@ export const SetMatchResultsRequest = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<SetMatchResultsRequest>, I>>(base?: I): SetMatchResultsRequest {
-    return SetMatchResultsRequest.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<FinishMatchRequest>, I>>(base?: I): FinishMatchRequest {
+    return FinishMatchRequest.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<SetMatchResultsRequest>, I>>(object: I): SetMatchResultsRequest {
-    const message = createBaseSetMatchResultsRequest();
+  fromPartial<I extends Exact<DeepPartial<FinishMatchRequest>, I>>(object: I): FinishMatchRequest {
+    const message = createBaseFinishMatchRequest();
     message.matchId = object.matchId ?? "";
     message.results = (object.results !== undefined && object.results !== null)
       ? MatchResults.fromPartial(object.results)
@@ -365,88 +387,142 @@ export const SetMatchResultsRequest = {
 
 /**
  * Manager service to keep track of match details (in-progress and completed).
- * Should only be used by Director or some subscriber who is listening to
- * messages for when matches begin and finish.
+ * Should only be called by gameservers to update match progress.
  */
 export type QuipManagerService = typeof QuipManagerService;
 export const QuipManagerService = {
+  /**
+   * CreateMatch should be called by gameservers when they are allocated. It will attempt
+   * to mark all players in the roster as participants in the match.
+   */
   createMatch: {
     path: "/quip.matchmaker.QuipManager/CreateMatch",
     requestStream: false,
     responseStream: false,
     requestSerialize: (value: CreateMatchRequest) => Buffer.from(CreateMatchRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer) => CreateMatchRequest.decode(value),
+    responseSerialize: (value: CreateMatchResponse) => Buffer.from(CreateMatchResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => CreateMatchResponse.decode(value),
+  },
+  /**
+   * StartMatch should be called when gameservers actually begin play.
+   * For matches with a wager, this means after collecting the wager from all players.
+   */
+  startMatch: {
+    path: "/quip.matchmaker.QuipManager/StartMatch",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: StartMatchRequest) => Buffer.from(StartMatchRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => StartMatchRequest.decode(value),
     responseSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
     responseDeserialize: (value: Buffer) => Empty.decode(value),
   },
-  getMatch: {
-    path: "/quip.matchmaker.QuipManager/GetMatch",
+  /** CancelMatch should be called if gameservers do not start play for any reason. */
+  cancelMatch: {
+    path: "/quip.matchmaker.QuipManager/CancelMatch",
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: GetMatchRequest) => Buffer.from(GetMatchRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer) => GetMatchRequest.decode(value),
-    responseSerialize: (value: GetMatchResponse) => Buffer.from(GetMatchResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer) => GetMatchResponse.decode(value),
+    requestSerialize: (value: CancelMatchRequest) => Buffer.from(CancelMatchRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => CancelMatchRequest.decode(value),
+    responseSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => Empty.decode(value),
   },
-  setMatchResults: {
-    path: "/quip.matchmaker.QuipManager/SetMatchResults",
+  /** FinishMatch should be called when gameservers finish play. */
+  finishMatch: {
+    path: "/quip.matchmaker.QuipManager/FinishMatch",
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: SetMatchResultsRequest) => Buffer.from(SetMatchResultsRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer) => SetMatchResultsRequest.decode(value),
+    requestSerialize: (value: FinishMatchRequest) => Buffer.from(FinishMatchRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => FinishMatchRequest.decode(value),
     responseSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
     responseDeserialize: (value: Buffer) => Empty.decode(value),
   },
 } as const;
 
 export interface QuipManagerServer extends UntypedServiceImplementation {
-  createMatch: handleUnaryCall<CreateMatchRequest, Empty>;
-  getMatch: handleUnaryCall<GetMatchRequest, GetMatchResponse>;
-  setMatchResults: handleUnaryCall<SetMatchResultsRequest, Empty>;
+  /**
+   * CreateMatch should be called by gameservers when they are allocated. It will attempt
+   * to mark all players in the roster as participants in the match.
+   */
+  createMatch: handleUnaryCall<CreateMatchRequest, CreateMatchResponse>;
+  /**
+   * StartMatch should be called when gameservers actually begin play.
+   * For matches with a wager, this means after collecting the wager from all players.
+   */
+  startMatch: handleUnaryCall<StartMatchRequest, Empty>;
+  /** CancelMatch should be called if gameservers do not start play for any reason. */
+  cancelMatch: handleUnaryCall<CancelMatchRequest, Empty>;
+  /** FinishMatch should be called when gameservers finish play. */
+  finishMatch: handleUnaryCall<FinishMatchRequest, Empty>;
 }
 
 export interface QuipManagerClient extends Client {
+  /**
+   * CreateMatch should be called by gameservers when they are allocated. It will attempt
+   * to mark all players in the roster as participants in the match.
+   */
   createMatch(
     request: CreateMatchRequest,
-    callback: (error: ServiceError | null, response: Empty) => void,
+    callback: (error: ServiceError | null, response: CreateMatchResponse) => void,
   ): ClientUnaryCall;
   createMatch(
     request: CreateMatchRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: Empty) => void,
+    callback: (error: ServiceError | null, response: CreateMatchResponse) => void,
   ): ClientUnaryCall;
   createMatch(
     request: CreateMatchRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreateMatchResponse) => void,
+  ): ClientUnaryCall;
+  /**
+   * StartMatch should be called when gameservers actually begin play.
+   * For matches with a wager, this means after collecting the wager from all players.
+   */
+  startMatch(
+    request: StartMatchRequest,
     callback: (error: ServiceError | null, response: Empty) => void,
   ): ClientUnaryCall;
-  getMatch(
-    request: GetMatchRequest,
-    callback: (error: ServiceError | null, response: GetMatchResponse) => void,
-  ): ClientUnaryCall;
-  getMatch(
-    request: GetMatchRequest,
+  startMatch(
+    request: StartMatchRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: GetMatchResponse) => void,
+    callback: (error: ServiceError | null, response: Empty) => void,
   ): ClientUnaryCall;
-  getMatch(
-    request: GetMatchRequest,
+  startMatch(
+    request: StartMatchRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: GetMatchResponse) => void,
-  ): ClientUnaryCall;
-  setMatchResults(
-    request: SetMatchResultsRequest,
     callback: (error: ServiceError | null, response: Empty) => void,
   ): ClientUnaryCall;
-  setMatchResults(
-    request: SetMatchResultsRequest,
+  /** CancelMatch should be called if gameservers do not start play for any reason. */
+  cancelMatch(
+    request: CancelMatchRequest,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  cancelMatch(
+    request: CancelMatchRequest,
     metadata: Metadata,
     callback: (error: ServiceError | null, response: Empty) => void,
   ): ClientUnaryCall;
-  setMatchResults(
-    request: SetMatchResultsRequest,
+  cancelMatch(
+    request: CancelMatchRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  /** FinishMatch should be called when gameservers finish play. */
+  finishMatch(
+    request: FinishMatchRequest,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  finishMatch(
+    request: FinishMatchRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  finishMatch(
+    request: FinishMatchRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: Empty) => void,

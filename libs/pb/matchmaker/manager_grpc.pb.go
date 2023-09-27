@@ -20,18 +20,26 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	QuipManager_CreateMatch_FullMethodName     = "/quip.matchmaker.QuipManager/CreateMatch"
-	QuipManager_GetMatch_FullMethodName        = "/quip.matchmaker.QuipManager/GetMatch"
-	QuipManager_SetMatchResults_FullMethodName = "/quip.matchmaker.QuipManager/SetMatchResults"
+	QuipManager_CreateMatch_FullMethodName = "/quip.matchmaker.QuipManager/CreateMatch"
+	QuipManager_StartMatch_FullMethodName  = "/quip.matchmaker.QuipManager/StartMatch"
+	QuipManager_CancelMatch_FullMethodName = "/quip.matchmaker.QuipManager/CancelMatch"
+	QuipManager_FinishMatch_FullMethodName = "/quip.matchmaker.QuipManager/FinishMatch"
 )
 
 // QuipManagerClient is the client API for QuipManager service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type QuipManagerClient interface {
-	CreateMatch(ctx context.Context, in *CreateMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	GetMatch(ctx context.Context, in *GetMatchRequest, opts ...grpc.CallOption) (*GetMatchResponse, error)
-	SetMatchResults(ctx context.Context, in *SetMatchResultsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// CreateMatch should be called by gameservers when they are allocated. It will attempt
+	// to mark all players in the roster as participants in the match.
+	CreateMatch(ctx context.Context, in *CreateMatchRequest, opts ...grpc.CallOption) (*CreateMatchResponse, error)
+	// StartMatch should be called when gameservers actually begin play.
+	// For matches with a wager, this means after collecting the wager from all players.
+	StartMatch(ctx context.Context, in *StartMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// CancelMatch should be called if gameservers do not start play for any reason.
+	CancelMatch(ctx context.Context, in *CancelMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// FinishMatch should be called when gameservers finish play.
+	FinishMatch(ctx context.Context, in *FinishMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type quipManagerClient struct {
@@ -42,8 +50,8 @@ func NewQuipManagerClient(cc grpc.ClientConnInterface) QuipManagerClient {
 	return &quipManagerClient{cc}
 }
 
-func (c *quipManagerClient) CreateMatch(ctx context.Context, in *CreateMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *quipManagerClient) CreateMatch(ctx context.Context, in *CreateMatchRequest, opts ...grpc.CallOption) (*CreateMatchResponse, error) {
+	out := new(CreateMatchResponse)
 	err := c.cc.Invoke(ctx, QuipManager_CreateMatch_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -51,18 +59,27 @@ func (c *quipManagerClient) CreateMatch(ctx context.Context, in *CreateMatchRequ
 	return out, nil
 }
 
-func (c *quipManagerClient) GetMatch(ctx context.Context, in *GetMatchRequest, opts ...grpc.CallOption) (*GetMatchResponse, error) {
-	out := new(GetMatchResponse)
-	err := c.cc.Invoke(ctx, QuipManager_GetMatch_FullMethodName, in, out, opts...)
+func (c *quipManagerClient) StartMatch(ctx context.Context, in *StartMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, QuipManager_StartMatch_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *quipManagerClient) SetMatchResults(ctx context.Context, in *SetMatchResultsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *quipManagerClient) CancelMatch(ctx context.Context, in *CancelMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, QuipManager_SetMatchResults_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, QuipManager_CancelMatch_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *quipManagerClient) FinishMatch(ctx context.Context, in *FinishMatchRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, QuipManager_FinishMatch_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -73,23 +90,33 @@ func (c *quipManagerClient) SetMatchResults(ctx context.Context, in *SetMatchRes
 // All implementations should embed UnimplementedQuipManagerServer
 // for forward compatibility
 type QuipManagerServer interface {
-	CreateMatch(context.Context, *CreateMatchRequest) (*emptypb.Empty, error)
-	GetMatch(context.Context, *GetMatchRequest) (*GetMatchResponse, error)
-	SetMatchResults(context.Context, *SetMatchResultsRequest) (*emptypb.Empty, error)
+	// CreateMatch should be called by gameservers when they are allocated. It will attempt
+	// to mark all players in the roster as participants in the match.
+	CreateMatch(context.Context, *CreateMatchRequest) (*CreateMatchResponse, error)
+	// StartMatch should be called when gameservers actually begin play.
+	// For matches with a wager, this means after collecting the wager from all players.
+	StartMatch(context.Context, *StartMatchRequest) (*emptypb.Empty, error)
+	// CancelMatch should be called if gameservers do not start play for any reason.
+	CancelMatch(context.Context, *CancelMatchRequest) (*emptypb.Empty, error)
+	// FinishMatch should be called when gameservers finish play.
+	FinishMatch(context.Context, *FinishMatchRequest) (*emptypb.Empty, error)
 }
 
 // UnimplementedQuipManagerServer should be embedded to have forward compatible implementations.
 type UnimplementedQuipManagerServer struct {
 }
 
-func (UnimplementedQuipManagerServer) CreateMatch(context.Context, *CreateMatchRequest) (*emptypb.Empty, error) {
+func (UnimplementedQuipManagerServer) CreateMatch(context.Context, *CreateMatchRequest) (*CreateMatchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateMatch not implemented")
 }
-func (UnimplementedQuipManagerServer) GetMatch(context.Context, *GetMatchRequest) (*GetMatchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetMatch not implemented")
+func (UnimplementedQuipManagerServer) StartMatch(context.Context, *StartMatchRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartMatch not implemented")
 }
-func (UnimplementedQuipManagerServer) SetMatchResults(context.Context, *SetMatchResultsRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetMatchResults not implemented")
+func (UnimplementedQuipManagerServer) CancelMatch(context.Context, *CancelMatchRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelMatch not implemented")
+}
+func (UnimplementedQuipManagerServer) FinishMatch(context.Context, *FinishMatchRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinishMatch not implemented")
 }
 
 // UnsafeQuipManagerServer may be embedded to opt out of forward compatibility for this service.
@@ -121,38 +148,56 @@ func _QuipManager_CreateMatch_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _QuipManager_GetMatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetMatchRequest)
+func _QuipManager_StartMatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartMatchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QuipManagerServer).GetMatch(ctx, in)
+		return srv.(QuipManagerServer).StartMatch(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: QuipManager_GetMatch_FullMethodName,
+		FullMethod: QuipManager_StartMatch_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QuipManagerServer).GetMatch(ctx, req.(*GetMatchRequest))
+		return srv.(QuipManagerServer).StartMatch(ctx, req.(*StartMatchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _QuipManager_SetMatchResults_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetMatchResultsRequest)
+func _QuipManager_CancelMatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelMatchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QuipManagerServer).SetMatchResults(ctx, in)
+		return srv.(QuipManagerServer).CancelMatch(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: QuipManager_SetMatchResults_FullMethodName,
+		FullMethod: QuipManager_CancelMatch_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QuipManagerServer).SetMatchResults(ctx, req.(*SetMatchResultsRequest))
+		return srv.(QuipManagerServer).CancelMatch(ctx, req.(*CancelMatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QuipManager_FinishMatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FinishMatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuipManagerServer).FinishMatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuipManager_FinishMatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuipManagerServer).FinishMatch(ctx, req.(*FinishMatchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -169,12 +214,16 @@ var QuipManager_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _QuipManager_CreateMatch_Handler,
 		},
 		{
-			MethodName: "GetMatch",
-			Handler:    _QuipManager_GetMatch_Handler,
+			MethodName: "StartMatch",
+			Handler:    _QuipManager_StartMatch_Handler,
 		},
 		{
-			MethodName: "SetMatchResults",
-			Handler:    _QuipManager_SetMatchResults_Handler,
+			MethodName: "CancelMatch",
+			Handler:    _QuipManager_CancelMatch_Handler,
+		},
+		{
+			MethodName: "FinishMatch",
+			Handler:    _QuipManager_FinishMatch_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

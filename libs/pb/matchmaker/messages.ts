@@ -120,7 +120,7 @@ export interface StatusUpdate {
   matchFound?: MatchFound | undefined;
   matchCancelled?: MatchCancelled | undefined;
   matchStarted?: MatchStarted | undefined;
-  matchFinished?: MatchResults | undefined;
+  matchFinished?: MatchFinished | undefined;
 }
 
 /** QueueStopped contains information about why a queue has stopped. */
@@ -151,7 +151,7 @@ export interface MatchStarted {
   connection: string;
 }
 
-export interface MatchResults {
+export interface MatchFinished {
   matchId: string;
 }
 
@@ -162,6 +162,10 @@ export interface MatchConfiguration {
 /** MatchRoster contains necessary information for a gameserver to setup. */
 export interface MatchRoster {
   players: string[];
+}
+
+/** TODO: figure out format for results */
+export interface MatchResults {
 }
 
 function createBasePlayer(): Player {
@@ -527,7 +531,7 @@ export const StatusUpdate = {
       MatchStarted.encode(message.matchStarted, writer.uint32(50).fork()).ldelim();
     }
     if (message.matchFinished !== undefined) {
-      MatchResults.encode(message.matchFinished, writer.uint32(58).fork()).ldelim();
+      MatchFinished.encode(message.matchFinished, writer.uint32(58).fork()).ldelim();
     }
     return writer;
   },
@@ -579,7 +583,7 @@ export const StatusUpdate = {
             break;
           }
 
-          message.matchFinished = MatchResults.decode(reader, reader.uint32());
+          message.matchFinished = MatchFinished.decode(reader, reader.uint32());
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -597,7 +601,7 @@ export const StatusUpdate = {
       matchFound: isSet(object.matchFound) ? MatchFound.fromJSON(object.matchFound) : undefined,
       matchCancelled: isSet(object.matchCancelled) ? MatchCancelled.fromJSON(object.matchCancelled) : undefined,
       matchStarted: isSet(object.matchStarted) ? MatchStarted.fromJSON(object.matchStarted) : undefined,
-      matchFinished: isSet(object.matchFinished) ? MatchResults.fromJSON(object.matchFinished) : undefined,
+      matchFinished: isSet(object.matchFinished) ? MatchFinished.fromJSON(object.matchFinished) : undefined,
     };
   },
 
@@ -619,7 +623,7 @@ export const StatusUpdate = {
       obj.matchStarted = MatchStarted.toJSON(message.matchStarted);
     }
     if (message.matchFinished !== undefined) {
-      obj.matchFinished = MatchResults.toJSON(message.matchFinished);
+      obj.matchFinished = MatchFinished.toJSON(message.matchFinished);
     }
     return obj;
   },
@@ -646,7 +650,7 @@ export const StatusUpdate = {
       ? MatchStarted.fromPartial(object.matchStarted)
       : undefined;
     message.matchFinished = (object.matchFinished !== undefined && object.matchFinished !== null)
-      ? MatchResults.fromPartial(object.matchFinished)
+      ? MatchFinished.fromPartial(object.matchFinished)
       : undefined;
     return message;
   },
@@ -967,22 +971,22 @@ export const MatchStarted = {
   },
 };
 
-function createBaseMatchResults(): MatchResults {
+function createBaseMatchFinished(): MatchFinished {
   return { matchId: "" };
 }
 
-export const MatchResults = {
-  encode(message: MatchResults, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const MatchFinished = {
+  encode(message: MatchFinished, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.matchId !== "") {
       writer.uint32(10).string(message.matchId);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): MatchResults {
+  decode(input: _m0.Reader | Uint8Array, length?: number): MatchFinished {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseMatchResults();
+    const message = createBaseMatchFinished();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1002,11 +1006,11 @@ export const MatchResults = {
     return message;
   },
 
-  fromJSON(object: any): MatchResults {
+  fromJSON(object: any): MatchFinished {
     return { matchId: isSet(object.matchId) ? String(object.matchId) : "" };
   },
 
-  toJSON(message: MatchResults): unknown {
+  toJSON(message: MatchFinished): unknown {
     const obj: any = {};
     if (message.matchId !== "") {
       obj.matchId = message.matchId;
@@ -1014,12 +1018,12 @@ export const MatchResults = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<MatchResults>, I>>(base?: I): MatchResults {
-    return MatchResults.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<MatchFinished>, I>>(base?: I): MatchFinished {
+    return MatchFinished.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<MatchResults>, I>>(object: I): MatchResults {
-    const message = createBaseMatchResults();
+  fromPartial<I extends Exact<DeepPartial<MatchFinished>, I>>(object: I): MatchFinished {
+    const message = createBaseMatchFinished();
     message.matchId = object.matchId ?? "";
     return message;
   },
@@ -1137,6 +1141,50 @@ export const MatchRoster = {
   fromPartial<I extends Exact<DeepPartial<MatchRoster>, I>>(object: I): MatchRoster {
     const message = createBaseMatchRoster();
     message.players = object.players?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseMatchResults(): MatchResults {
+  return {};
+}
+
+export const MatchResults = {
+  encode(_: MatchResults, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): MatchResults {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMatchResults();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): MatchResults {
+    return {};
+  },
+
+  toJSON(_: MatchResults): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MatchResults>, I>>(base?: I): MatchResults {
+    return MatchResults.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<MatchResults>, I>>(_: I): MatchResults {
+    const message = createBaseMatchResults();
     return message;
   },
 };

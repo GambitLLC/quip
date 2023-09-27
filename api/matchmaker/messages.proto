@@ -59,7 +59,7 @@ message StatusUpdate {
     MatchFound match_found = 4;
     MatchCancelled match_cancelled = 5;
     MatchStarted match_started = 6;
-    MatchResults match_finished = 7;
+    MatchFinished match_finished = 7;
   }
 }
 
@@ -94,7 +94,7 @@ message MatchStarted {
   string connection = 2;
 }
 
-message MatchResults {
+message MatchFinished {
   string match_id = 1;
 }
 
@@ -109,4 +109,8 @@ message MatchRoster {
   // repeated Team teams = 1;
 
   repeated string players = 1;
+}
+
+message MatchResults {
+  // TODO: figure out format for results
 }
