@@ -29,9 +29,17 @@ type Service interface {
 
 	UnsetMatchId(ctx context.Context, players []string) error
 
-	// Batch
-
 	GetTicketIds(ctx context.Context, players []string) ([]string, error)
+
+	// Match
+
+	CreateMatch(ctx context.Context, id string, players []string, connection string) error
+
+	GetMatchConnection(ctx context.Context, id string) (string, error)
+
+	GetMatchPlayers(ctx context.Context, id string) ([]string, error)
+
+	DeleteMatch(ctx context.Context, id string) error
 }
 
 func New(cfg config.View) Service {
@@ -43,3 +51,10 @@ type Locker interface {
 	Lock(context.Context) error
 	Unlock(context.Context) (bool, error)
 }
+
+type MatchState uint8
+const (
+	MatchStatePending MatchState = iota
+	MatchStateStarted
+	// No MatchState for cancelled or finished -- should be removed from statestore
+)

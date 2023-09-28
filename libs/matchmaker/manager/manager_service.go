@@ -65,7 +65,17 @@ func (s *Service) CreateMatch(ctx context.Context, req *pb.CreateMatchRequest) (
 		return nil, status.Error(codes.FailedPrecondition, "failed to set match id for some players")
 	}
 
-	// TODO: store match details in statestore so it can be fetched later
+	// TODO: get connection from request
+	err = s.store.CreateMatch(ctx, req.MatchId, req.Roster.Players, "connection")
+	if err != nil {
+		// TODO: handle errors
+		go s.store.UnsetMatchId(context.Background(), req.Roster.Players)
+		go s.omBackend.ReleaseTickets(context.Background(), &ompb.ReleaseTicketsRequest{
+			TicketIds: ticketIds,
+		})
+
+		return nil, status.Errorf(codes.Internal, "store.CreateMatch failed: %v", err)
+	}
 
 	// TODO: handle AssignTicketsResponse (failed ticketids)
 	_, err = s.omBackend.AssignTickets(ctx, &ompb.AssignTicketsRequest{
@@ -97,9 +107,22 @@ func (s *Service) CreateMatch(ctx context.Context, req *pb.CreateMatchRequest) (
 
 // CancelMatch should be called if gameservers do not start play for any reason.
 func (s *Service) CancelMatch(ctx context.Context, req *pb.CancelMatchRequest) (*emptypb.Empty, error) {
-	// TODO: update match state in statestore
+	players, err := s.store.GetMatchPlayers(ctx, req.MatchId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "store.GetMatchPlayers failed: %v", err)
+	}
+
+	err = s.store.DeleteMatch(ctx, req.MatchId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "store.DeleteMatch failed: %v", err)
+	}	
+
+	// eventually unset match id: now that statestore has deleted match
+	// frontend will not really care even if match id is set
+	// TODO: handle errors
+	go s.store.UnsetMatchId(context.Background(), players)
 	go s.broker.Publish(context.Background(), broker.StatusUpdateRoute, &pb.StatusUpdateMessage{
-		Targets: []string{}, // TODO: get targets from statestore
+		Targets: players,
 		Update: &pb.StatusUpdate{
 			Update: &pb.StatusUpdate_MatchCancelled{
 				MatchCancelled: &pb.MatchCancelled{
@@ -114,16 +137,20 @@ func (s *Service) CancelMatch(ctx context.Context, req *pb.CancelMatchRequest) (
 
 // FinishMatch should be called when gameservers finish play.
 func (s *Service) FinishMatch(ctx context.Context, req *pb.FinishMatchRequest) (*emptypb.Empty, error) {
-	// TODO: update match state in statestore
+	players, err := s.store.GetMatchPlayers(ctx, req.MatchId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "store.GetMatchPlayers failed: %v", err)
+	}
 
-	// TODO: get players from statestore
-	players := []string{}
-	
-	// eventually unset match id: now that statestore has marked match as finished
+	err = s.store.DeleteMatch(ctx, req.MatchId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "store.DeleteMatch failed: %v", err)
+	}
+
+	// eventually unset match id: now that statestore has deleted match
 	// frontend will not really care even if match id is set
-	// TODO: handle error
+	// TODO: handle errors
 	go s.store.UnsetMatchId(context.Background(), players)
-
 	go s.broker.Publish(context.Background(), broker.StatusUpdateRoute, &pb.StatusUpdateMessage{
 		Targets: players,
 		Update: &pb.StatusUpdate{
@@ -137,4 +164,3 @@ func (s *Service) FinishMatch(ctx context.Context, req *pb.FinishMatchRequest) (
 
 	return &emptypb.Empty{}, nil
 }
-
