@@ -391,7 +391,7 @@ func newService(t *testing.T, cfg config.Mutable) {
 		cfg,
 		[]net.Listener{ln},
 		func(cfg config.View, b *appmain.GRPCBindings) error {
-			svc := NewQuipService(cfg)
+			svc := New(cfg)
 			// TODO: replace some internals for testing
 
 			b.AddHandler(func(s *grpc.Server) {
@@ -427,7 +427,7 @@ func newService(t *testing.T, cfg config.Mutable) {
 // newClient creates a new QuipFrontendClient with an arbitrary player id.
 func newClient(t *testing.T, cfg config.View) (pb.QuipFrontendClient, string) {
 	id := xid.New().String()
-	conn, err := rpc.GRPCClientFromConfig(
+	conn, err := rpc.GRPCClientFromService(
 		cfg,
 		"matchmaker.frontend",
 		grpc.WithStreamInterceptor(

@@ -23,11 +23,20 @@ type Service struct {
 
 func New(cfg config.View) *Service {
 	return &Service{
-		cfg: cfg,
-		store: statestore.New(cfg),
+		cfg:       cfg,
+		store:     statestore.New(cfg),
 		omBackend: newOMBackendClient(cfg),
-		broker: broker.NewRedisBroker(cfg),
+		broker:    broker.NewRedisBroker(cfg),
 	}
+}
+
+func (s *Service) Close() error {
+	err := s.broker.Close()
+	if err2 := s.store.Close(); err != nil {
+		err = err2
+	}
+
+	return err
 }
 
 // CreateMatch should be called by gameservers when they are allocated. It will attempt
@@ -115,7 +124,7 @@ func (s *Service) CancelMatch(ctx context.Context, req *pb.CancelMatchRequest) (
 	err = s.store.DeleteMatch(ctx, req.MatchId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "store.DeleteMatch failed: %v", err)
-	}	
+	}
 
 	// eventually unset match id: now that statestore has deleted match
 	// frontend will not really care even if match id is set

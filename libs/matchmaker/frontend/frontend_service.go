@@ -35,7 +35,7 @@ type Service struct {
 	closed chan struct{}
 }
 
-func NewQuipService(cfg config.View) *Service {
+func New(cfg config.View) *Service {
 	srv := &Service{
 		idToChan:   make(map[string]chan *pb.Response),
 		games:      games.NewGameListingCache(cfg.GetString("matchmaker.gamesFile")),

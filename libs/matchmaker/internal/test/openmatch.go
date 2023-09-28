@@ -18,6 +18,7 @@ import (
 
 	"github.com/GambitLLC/quip/libs/appmain"
 	"github.com/GambitLLC/quip/libs/config"
+	"github.com/GambitLLC/quip/libs/rpc"
 )
 
 func BindOpenMatchService(cfg config.View, b *appmain.GRPCBindings) error {
@@ -95,7 +96,7 @@ func (s *openMatchService) FetchMatches(req *ompb.FetchMatchesRequest, srv ompb.
 	}
 
 	address := fmt.Sprintf("%s:%d", req.GetConfig().GetHost(), req.GetConfig().GetPort())
-	conn, err := NewGRPCClient(s.cfg, address)
+	conn, err := rpc.GRPCClientFromAddress(s.cfg, address)
 	if err != nil {
 		return errors.Wrap(err, "failed to create grpc connection to matchfunction")
 	}

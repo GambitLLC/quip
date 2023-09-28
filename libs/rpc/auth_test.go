@@ -61,7 +61,7 @@ func TestAuth(t *testing.T) {
 		}
 	})
 
-	conn, err := GRPCClientFromConfig(cfg, "test")
+	conn, err := GRPCClientFromService(cfg, "test")
 	require.NoError(t, err, "create grpc client failed")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

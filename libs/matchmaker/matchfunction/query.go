@@ -13,7 +13,7 @@ type omQueryClient struct {
 
 func newOmQueryClient(cfg config.View) *omQueryClient {
 	newInstance := func(cfg config.View) (interface{}, func(), error) {
-		conn, err := rpc.GRPCClientFromConfig(cfg, "openmatch.query")
+		conn, err := rpc.GRPCClientFromService(cfg, "openmatch.query")
 		if err != nil {
 			return nil, nil, err
 		}

@@ -16,7 +16,7 @@ type omBackendClient struct {
 
 func newOMBackendClient(cfg config.View) *omBackendClient {
 	var newInstance config.NewInstanceFunc = func(cfg config.View) (interface{}, func(), error) {
-		conn, err := rpc.GRPCClientFromConfig(cfg, "openmatch.backend")
+		conn, err := rpc.GRPCClientFromService(cfg, "openmatch.backend")
 		if err != nil {
 			return nil, nil, err
 		}
@@ -33,7 +33,6 @@ func newOMBackendClient(cfg config.View) *omBackendClient {
 		cacher: config.NewViewCacher(cfg, newInstance),
 	}
 }
-
 
 func (bc *omBackendClient) AssignTickets(ctx context.Context, in *ompb.AssignTicketsRequest) (*ompb.AssignTicketsResponse, error) {
 	client, err := bc.cacher.Get()

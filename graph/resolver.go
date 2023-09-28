@@ -23,7 +23,7 @@ type Resolver struct {
 }
 
 func NewResolver(cfg config.View) (*Resolver, error) {
-	frontendConn, err := rpc.GRPCClientFromConfig(cfg, "matchmaker.frontend")
+	frontendConn, err := rpc.GRPCClientFromService(cfg, "matchmaker.frontend")
 	if err != nil {
 		return nil, err
 	}

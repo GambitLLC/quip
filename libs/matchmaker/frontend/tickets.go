@@ -19,7 +19,7 @@ type omFrontendClient struct {
 
 func newOmFrontendClient(cfg config.View) *omFrontendClient {
 	newInstance := func(cfg config.View) (interface{}, func(), error) {
-		conn, err := rpc.GRPCClientFromConfig(cfg, "openmatch.frontend")
+		conn, err := rpc.GRPCClientFromService(cfg, "openmatch.frontend")
 		if err != nil {
 			return nil, nil, err
 		}

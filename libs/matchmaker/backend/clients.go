@@ -19,7 +19,7 @@ type agonesAllocationClient struct {
 
 func newAgonesAllocationClient(cfg config.View) *agonesAllocationClient {
 	var newInstance config.NewInstanceFunc = func(cfg config.View) (interface{}, func(), error) {
-		conn, err := rpc.GRPCClientFromConfig(cfg, "agones")
+		conn, err := rpc.GRPCClientFromService(cfg, "agones")
 		if err != nil {
 			return nil, nil, err
 		}

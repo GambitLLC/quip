@@ -13,13 +13,13 @@ import (
 	"github.com/GambitLLC/quip/libs/rpc"
 )
 
-type OnAllocatedFunc func ()
+type OnAllocatedFunc func()
 
 type SDK struct {
-	agonesSDK *agones.SDK
+	agonesSDK         *agones.SDK
 	quipManagerClient pb.QuipManagerClient
 
-	lock sync.Mutex
+	lock        sync.Mutex
 	onAllocated OnAllocatedFunc
 }
 
@@ -29,13 +29,13 @@ func New(cfg config.View) (*SDK, error) {
 		return nil, errors.WithMessage(err, "failed to make agones.SDK")
 	}
 
-	conn, err := rpc.GRPCClientFromConfig(cfg, "matchmaker.manager")
+	conn, err := rpc.GRPCClientFromService(cfg, "matchmaker.manager")
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to make QuipManager grpc client")
 	}
 
 	s := &SDK{
-		agonesSDK: agonesSDK,
+		agonesSDK:         agonesSDK,
 		quipManagerClient: pb.NewQuipManagerClient(conn),
 	}
 

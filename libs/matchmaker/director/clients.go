@@ -18,7 +18,7 @@ type omBackendClient struct {
 
 func newOMBackendClient(cfg config.View) *omBackendClient {
 	var newInstance config.NewInstanceFunc = func(cfg config.View) (interface{}, func(), error) {
-		conn, err := rpc.GRPCClientFromConfig(cfg, "openmatch.backend")
+		conn, err := rpc.GRPCClientFromService(cfg, "openmatch.backend")
 		if err != nil {
 			return nil, nil, err
 		}
@@ -88,7 +88,7 @@ type agonesClient struct {
 
 func newAgonesClient(cfg config.View) *agonesClient {
 	var newInstance config.NewInstanceFunc = func(cfg config.View) (interface{}, func(), error) {
-		conn, err := rpc.GRPCClientFromConfig(cfg, "agones")
+		conn, err := rpc.GRPCClientFromService(cfg, "agones")
 		if err != nil {
 			return nil, nil, err
 		}
