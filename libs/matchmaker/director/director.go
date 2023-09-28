@@ -115,6 +115,19 @@ func (s *Service) allocateMatch(ctx context.Context, match *ompb.Match) error {
 	// TODO: is it necessary to get match response?
 	_, err = s.agonesClient.Allocate(ctx)
 	if err != nil {
+		// Release tickets associated with match
+		go func() {
+			ticketIds := make([]string, len(match.Tickets))
+			for i, ticket := range match.Tickets {
+				ticketIds[i] = ticket.Id
+			}
+			_, err := s.omBackend.ReleaseTickets(context.Background(), &ompb.ReleaseTicketsRequest{
+				TicketIds: ticketIds,
+			})
+			if err != nil {
+				logger.Err(err).Msgf("failed to release tickets for unallocated match %s", match.MatchId)
+			}
+		}()
 		return errors.WithMessagef(err, "failed to allocate gameserver for match %s", match.MatchId)
 	}
 
