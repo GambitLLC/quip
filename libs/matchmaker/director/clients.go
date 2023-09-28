@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 
+	agonesPb "agones.dev/agones/pkg/allocation/go"
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
@@ -79,4 +80,40 @@ func (bc *omBackendClient) ReleaseTickets(ctx context.Context, in *ompb.ReleaseT
 	}
 
 	return client.(ompb.BackendServiceClient).ReleaseTickets(ctx, in)
+}
+
+type agonesClient struct {
+	cacher config.Cacher
+}
+
+func newAgonesClient(cfg config.View) *agonesClient {
+	var newInstance config.NewInstanceFunc = func(cfg config.View) (interface{}, func(), error) {
+		conn, err := rpc.GRPCClientFromConfig(cfg, "agones")
+		if err != nil {
+			return nil, nil, err
+		}
+
+		close := func() {
+			// TODO: handle error
+			_ = conn.Close()
+		}
+
+		return agonesPb.NewAllocationServiceClient(conn), close, nil
+	}
+
+	return &agonesClient{
+		cacher: config.NewViewCacher(cfg, newInstance),
+	}
+}
+
+func (c *agonesClient) Allocate(ctx context.Context) (*agonesPb.AllocationResponse, error) {
+	client, err := c.cacher.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.(agonesPb.AllocationServiceClient).Allocate(
+		ctx,
+		&agonesPb.AllocationRequest{},
+	)
 }

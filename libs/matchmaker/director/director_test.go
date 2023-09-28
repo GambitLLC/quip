@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	agonesPb "agones.dev/agones/pkg/allocation/go"
 	"github.com/rs/xid"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
@@ -16,39 +17,73 @@ import (
 	"github.com/GambitLLC/quip/libs/appmain"
 	"github.com/GambitLLC/quip/libs/appmain/apptest"
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/broker"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/test"
 	"github.com/GambitLLC/quip/libs/matchmaker/matchfunction"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
-func TestMatchFound(t *testing.T) {
+func TestDirectorAllocates(t *testing.T) {
 	cfg := viper.New()
+	mockAgones := newAgones(t, cfg)
 	newService(t, cfg)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	b := broker.NewRedisBroker(cfg)
-	statusSub := b.SubscribeStatusUpdate(ctx)
-	t.Cleanup(func() { _ = statusSub.Close() })
-
-	for {
-		select {
-		case <-ctx.Done():
-			t.Fatal("test timed out without receiving match found update")
-		case update, ok := <-statusSub.Channel():
-			if !ok {
-				t.Fatal("queue update channel closed")
-			}
-
-			// got some match found, test finished
-			if update.GetUpdate().GetMatchFound() != nil {
-				return
-			}
-		}
+	select {
+	case <-mockAgones.allocated:
+	case <-time.After(10 * time.Second):
+		t.Fatal("test timed out without receiving allocation")
 	}
+
+	<-time.After(1 * time.Second)
+}
+
+type mockAgones struct {
+	agonesPb.UnimplementedAllocationServiceServer
+	allocated chan struct{}
+}
+
+func (a *mockAgones) Allocate(context.Context, *agonesPb.AllocationRequest) (*agonesPb.AllocationResponse, error) {
+	select {
+	case a.allocated <- struct{}{}:
+	default:
+	}
+
+	return &agonesPb.AllocationResponse{}, nil
+}
+
+func newAgones(t *testing.T, cfg config.Mutable) *mockAgones {
+	service := &mockAgones{
+		allocated: make(chan struct{}, 1),
+	}
+
+	ln, err := net.Listen("tcp", ":0")
+	require.NoError(t, err, "net.Listen failed")
+
+	_, port, err := net.SplitHostPort(ln.Addr().String())
+	require.NoError(t, err, "net.SplitHostPort failed")
+
+	services := []string{
+		apptest.ServiceName,
+		"agones",
+	}
+	for _, svc := range services {
+		cfg.Set(svc+".hostname", "localhost")
+		cfg.Set(svc+".port", port)
+	}
+
+	apptest.TestGRPCService(
+		t,
+		cfg,
+		[]net.Listener{ln},
+		func(v config.View, g *appmain.GRPCBindings) error {
+			g.AddHandler(func(s *grpc.Server) {
+				agonesPb.RegisterAllocationServiceServer(s, service)
+			})
+			return nil
+		},
+	)
+
+	return service
 }
 
 func newService(t *testing.T, cfg config.Mutable) {

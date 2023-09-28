@@ -16,7 +16,6 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
-	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
 
 var logger = zerolog.New(os.Stderr).With().
@@ -25,20 +24,22 @@ var logger = zerolog.New(os.Stderr).With().
 	Logger()
 
 type Service struct {
-	cfg       config.View
-	store     statestore.Service
-	omBackend *omBackendClient
-	broker    *broker.RedisBroker
-	profiles  *games.MatchProfileCache
+	cfg          config.View
+	store        statestore.Service
+	omBackend    *omBackendClient
+	agonesClient *agonesClient
+	broker       *broker.RedisBroker
+	profiles     *games.MatchProfileCache
 }
 
 func New(cfg config.View) appmain.Daemon {
 	return &Service{
-		cfg:       cfg,
-		store:     statestore.New(cfg),
-		omBackend: newOMBackendClient(cfg),
-		broker:    broker.NewRedisBroker(cfg),
-		profiles:  games.NewMatchProfileCache(cfg.GetString("matchmaker.gamesFile")),
+		cfg:          cfg,
+		store:        statestore.New(cfg),
+		omBackend:    newOMBackendClient(cfg),
+		agonesClient: newAgonesClient(cfg),
+		broker:       broker.NewRedisBroker(cfg),
+		profiles:     games.NewMatchProfileCache(cfg.GetString("matchmaker.gamesFile")),
 	}
 }
 
@@ -85,8 +86,8 @@ func (s *Service) Start(ctx context.Context) error {
 					logger.Debug().Msgf("Fetched %d matches for profile %s", len(matches), profile.Name)
 
 					for _, match := range matches {
-						if err := s.assignMatch(ctx, match); err != nil {
-							logger.Error().Err(err).Str("match_id", match.MatchId).Msg("Failed to assign match")
+						if err := s.allocateMatch(ctx, match); err != nil {
+							logger.Error().Err(err).Str("match_id", match.MatchId).Msg("Failed to allocate match")
 						}
 					}
 				}(&wg, p)
@@ -97,7 +98,7 @@ func (s *Service) Start(ctx context.Context) error {
 	}
 }
 
-func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
+func (s *Service) allocateMatch(ctx context.Context, match *ompb.Match) error {
 	details, err := protoext.OpenMatchMatchDetails(match)
 	if err != nil {
 		return err
@@ -111,68 +112,10 @@ func (s *Service) assignMatch(ctx context.Context, match *ompb.Match) error {
 		return errors.Errorf("match details has zero length players: %v", details)
 	}
 
-	ticketIds := make([]string, len(match.Tickets))
-	for i, ticket := range match.Tickets {
-		ticketIds[i] = ticket.Id
-	}
-
-	b, err := s.store.SetMatchId(ctx, details.MatchId, details.Roster.Players)
+	// TODO: is it necessary to get match response?
+	_, err = s.agonesClient.Allocate(ctx)
 	if err != nil {
-		// TODO: release tickets
-		return err
-	}
-
-	if !b {
-		// TODO: release tickets
-		return errors.New("failed to set match id for some players")
-	}
-
-	// TODO: allocate match
-
-	// resp, err := s.backend.AllocateMatch(ctx, &pb.AllocateMatchRequest{
-	// 	MatchId: match.MatchId,
-	// 	GameConfig: &pb.GameConfiguration{
-	// 		Gamemode: details.GetConfig().Gamemode,
-	// 	},
-	// 	Roster: &pb.MatchRoster{
-	// 		Players: details.GetRoster().Players,
-	// 	},
-	// })
-
-	// if err != nil {
-	// 	// TODO: release tickets
-	// 	return err
-	// }
-
-	// TODO: handle publish error
-	go s.broker.Publish(context.Background(), broker.StatusUpdateRoute, &pb.StatusUpdateMessage{
-		Targets: details.Roster.Players,
-		Update: &pb.StatusUpdate{
-			Update: &pb.StatusUpdate_MatchFound{
-				MatchFound: &pb.MatchFound{
-					MatchId: details.MatchId,
-				},
-			},
-		},
-	})
-
-	res, err := s.omBackend.AssignTickets(ctx, &ompb.AssignTicketsRequest{
-		Assignments: []*ompb.AssignmentGroup{
-			{
-				TicketIds: ticketIds,
-				Assignment: &ompb.Assignment{
-					Connection: "temporary connection",
-				},
-			},
-		},
-	})
-	if err != nil {
-		return errors.Wrap(err, "AssignTickets failed")
-	}
-
-	// TODO: repeat assignment on error or failures?
-	for _, failure := range res.Failures {
-		logger.Warn().Str("ticket_id", failure.TicketId).Msg("Failed to assign ticket")
+		return errors.WithMessagef(err, "failed to allocate gameserver for match %s", match.MatchId)
 	}
 
 	return nil
