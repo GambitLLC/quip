@@ -3,13 +3,19 @@ package broker
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/GambitLLC/quip/libs/config"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
+
+var logger = zerolog.New(os.Stderr).With().
+	Str("component", "matchmaker.broker").
+	Logger()
 
 type Route string
 
@@ -59,7 +65,7 @@ func (b *RedisBroker) SubscribeStateUpdate(ctx context.Context) *StateSubscripti
 		for msg := range pubsub.Channel() {
 			update := &pb.StateUpdateMessage{}
 			if err := proto.Unmarshal([]byte(msg.Payload), update); err != nil {
-				// logger.Error().Err(err).Msg("Unmarshal StateUpdate failed")
+				logger.Error().Err(err).Msg("Unmarshal StateUpdate failed")
 				continue
 			}
 
@@ -84,7 +90,7 @@ func (b *RedisBroker) SubscribeStatusUpdate(ctx context.Context) *StatusSubscrip
 		for msg := range pubsub.Channel() {
 			update := &pb.StatusUpdateMessage{}
 			if err := proto.Unmarshal([]byte(msg.Payload), update); err != nil {
-				// logger.Error().Err(err).Msg("Unmarshal StateUpdate failed")
+				logger.Error().Err(err).Msg("Unmarshal StatusUpdate failed")
 				continue
 			}
 
@@ -110,7 +116,7 @@ func (b *RedisBroker) SubscribeMatchUpdate(ctx context.Context) *MatchSubscripti
 		for msg := range pubsub.Channel() {
 			update := &pb.MatchUpdateMessage{}
 			if err := proto.Unmarshal([]byte(msg.Payload), update); err != nil {
-				// logger.Error().Err(err).Msg("Unmarshal StateUpdate failed")
+				logger.Error().Err(err).Msg("Unmarshal MatchUpdate failed")
 				continue
 			}
 

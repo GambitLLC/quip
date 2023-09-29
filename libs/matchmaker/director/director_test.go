@@ -148,7 +148,7 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 		details := &pb.TicketDetails{
 			PlayerId: xid.New().String(),
 			Config: &pb.QueueConfiguration{
-				Gamemode: "test",
+				Gamemode: "test_1x1",
 			},
 		}
 
@@ -175,7 +175,7 @@ func (s *stubOMBackendService) FetchMatches(req *ompb.FetchMatchesRequest, srv o
 		MatchId: match.MatchId,
 		Roster:  roster,
 		Config: &pb.MatchConfiguration{
-			Gamemode: "test",
+			Gamemode: "test_1x1",
 		},
 	})
 	if err != nil {

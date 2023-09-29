@@ -103,10 +103,13 @@ func (s *Service) CreateMatch(ctx context.Context, req *pb.CreateMatchRequest) (
 		return nil, status.Errorf(codes.Internal, "AssignTickets failed: %v", err)
 	}
 
-	go s.broker.Publish(context.Background(), broker.StatusUpdateRoute, &pb.StatusUpdate{
-		Update: &pb.StatusUpdate_MatchFound{
-			MatchFound: &pb.MatchFound{
-				MatchId: req.MatchId,
+	go s.broker.Publish(context.Background(), broker.StatusUpdateRoute, &pb.StatusUpdateMessage{
+		Targets: req.Roster.Players,
+		Update: &pb.StatusUpdate{
+			Update: &pb.StatusUpdate_MatchFound{
+				MatchFound: &pb.MatchFound{
+					MatchId: req.MatchId,
+				},
 			},
 		},
 	})

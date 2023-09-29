@@ -31,18 +31,46 @@ import (
 	"github.com/GambitLLC/quip/libs/test/data"
 )
 
+const TestTimeout = 60 * time.Second
+
 // start spins up all matchmaker services in memory for the duration of the test.
 func start(t *testing.T) config.View {
 	cfg := viper.New()
-	test.NewRedis(t, cfg)
-	test.NewGamesFile(t, cfg)
 
 	// set tls
 	cfg.Set("api.tls.certificateFile", data.Path("x509/server_cert.pem"))
 	cfg.Set("api.tls.privateKeyFile", data.Path("x509/server_key.pem"))
 	cfg.Set("api.tls.rootCertificateFile", data.Path("x509/ca_cert.pem"))
 
-	// spin up all services
+	test.NewRedis(t, cfg)
+	test.NewGamesFile(t, cfg)
+
+	sdk := test.NewAgonesSDKServer(t)
+	{
+		// sdk must be created on an insecure grpc server -- spin it up separately
+		ln, err := net.Listen("tcp", ":0")
+		require.NoError(t, err, "net.Listen failed")
+
+		_, port, err := net.SplitHostPort(ln.Addr().String())
+		require.NoError(t, err, "net.SplitHostPort failed")
+
+		t.Setenv("AGONES_SDK_GRPC_PORT", port)
+
+		cfg := viper.New()
+		cfg.Set(apptest.ServiceName+".hostname", "localhost")
+		cfg.Set(apptest.ServiceName+".port", port)
+
+		apptest.TestGRPCService(
+			t,
+			cfg,
+			[]net.Listener{ln},
+			sdk.Bind,
+		)
+	}
+
+	alloc := test.NewAgonesAllocationService(t, cfg, sdk)
+
+	// spin up server for the rest of the services
 	ln, err := net.Listen("tcp", ":0")
 	require.NoError(t, err, "net.Listen failed")
 
@@ -72,7 +100,7 @@ func start(t *testing.T) config.View {
 		manager.BindService,
 		matchfunction.BindService,
 		test.BindOpenMatchService,
-		test.BindAgonesService,
+		alloc.Bind,
 	)
 
 	// start up director as well
@@ -141,6 +169,7 @@ func recvStream(t *testing.T, ctx context.Context, stream matchmaker.QuipFronten
 				t.Error(err)
 			}
 
+			// t.Log("recv'd msg: ", msg)
 			resps <- msg
 		}
 	}()

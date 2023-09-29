@@ -3,8 +3,9 @@ package sdk
 import (
 	"context"
 	"sync"
+	"time"
 
-	agonesSDK "agones.dev/agones/pkg/sdk"
+	agonessdk "agones.dev/agones/pkg/sdk"
 	agones "agones.dev/agones/sdks/go"
 	"github.com/pkg/errors"
 
@@ -13,7 +14,7 @@ import (
 	"github.com/GambitLLC/quip/libs/rpc"
 )
 
-type OnAllocatedFunc func()
+type OnAllocatedFunc func(*agonessdk.GameServer)
 
 type SDK struct {
 	agonesSDK         *agones.SDK
@@ -21,9 +22,10 @@ type SDK struct {
 
 	lock        sync.Mutex
 	onAllocated OnAllocatedFunc
+	details     *pb.MatchDetails
 }
 
-func New(cfg config.View) (*SDK, error) {
+func New(cfg config.View, onAllocated OnAllocatedFunc) (*SDK, error) {
 	agonesSDK, err := agones.NewSDK()
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to make agones.SDK")
@@ -37,6 +39,7 @@ func New(cfg config.View) (*SDK, error) {
 	s := &SDK{
 		agonesSDK:         agonesSDK,
 		quipManagerClient: pb.NewQuipManagerClient(conn),
+		onAllocated:       onAllocated,
 	}
 
 	if err := agonesSDK.WatchGameServer(s.onGameServerChange); err != nil {
@@ -58,7 +61,9 @@ func (s *SDK) Health() error {
 
 // OnAllocated sets f to be called when the game server is allocated.
 func (s *SDK) OnAllocated(f OnAllocatedFunc) {
+	s.lock.Lock()
 	s.onAllocated = f
+	s.lock.Unlock()
 }
 
 // Cancel cancels the match and marks the server as ready to be shutdown.
@@ -75,17 +80,47 @@ func (s *SDK) Cancel(ctx context.Context) error {
 
 // Finish sends final match results and marks the server as ready to be shutdown.
 func (s *SDK) Finish(results any) error {
-	// TODO: handle game results
+	// TODO: figure out results format
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := s.quipManagerClient.FinishMatch(ctx, &pb.FinishMatchRequest{
+		MatchId: s.details.MatchId,
+		Results: &pb.MatchResults{},
+	})
+	if err != nil {
+		return err
+	}
+
 	return s.agonesSDK.Shutdown()
 }
 
-func (s *SDK) onGameServerChange(gs *agonesSDK.GameServer) {
+func (s *SDK) onGameServerChange(gs *agonessdk.GameServer) {
 	// TODO: is string comparison the only way to check allocation?
 	if gs.Status.State == "Allocated" {
+		details, err := AgonesMatchDetails(gs.GetObjectMeta())
+		if err != nil {
+			panic(errors.WithMessage(err, "failed to get match details from gameserver"))
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_, err = s.quipManagerClient.CreateMatch(ctx, &pb.CreateMatchRequest{
+			MatchId: details.MatchId,
+			Config:  details.Config,
+			Roster:  details.Roster,
+		})
+		if err != nil {
+			panic(errors.WithMessage(err, "failed to creatematch"))
+		}
+
 		s.lock.Lock()
 		defer s.lock.Unlock()
-		// TODO: set internal data for sdk
-		s.onAllocated()
+
+		s.details = details
+		if s.onAllocated != nil {
+			s.onAllocated(gs)
+		}
 		return
 	}
 }

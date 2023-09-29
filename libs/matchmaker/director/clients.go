@@ -8,6 +8,8 @@ import (
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
+	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/GambitLLC/quip/libs/rpc"
 )
 
@@ -106,14 +108,23 @@ func newAgonesClient(cfg config.View) *agonesClient {
 	}
 }
 
-func (c *agonesClient) Allocate(ctx context.Context) (*agonesPb.AllocationResponse, error) {
+func (c *agonesClient) Allocate(ctx context.Context, details *pb.MatchDetails) (*agonesPb.AllocationResponse, error) {
 	client, err := c.cacher.Get()
 	if err != nil {
 		return nil, err
 	}
 
+	md := &agonesPb.MetaPatch{
+		Annotations: make(map[string]string),
+	}
+	if err := protoext.SetAnnotationDetails(md, details); err != nil {
+		return nil, err
+	}
+
 	return client.(agonesPb.AllocationServiceClient).Allocate(
 		ctx,
-		&agonesPb.AllocationRequest{},
+		&agonesPb.AllocationRequest{
+			Metadata: md,
+		},
 	)
 }

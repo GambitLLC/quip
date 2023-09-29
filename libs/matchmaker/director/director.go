@@ -66,7 +66,7 @@ func (s *Service) Start(ctx context.Context) error {
 				go func(wg *sync.WaitGroup, profile *ompb.MatchProfile) {
 					defer wg.Done()
 
-					ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+					ctx, cancel := context.WithTimeout(ctx, 45*time.Second)
 					defer cancel()
 
 					matches, err := s.omBackend.FetchMatches(ctx, &ompb.FetchMatchesRequest{
@@ -113,7 +113,7 @@ func (s *Service) allocateMatch(ctx context.Context, match *ompb.Match) error {
 	}
 
 	// TODO: is it necessary to get match response?
-	_, err = s.agonesClient.Allocate(ctx)
+	_, err = s.agonesClient.Allocate(ctx, details)
 	if err != nil {
 		// Release tickets associated with match
 		go func() {

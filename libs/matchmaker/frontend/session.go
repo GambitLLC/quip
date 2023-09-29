@@ -283,6 +283,7 @@ func (s *session) startQueue(req *pb.Request_StartQueue) error {
 				},
 			},
 		}
+		return nil
 	}
 
 	b, err := s.svc.statestore.SetTicketId(ctx, ticket.Id, []string{s.id})
@@ -302,6 +303,7 @@ func (s *session) startQueue(req *pb.Request_StartQueue) error {
 				},
 			},
 		}
+		return nil
 	}
 
 	// TODO: publish status update to broker so friends/party members are notified

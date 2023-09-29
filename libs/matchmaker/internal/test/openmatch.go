@@ -27,8 +27,8 @@ func BindOpenMatchService(cfg config.View, b *appmain.GRPCBindings) error {
 	}
 
 	b.AddHandler(func(s *grpc.Server) {
-		ompb.RegisterBackendServiceServer(s, svc)
 		ompb.RegisterFrontendServiceServer(s, svc)
+		ompb.RegisterBackendServiceServer(s, svc)
 		ompb.RegisterQueryServiceServer(s, svc)
 	})
 
@@ -36,12 +36,14 @@ func BindOpenMatchService(cfg config.View, b *appmain.GRPCBindings) error {
 }
 
 type openMatchService struct {
-	ompb.UnimplementedBackendServiceServer
 	ompb.UnimplementedFrontendServiceServer
+	ompb.UnimplementedBackendServiceServer
 	ompb.UnimplementedQueryServiceServer
 
 	cfg config.View
 	tm  sync.Map
+
+	clientCache sync.Map
 }
 
 func (s *openMatchService) CreateTicket(ctx context.Context, req *ompb.CreateTicketRequest) (*ompb.Ticket, error) {
@@ -96,11 +98,18 @@ func (s *openMatchService) FetchMatches(req *ompb.FetchMatchesRequest, srv ompb.
 	}
 
 	address := fmt.Sprintf("%s:%d", req.GetConfig().GetHost(), req.GetConfig().GetPort())
-	conn, err := rpc.GRPCClientFromAddress(s.cfg, address)
-	if err != nil {
-		return errors.Wrap(err, "failed to create grpc connection to matchfunction")
+	item, ok := s.clientCache.Load(address)
+	if !ok {
+		conn, err := rpc.GRPCClientFromAddress(s.cfg, address)
+		if err != nil {
+			return errors.Wrap(err, "failed to create grpc connection to matchfunction")
+		}
+		client := ompb.NewMatchFunctionClient(conn)
+		item = client
+		s.clientCache.Store(address, client)
 	}
-	client := ompb.NewMatchFunctionClient(conn)
+	client := item.(ompb.MatchFunctionClient)
+
 	ctx := srv.Context()
 
 	stream, err := client.Run(ctx, &ompb.RunRequest{Profile: req.Profile})
@@ -174,6 +183,29 @@ func (s *openMatchService) AssignTickets(ctx context.Context, req *ompb.AssignTi
 	}, nil
 }
 
+func (s *openMatchService) ReleaseTickets(ctx context.Context, req *ompb.ReleaseTicketsRequest) (*ompb.ReleaseTicketsResponse, error) {
+	for _, id := range req.TicketIds {
+		item, ok := s.tm.Load(id)
+		if !ok {
+			return nil, status.Errorf(codes.NotFound, "ticket id %s not found", id)
+		}
+
+		ticket, ok := item.(*ompb.Ticket)
+		if !ok || ticket == nil {
+			return nil, status.Errorf(codes.NotFound, "ticket id %s not found", id)
+		}
+
+		tags := ticket.SearchFields.Tags[:0]
+		for _, tag := range tags {
+			if tag != "queried" {
+				tags = append(tags, tag)
+			}
+		}
+		ticket.SearchFields.Tags = tags
+	}
+	return &ompb.ReleaseTicketsResponse{}, nil
+}
+
 func (s *openMatchService) QueryTickets(req *ompb.QueryTicketsRequest, srv ompb.QueryService_QueryTicketsServer) error {
 	ts := []*ompb.Ticket{}
 
@@ -183,6 +215,25 @@ func (s *openMatchService) QueryTickets(req *ompb.QueryTicketsRequest, srv ompb.
 		if ticket.GetAssignment() != nil {
 			return true
 		}
+
+		if ticket.SearchFields == nil {
+			ticket.SearchFields = &ompb.SearchFields{}
+		}
+		for _, tag := range ticket.SearchFields.Tags {
+			if tag == "queried" {
+				return true
+			}
+		}
+		for _, expected := range req.Pool.TagPresentFilters {
+			for _, tag := range ticket.SearchFields.Tags {
+				if tag == expected.Tag {
+					goto valid
+				}
+			}
+			return true
+		}
+	valid:
+		ticket.SearchFields.Tags = append(ticket.SearchFields.Tags, "queried")
 
 		ts = append(ts, value.(*ompb.Ticket))
 		return true

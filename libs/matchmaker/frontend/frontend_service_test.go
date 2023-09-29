@@ -97,7 +97,7 @@ func TestQueue(t *testing.T) {
 			Action: &pb.Request_StartQueue{
 				StartQueue: &pb.StartQueue{
 					Config: &pb.QueueConfiguration{
-						Gamemode: "test",
+						Gamemode: "test_1x1",
 					},
 				},
 			},

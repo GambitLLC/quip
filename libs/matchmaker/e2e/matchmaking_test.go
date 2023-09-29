@@ -3,7 +3,6 @@ package e2e_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -13,7 +12,7 @@ import (
 
 func TestMatch(t *testing.T) {
 	cfg := start(t)
-	ctx, cancel := context.WithTimeout(test.NewContext(t), 30*time.Second)
+	ctx, cancel := context.WithTimeout(test.NewContext(t), TestTimeout)
 	t.Cleanup(cancel)
 
 	client, _ := newFrontendClient(t, cfg)
@@ -28,12 +27,13 @@ func TestMatch(t *testing.T) {
 			Action: &pb.Request_StartQueue{
 				StartQueue: &pb.StartQueue{
 					Config: &pb.QueueConfiguration{
-						Gamemode: "test",
+						Gamemode: "test_1x1",
 					},
 				},
 			},
 		})
 		require.NoError(t, err, "StartQueue failed")
+		t.Log("sent start queue")
 	}
 
 	{
@@ -55,6 +55,7 @@ func TestMatch(t *testing.T) {
 				require.NotNil(t, msg.StatusUpdate.GetQueueStarted(), "expected queue started")
 			}
 		}
+		t.Log("got status searching")
 	}
 
 	{
@@ -76,6 +77,7 @@ func TestMatch(t *testing.T) {
 				require.NotNil(t, msg.StatusUpdate.GetMatchFound(), "expected match found")
 			}
 		}
+		t.Log("got match found")
 	}
 
 	{
@@ -97,6 +99,7 @@ func TestMatch(t *testing.T) {
 				require.NotNil(t, msg.StatusUpdate.GetMatchFinished(), "expected match finished")
 			}
 		}
+		t.Log("got match finished")
 	}
 
 	{

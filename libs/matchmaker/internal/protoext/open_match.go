@@ -11,13 +11,13 @@ import (
 
 const extensionDetailsKey string = "details"
 
-type extendable interface {
+type hasExtensions interface {
 	GetExtensions() map[string]*anypb.Any
 }
 
 // SetExtensionDetails puts src into dst.Extensions.
 // NOTE: Requires Extensions to NOT be nil on dst.
-func SetExtensionDetails(dst extendable, src proto.Message) error {
+func SetExtensionDetails(dst hasExtensions, src proto.Message) error {
 	any, err := anypb.New(src)
 	if err != nil {
 		return err

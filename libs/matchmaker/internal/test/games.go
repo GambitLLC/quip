@@ -21,8 +21,12 @@ func NewGamesFile(t *testing.T, cfg config.Mutable) {
 }
 
 const gamesFile = `{
-	"test": {
+	"test_2x1": {
 		"teamCount": 2,
+		"teamSize": 1
+	},
+	"test_1x1": {
+		"teamCount": 1,
 		"teamSize": 1
 	}
 }`
