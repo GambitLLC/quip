@@ -5,6 +5,7 @@ import { border } from "../styles/Border";
 import { typography } from "../styles/Typography";
 import { TouchableRipple } from "react-native-paper";
 import FontAwesome from "@expo/vector-icons/FontAwesome5"
+import RippleClick from "../animations/RippleClick";
 interface CryptoNumpadInputProps {
   onInput: (n: number) => void,
   onDelete: () => void,
@@ -40,9 +41,9 @@ export function CryptoNumpadInput(props: CryptoNumpadInputProps) {
               {
                 row.map((num, j) => {
                   return (
-                    <TouchableRipple borderless key={j} style={[styles.numpadKey, border.quip, m('x', 1)]} onPress={() => onPress(num)}>
+                    <RippleClick duration={600} minScale={.85 } borderless key={j} style={[styles.numpadKey, border.quip, m('x', 1)]} onPress={() => onPress(num)}>
                       {num === -1 || num === -2 ? <MapToIcon num={num}/> : <Text style={typography.h5}>{num.toString()}</Text>}
-                    </TouchableRipple>
+                    </RippleClick>
                   )
                 })
               }
