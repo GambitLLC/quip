@@ -63,7 +63,7 @@ func (s *AgonesAllocationService) Allocate(ctx context.Context, req *pb.Allocati
 			Address: "localhost",
 			Ports: []*agonessdk.GameServer_Status_Port{
 				{
-					Name: "tcp",
+					Name: "game",
 					Port: 25565,
 				},
 			},
@@ -77,7 +77,7 @@ func (s *AgonesAllocationService) Allocate(ctx context.Context, req *pb.Allocati
 		Address: "localhost",
 		Ports: []*pb.AllocationResponse_GameServerStatusPort{
 			{
-				Name: "tcp",
+				Name: "game",
 				Port: 25565,
 			},
 		},

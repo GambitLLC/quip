@@ -39,7 +39,7 @@
           }
         }
       },
-      "description": "MatchRoster contains necessary information for a gameserver to setup.\n\nTODO: support teams\n message Team { repeated string players = 1; }\n repeated Team teams = 1;"
+      "title": "TODO: support teams\n message Team { repeated string players = 1; }\n repeated Team teams = 1;"
     },
     "protobufAny": {
       "type": "object",

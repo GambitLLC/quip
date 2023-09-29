@@ -19,6 +19,7 @@ export const protobufPackage = "quip.matchmaker";
 
 export interface CreateMatchRequest {
   matchId: string;
+  connection: string;
   config: MatchConfiguration | undefined;
   roster: MatchRoster | undefined;
 }
@@ -33,7 +34,7 @@ export interface FinishMatchRequest {
 }
 
 function createBaseCreateMatchRequest(): CreateMatchRequest {
-  return { matchId: "", config: undefined, roster: undefined };
+  return { matchId: "", connection: "", config: undefined, roster: undefined };
 }
 
 export const CreateMatchRequest = {
@@ -41,11 +42,14 @@ export const CreateMatchRequest = {
     if (message.matchId !== "") {
       writer.uint32(10).string(message.matchId);
     }
+    if (message.connection !== "") {
+      writer.uint32(18).string(message.connection);
+    }
     if (message.config !== undefined) {
-      MatchConfiguration.encode(message.config, writer.uint32(18).fork()).ldelim();
+      MatchConfiguration.encode(message.config, writer.uint32(26).fork()).ldelim();
     }
     if (message.roster !== undefined) {
-      MatchRoster.encode(message.roster, writer.uint32(26).fork()).ldelim();
+      MatchRoster.encode(message.roster, writer.uint32(34).fork()).ldelim();
     }
     return writer;
   },
@@ -69,10 +73,17 @@ export const CreateMatchRequest = {
             break;
           }
 
-          message.config = MatchConfiguration.decode(reader, reader.uint32());
+          message.connection = reader.string();
           continue;
         case 3:
           if (tag !== 26) {
+            break;
+          }
+
+          message.config = MatchConfiguration.decode(reader, reader.uint32());
+          continue;
+        case 4:
+          if (tag !== 34) {
             break;
           }
 
@@ -90,6 +101,7 @@ export const CreateMatchRequest = {
   fromJSON(object: any): CreateMatchRequest {
     return {
       matchId: isSet(object.matchId) ? String(object.matchId) : "",
+      connection: isSet(object.connection) ? String(object.connection) : "",
       config: isSet(object.config) ? MatchConfiguration.fromJSON(object.config) : undefined,
       roster: isSet(object.roster) ? MatchRoster.fromJSON(object.roster) : undefined,
     };
@@ -99,6 +111,9 @@ export const CreateMatchRequest = {
     const obj: any = {};
     if (message.matchId !== "") {
       obj.matchId = message.matchId;
+    }
+    if (message.connection !== "") {
+      obj.connection = message.connection;
     }
     if (message.config !== undefined) {
       obj.config = MatchConfiguration.toJSON(message.config);
@@ -116,6 +131,7 @@ export const CreateMatchRequest = {
   fromPartial<I extends Exact<DeepPartial<CreateMatchRequest>, I>>(object: I): CreateMatchRequest {
     const message = createBaseCreateMatchRequest();
     message.matchId = object.matchId ?? "";
+    message.connection = object.connection ?? "";
     message.config = (object.config !== undefined && object.config !== null)
       ? MatchConfiguration.fromPartial(object.config)
       : undefined;

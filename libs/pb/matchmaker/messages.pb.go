@@ -858,7 +858,6 @@ func (x *MatchConfiguration) GetGamemode() string {
 	return ""
 }
 
-// MatchRoster contains necessary information for a gameserver to setup.
 type MatchRoster struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

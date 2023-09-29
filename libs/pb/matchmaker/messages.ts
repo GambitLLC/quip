@@ -159,7 +159,11 @@ export interface MatchConfiguration {
   gamemode: string;
 }
 
-/** MatchRoster contains necessary information for a gameserver to setup. */
+/**
+ * TODO: support teams
+ * message Team { repeated string players = 1; }
+ * repeated Team teams = 1;
+ */
 export interface MatchRoster {
   players: string[];
 }

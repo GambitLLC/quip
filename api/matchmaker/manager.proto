@@ -21,8 +21,9 @@ service QuipManager {
 
 message CreateMatchRequest {
   string match_id = 1;
-  MatchConfiguration config = 2;
-  MatchRoster roster = 3;
+  string connection = 2;
+  MatchConfiguration config = 3;
+  MatchRoster roster = 4;
 }
 
 message CancelMatchRequest {

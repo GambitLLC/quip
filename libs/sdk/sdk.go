@@ -2,17 +2,24 @@ package sdk
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"sync"
 	"time"
 
 	agonessdk "agones.dev/agones/pkg/sdk"
 	agones "agones.dev/agones/sdks/go"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 
 	"github.com/GambitLLC/quip/libs/config"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/GambitLLC/quip/libs/rpc"
 )
+
+var logger = zerolog.New(os.Stderr).With().
+	Str("component", "sdk").
+	Logger()
 
 type OnAllocatedFunc func(*agonessdk.GameServer)
 
@@ -20,9 +27,9 @@ type SDK struct {
 	agonesSDK         *agones.SDK
 	quipManagerClient pb.QuipManagerClient
 
-	lock        sync.Mutex
-	onAllocated OnAllocatedFunc
-	details     *pb.MatchDetails
+	lock          sync.Mutex
+	onceAllocated OnAllocatedFunc
+	details       *pb.MatchDetails
 }
 
 func New(cfg config.View, onAllocated OnAllocatedFunc) (*SDK, error) {
@@ -39,7 +46,7 @@ func New(cfg config.View, onAllocated OnAllocatedFunc) (*SDK, error) {
 	s := &SDK{
 		agonesSDK:         agonesSDK,
 		quipManagerClient: pb.NewQuipManagerClient(conn),
-		onAllocated:       onAllocated,
+		onceAllocated:     onAllocated,
 	}
 
 	if err := agonesSDK.WatchGameServer(s.onGameServerChange); err != nil {
@@ -59,17 +66,18 @@ func (s *SDK) Health() error {
 	return s.agonesSDK.Health()
 }
 
-// OnAllocated sets f to be called when the game server is allocated.
-func (s *SDK) OnAllocated(f OnAllocatedFunc) {
+// OnceAllocated sets f to be called when the game server is allocated.
+// Only gets called once.
+func (s *SDK) OnceAllocated(f OnAllocatedFunc) {
 	s.lock.Lock()
-	s.onAllocated = f
+	s.onceAllocated = f
 	s.lock.Unlock()
 }
 
 // Cancel cancels the match and marks the server as ready to be shutdown.
 func (s *SDK) Cancel(ctx context.Context) error {
 	_, err := s.quipManagerClient.CancelMatch(ctx, &pb.CancelMatchRequest{
-		MatchId: "", // TODO: get matchid
+		MatchId: s.details.MatchId,
 	})
 	if err != nil {
 		return err
@@ -100,26 +108,49 @@ func (s *SDK) onGameServerChange(gs *agonessdk.GameServer) {
 	if gs.Status.State == "Allocated" {
 		details, err := AgonesMatchDetails(gs.GetObjectMeta())
 		if err != nil {
-			panic(errors.WithMessage(err, "failed to get match details from gameserver"))
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		_, err = s.quipManagerClient.CreateMatch(ctx, &pb.CreateMatchRequest{
-			MatchId: details.MatchId,
-			Config:  details.Config,
-			Roster:  details.Roster,
-		})
-		if err != nil {
-			panic(errors.WithMessage(err, "failed to creatematch"))
+			logger.Err(err).Msg("parse match details from game server annotations failed")
+			return
 		}
 
 		s.lock.Lock()
 		defer s.lock.Unlock()
 
+		// Send CreateMatch request to QuipManager iff this allocation is for a new match
+		if s.details == nil || s.details.MatchId != details.MatchId {
+			// Find the address this gameserver is assigned to
+			var conn string
+			if ports := gs.GetStatus().GetPorts(); len(ports) == 0 {
+				logger.Warn().Msg("Gameserver has no ports")
+				conn = gs.GetStatus().GetAddress()
+			} else {
+				// Prefer port named "game" if it exists, else just use the first port listed
+				port := ports[0]
+				for _, p := range gs.GetStatus().GetPorts() {
+					if p.Name == "game" {
+						port = p
+					}
+				}
+				conn = fmt.Sprintf("%s:%d", gs.GetStatus().GetAddress(), port.Port)
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_, err = s.quipManagerClient.CreateMatch(ctx, &pb.CreateMatchRequest{
+				MatchId:    details.MatchId,
+				Connection: conn,
+				Config:     details.Config,
+				Roster:     details.Roster,
+			})
+			if err != nil {
+				logger.Err(err).Msg("manager.CreateMatch failed")
+				return
+			}
+		}
+
 		s.details = details
-		if s.onAllocated != nil {
-			s.onAllocated(gs)
+		if s.onceAllocated != nil {
+			s.onceAllocated(gs)
+			s.onceAllocated = nil
 		}
 		return
 	}

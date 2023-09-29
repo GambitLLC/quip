@@ -102,7 +102,6 @@ message MatchConfiguration {
   string gamemode = 1;
 }
 
-// MatchRoster contains necessary information for a gameserver to setup.
 message MatchRoster {
   // TODO: support teams
   // message Team { repeated string players = 1; }

@@ -50,6 +50,10 @@ func (s *Service) CreateMatch(ctx context.Context, req *pb.CreateMatchRequest) (
 		return nil, status.Error(codes.InvalidArgument, ".Roster.Players must not be empty")
 	}
 
+	if len(req.GetConnection()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, ".Connection is required")
+	}
+
 	ticketIds, err := s.store.GetTicketIds(ctx, req.Roster.Players)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "store.GetTicketIds failed: %v", err)
@@ -74,8 +78,7 @@ func (s *Service) CreateMatch(ctx context.Context, req *pb.CreateMatchRequest) (
 		return nil, status.Error(codes.FailedPrecondition, "failed to set match id for some players")
 	}
 
-	// TODO: get connection from request
-	err = s.store.CreateMatch(ctx, req.MatchId, req.Roster.Players, "connection")
+	err = s.store.CreateMatch(ctx, req.MatchId, req.Roster.Players, req.Connection)
 	if err != nil {
 		// TODO: handle errors
 		go s.store.UnsetMatchId(context.Background(), req.Roster.Players)
@@ -92,7 +95,7 @@ func (s *Service) CreateMatch(ctx context.Context, req *pb.CreateMatchRequest) (
 			{
 				TicketIds: ticketIds,
 				Assignment: &ompb.Assignment{
-					Connection: "connection", // TODO: get connection from request
+					Connection: req.Connection,
 				},
 			},
 		},
