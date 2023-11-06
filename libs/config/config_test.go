@@ -14,6 +14,12 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(errors.WithMessage(err, "failed to create temporary directory"))
 	}
+	defer func() {
+		err := os.RemoveAll(dir)
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	// Create config symlink to temporary folder
 	// This is because config.Read attempts to read from config/ folder
@@ -31,7 +37,7 @@ func TestMain(m *testing.M) {
 		panic(errors.WithMessage(err, "failed to rename symlink to 'config'"))
 	}
 
-	code := m.Run()
+	m.Run()
 
 	if _, err := os.Lstat("config"); err == nil {
 		err := os.Remove("config")
@@ -41,8 +47,6 @@ func TestMain(m *testing.M) {
 	} else {
 		panic(errors.WithMessage(err, "os.Lstat failed"))
 	}
-
-	os.Exit(code)
 }
 
 func TestRead(t *testing.T) {
