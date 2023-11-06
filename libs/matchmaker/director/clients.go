@@ -11,6 +11,7 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/GambitLLC/quip/libs/rpc"
+	"github.com/pkg/errors"
 )
 
 // omBackendClient caches an open match BackendServiceClient.
@@ -41,12 +42,12 @@ func newOMBackendClient(cfg config.View) *omBackendClient {
 func (bc *omBackendClient) FetchMatches(ctx context.Context, in *ompb.FetchMatchesRequest) ([]*ompb.Match, error) {
 	client, err := bc.cacher.Get()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithMessage(err, "failed to get cached backend client")
 	}
 
 	stream, err := client.(ompb.BackendServiceClient).FetchMatches(ctx, in)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithMessage(err, "failed to call FetchMatches")
 	}
 
 	var result []*ompb.Match
@@ -57,7 +58,7 @@ func (bc *omBackendClient) FetchMatches(ctx context.Context, in *ompb.FetchMatch
 		}
 
 		if err != nil {
-			return nil, err
+			return nil, errors.WithMessage(err, "error occured during FetchMatches stream")
 		}
 
 		result = append(result, resp.GetMatch())

@@ -1,245 +1,195 @@
 package test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"io"
-	"sync"
+	"net"
+	"os"
+	"os/exec"
+	"syscall"
+	"testing"
+	"time"
 
-	"github.com/pkg/errors"
-	"github.com/rs/xid"
-	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	ompb "open-match.dev/open-match/pkg/pb"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/require"
 
-	"github.com/GambitLLC/quip/libs/appmain"
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/rpc"
+	"github.com/GambitLLC/quip/libs/test/data"
 )
 
-func BindOpenMatchService(cfg config.View, b *appmain.GRPCBindings) error {
-	svc := &openMatchService{
-		cfg: cfg,
-	}
+func NewOpenMatch(t *testing.T, extCfg config.Mutable) {
+	dir, err := os.MkdirTemp("", "app")
+	require.NoError(t, err, "failed to create temporary directory")
 
-	b.AddHandler(func(s *grpc.Server) {
-		ompb.RegisterFrontendServiceServer(s, svc)
-		ompb.RegisterBackendServiceServer(s, svc)
-		ompb.RegisterQueryServiceServer(s, svc)
+	t.Cleanup(func() {
+		require.NoError(t, os.RemoveAll(dir), "failed to cleanup temp dir")
 	})
 
-	return nil
-}
+	// create default cfg
+	defaultCfg := viper.New()
+	defaultCfg.SetConfigType("yaml")
+	err = defaultCfg.ReadConfig(bytes.NewBufferString(defaultCfgString))
+	require.NoError(t, err, "failed to read default config")
 
-type openMatchService struct {
-	ompb.UnimplementedFrontendServiceServer
-	ompb.UnimplementedBackendServiceServer
-	ompb.UnimplementedQueryServiceServer
+	// set tls
+	defaultCfg.Set("api.tls.certificateFile", data.Path("x509/server_cert.pem"))
+	defaultCfg.Set("api.tls.privateKey", data.Path("x509/server_key.pem"))
+	defaultCfg.Set("api.tls.rootCertificateFile", data.Path("x509/ca_cert.pem"))
 
-	cfg config.View
-	tm  sync.Map
+	for _, svc := range []string{"minimatch", "synchronizer", "evaluator"} {
+		grpcport := getFreePort(t)
+		httpport := getFreePort(t)
 
-	clientCache sync.Map
-}
+		defaultCfg.Set("api."+svc+".hostname", "localhost")
+		defaultCfg.Set("api."+svc+".grpcport", grpcport)
+		defaultCfg.Set("api."+svc+".httpport", httpport)
 
-func (s *openMatchService) CreateTicket(ctx context.Context, req *ompb.CreateTicketRequest) (*ompb.Ticket, error) {
-	// Perform input validation.
-	if req.Ticket == nil {
-		return nil, status.Errorf(codes.InvalidArgument, ".ticket is required")
-	}
-	if req.Ticket.Assignment != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "tickets cannot be created with an assignment")
-	}
-	if req.Ticket.CreateTime != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "tickets cannot be created with create time set")
 	}
 
-	if req.Ticket.Id == "" {
-		req.Ticket.Id = xid.New().String()
-	}
-	req.Ticket.CreateTime = timestamppb.Now()
-	s.tm.Store(req.Ticket.Id, req.Ticket)
-	return req.Ticket, nil
-}
-
-func (s *openMatchService) DeleteTicket(ctx context.Context, req *ompb.DeleteTicketRequest) (*emptypb.Empty, error) {
-	_, ok := s.tm.LoadAndDelete(req.TicketId)
-	if !ok {
-		return nil, status.Errorf(codes.NotFound, "ticket id %s not found", req.TicketId)
+	minimatchPort := defaultCfg.Get("api.minimatch.grpcport")
+	for _, svc := range []string{"openmatch.frontend", "openmatch.backend", "openmatch.query"} {
+		extCfg.Set(svc+".hostname", "localhost")
+		extCfg.Set(svc+".port", minimatchPort)
 	}
 
-	return &emptypb.Empty{}, nil
-}
+	NewRedis(t, defaultCfg)
+	defaultCfg.Set("redis.hostname", "localhost")
+	defaultCfg.Set("redis.port", defaultCfg.Get("matchmaker.redis.port"))
 
-func (s *openMatchService) GetTicket(ctx context.Context, req *ompb.GetTicketRequest) (*ompb.Ticket, error) {
-	item, ok := s.tm.Load(req.TicketId)
-	if !ok {
-		return nil, status.Errorf(codes.NotFound, "ticket id %s not found", req.TicketId)
-	}
+	err = defaultCfg.WriteConfigAs(dir + "/matchmaker_config_default")
+	require.NoError(t, err, "failed to write default config")
 
-	ticket, ok := item.(*ompb.Ticket)
-	if !ok || ticket == nil {
-		return nil, status.Errorf(codes.NotFound, "ticket id %s not found", req.TicketId)
-	}
+	// create override cfg
+	overrideCfg := viper.New()
+	overrideCfg.SetConfigType("yaml")
+	err = overrideCfg.ReadConfig(bytes.NewBufferString(overrideCfgString))
+	require.NoError(t, err, "failed to read override config")
 
-	return ticket, nil
-}
+	err = overrideCfg.WriteConfigAs(dir + "/matchmaker_config_override")
+	require.NoError(t, err, "failed to write override config")
 
-func (s *openMatchService) FetchMatches(req *ompb.FetchMatchesRequest, srv ompb.BackendService_FetchMatchesServer) error {
-	if req.Config == nil {
-		return status.Error(codes.InvalidArgument, ".config is required")
-	}
-	if req.Profile == nil {
-		return status.Error(codes.InvalidArgument, ".profile is required")
-	}
+	ctx, cancel := context.WithCancel(NewContext(t))
+	t.Cleanup(cancel)
 
-	address := fmt.Sprintf("%s:%d", req.GetConfig().GetHost(), req.GetConfig().GetPort())
-	item, ok := s.clientCache.Load(address)
-	if !ok {
-		conn, err := rpc.GRPCClientFromAddress(s.cfg, address)
-		if err != nil {
-			return errors.Wrap(err, "failed to create grpc connection to matchfunction")
-		}
-		client := ompb.NewMatchFunctionClient(conn)
-		item = client
-		s.clientCache.Store(address, client)
-	}
-	client := item.(ompb.MatchFunctionClient)
-
-	ctx := srv.Context()
-
-	stream, err := client.Run(ctx, &ompb.RunRequest{Profile: req.Profile})
-	if err != nil {
-		return errors.Wrap(err, "failed to run match function for profile")
-	}
-
-	proposals := make(chan *ompb.Match, 1)
-	eg := &errgroup.Group{}
-
-	// send proposals to caller
-	eg.Go(func() error {
-		for p := range proposals {
-			err := srv.Send(&ompb.FetchMatchesResponse{
-				Match: p,
-			})
-			if err != nil {
-				return err
-			}
-		}
-		return nil
+	// minimatch := exec.Command("go", "run", "open-match.dev/open-match/cmd/minimatch@latest")
+	minimatch := exec.CommandContext(ctx, "minimatch")
+	minimatch.Dir = dir
+	// minimatch.Stdout = os.Stdout
+	// minimatch.Stderr = os.Stderr
+	require.NoError(t, minimatch.Start(), "start minimatch failed: make sure to run 'go install open-match.dev/open-match/cmd/minimatch@latest'")
+	t.Cleanup(func() {
+		require.NoError(t, minimatch.Process.Signal(syscall.SIGINT), "failed to signal SIGINT to minimatch")
+		_ = minimatch.Wait()
 	})
 
-	// recv proposals from matchfunction
-	eg.Go(func() error {
-		defer close(proposals)
-		for {
-			resp, err := stream.Recv()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				err = errors.Wrapf(err, "%v.Run() error, %v", client, err)
-				if ctx.Err() != nil {
-					// gRPC likes to suppress the context's error, so stop that.
-					return ctx.Err()
-				}
-				return err
-			}
-			select {
-			case proposals <- resp.GetProposal():
-			case <-ctx.Done():
-				return ctx.Err()
-			}
-		}
-
-		return nil
+	// synchronizer := exec.CommandContext(ctx, "go", "run", "open-match.dev/open-match/cmd/synchronizer@latest")
+	synchronizer := exec.CommandContext(ctx, "synchronizer")
+	synchronizer.Dir = dir
+	// synchronizer.Stdout = os.Stdout
+	// synchronizer.Stderr = os.Stderr
+	require.NoError(t, synchronizer.Start(), "start synchronizer failed: make sure to run 'go install open-match.dev/open-match/cmd/synchronizer@latest'")
+	t.Cleanup(func() {
+		require.NoError(t, synchronizer.Process.Signal(syscall.SIGINT), "failed to signal SIGINT to synchronizer")
+		_ = synchronizer.Wait()
 	})
 
-	return eg.Wait()
-}
-func (s *openMatchService) AssignTickets(ctx context.Context, req *ompb.AssignTicketsRequest) (*ompb.AssignTicketsResponse, error) {
-	failed := []*ompb.AssignmentFailure{}
-	for _, assignment := range req.GetAssignments() {
-		for _, tid := range assignment.TicketIds {
-			val, ok := s.tm.Load(tid)
-			if !ok {
-				failed = append(failed, &ompb.AssignmentFailure{
-					TicketId: tid,
-					Cause:    ompb.AssignmentFailure_TICKET_NOT_FOUND,
-				})
-				continue
-			}
+	// evaluator := exec.CommandContext(ctx, "go", "run", "open-match.dev/open-match/cmd/default-evaluator@latest")
+	evaluator := exec.CommandContext(ctx, "default-evaluator")
+	evaluator.Dir = dir
+	// evaluator.Stdout = os.Stdout
+	// evaluator.Stderr = os.Stderr
+	require.NoError(t, evaluator.Start(), "start minimatch failed: make sure to run 'go install open-match.dev/open-match/cmd/minimatch@latest'")
+	t.Cleanup(func() {
+		require.NoError(t, evaluator.Process.Signal(syscall.SIGINT), "failed to signal SIGINT to minimatch")
+		_ = evaluator.Wait()
+	})
 
-			val.(*ompb.Ticket).Assignment = assignment.Assignment
-		}
+}
+
+func getFreePort(t *testing.T) string {
+	ln, err := net.Listen("tcp", ":0")
+	require.NoError(t, err, "Listen failed")
+
+	_, port, err := net.SplitHostPort(ln.Addr().String())
+	require.NoError(t, err, "SplitHostPort failed")
+	// t.Logf("listening on port: %s", port)
+
+	ch := make(chan struct{}, 1)
+	go func(ln net.Listener) {
+		conn, err := ln.Accept()
+		require.NoError(t, err, "Accept failed")
+		_ = conn.Close()
+		_ = ln.Close()
+
+		ch <- struct{}{}
+	}(ln)
+
+	// must dial to keep port in TIME_WAIT
+	_, err = net.Dial("tcp", fmt.Sprintf("localhost:%s", port))
+	require.NoError(t, err)
+
+	select {
+	case <-ch:
+	case <-time.After(1 * time.Second):
+		require.FailNow(t, "listener didn't accept and close conn after 3 seconds")
 	}
 
-	return &ompb.AssignTicketsResponse{
-		Failures: failed,
-	}, nil
+	return port
 }
 
-func (s *openMatchService) ReleaseTickets(ctx context.Context, req *ompb.ReleaseTicketsRequest) (*ompb.ReleaseTicketsResponse, error) {
-	for _, id := range req.TicketIds {
-		item, ok := s.tm.Load(id)
-		if !ok {
-			return nil, status.Errorf(codes.NotFound, "ticket id %s not found", id)
-		}
+const defaultCfgString = `api:
+  minimatch:
+    grpcport:
+    httpport:
+  synchronizer:
+    grpcport:
+    hostname:
+    httpport:
+  tls:
+    certificatefile:
+    privatekey:
+    rootcertificatefile:
+backoff:
+  initialinterval: 100ms
+  maxelapsedtime: 3000ms
+  maxinterval: 500ms
+  multiplier: 1.5
+  randfactor: 0.5
+logging:
+  format: text
+  level: debug
+  rpc: false
+redis:
+  hostname:
+  port:
+telemetry:
+  jaeger:
+    enable: "false"
+  prometheus:
+    enable: "false"
+  reportingperiod: 1m
+  stackdrivermetrics:
+    enable: "false"
+  tracesamplingfraction: "0.01"
+  zpages:
+    enable: "false"
+`
 
-		ticket, ok := item.(*ompb.Ticket)
-		if !ok || ticket == nil {
-			return nil, status.Errorf(codes.NotFound, "ticket id %s not found", id)
-		}
-
-		tags := ticket.SearchFields.Tags[:0]
-		for _, tag := range tags {
-			if tag != "queried" {
-				tags = append(tags, tag)
-			}
-		}
-		ticket.SearchFields.Tags = tags
-	}
-	return &ompb.ReleaseTicketsResponse{}, nil
-}
-
-func (s *openMatchService) QueryTickets(req *ompb.QueryTicketsRequest, srv ompb.QueryService_QueryTicketsServer) error {
-	ts := []*ompb.Ticket{}
-
-	// TODO: actually filter based on pool
-	s.tm.Range(func(key, value any) bool {
-		ticket := value.(*ompb.Ticket)
-		if ticket.GetAssignment() != nil {
-			return true
-		}
-
-		if ticket.SearchFields == nil {
-			ticket.SearchFields = &ompb.SearchFields{}
-		}
-		for _, tag := range ticket.SearchFields.Tags {
-			if tag == "queried" {
-				return true
-			}
-		}
-		for _, expected := range req.Pool.TagPresentFilters {
-			for _, tag := range ticket.SearchFields.Tags {
-				if tag == expected.Tag {
-					goto valid
-				}
-			}
-			return true
-		}
-	valid:
-		ticket.SearchFields.Tags = append(ticket.SearchFields.Tags, "queried")
-
-		ts = append(ts, value.(*ompb.Ticket))
-		return true
-	})
-
-	return srv.Send(&ompb.QueryTicketsResponse{
-		Tickets: ts,
-	})
-}
+const overrideCfgString = `# Length of time between first fetch matches call, and when no further fetch
+# matches calls will join the current evaluation/synchronization cycle,
+# instead waiting for the next cycle.
+registrationInterval: 250ms
+# Length of time after match function as started before it will be canceled,
+# and evaluator call input is EOF.
+proposalCollectionInterval: 20s
+# Time after a ticket has been returned from fetch matches (marked as pending)
+# before it automatically becomes active again and will be returned by query
+# calls.
+pendingReleaseTimeout: 1m
+# Time after a ticket has been assigned before it is automatically delted.
+assignedDeleteTimeout: 10m
+# Maximum number of tickets to return on a single QueryTicketsResponse.
+queryPageSize: 10000
+backfillLockTimeout: 1m
+`

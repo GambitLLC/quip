@@ -44,8 +44,9 @@ func start(t *testing.T) config.View {
 
 	test.NewRedis(t, cfg)
 	test.NewGamesFile(t, cfg)
+	test.NewOpenMatch(t, cfg)
 
-	sdk := test.NewAgonesSDKServer(t)
+	agonesSdkSvc := test.NewAgonesSDKServer(t)
 	{
 		// sdk must be created on an insecure grpc server -- spin it up separately
 		ln, err := net.Listen("tcp", ":0")
@@ -64,11 +65,9 @@ func start(t *testing.T) config.View {
 			t,
 			cfg,
 			[]net.Listener{ln},
-			sdk.Bind,
+			agonesSdkSvc.Bind,
 		)
 	}
-
-	alloc := test.NewAgonesAllocationService(t, cfg, sdk)
 
 	// spin up server for the rest of the services
 	ln, err := net.Listen("tcp", ":0")
@@ -82,15 +81,14 @@ func start(t *testing.T) config.View {
 		"matchmaker.frontend",
 		"matchmaker.manager",
 		"matchmaker.matchfunction",
-		"openmatch.backend",
-		"openmatch.frontend",
-		"openmatch.query",
 		"agones",
 	}
 	for _, svc := range services {
 		cfg.Set(svc+".hostname", "localhost")
 		cfg.Set(svc+".port", port)
 	}
+
+	agonesAllocSvc := test.NewAgonesAllocationService(t, cfg, agonesSdkSvc)
 
 	apptest.TestGRPCService(
 		t,
@@ -99,8 +97,7 @@ func start(t *testing.T) config.View {
 		frontend.BindService,
 		manager.BindService,
 		matchfunction.BindService,
-		test.BindOpenMatchService,
-		alloc.Bind,
+		agonesAllocSvc.Bind,
 	)
 
 	// start up director as well
