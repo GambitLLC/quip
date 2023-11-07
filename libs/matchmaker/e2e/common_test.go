@@ -28,7 +28,6 @@ import (
 	"github.com/GambitLLC/quip/libs/matchmaker/matchfunction"
 	"github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/GambitLLC/quip/libs/rpc"
-	"github.com/GambitLLC/quip/libs/test/data"
 )
 
 const TestTimeout = 60 * time.Second
@@ -37,11 +36,7 @@ const TestTimeout = 60 * time.Second
 func start(t *testing.T) config.View {
 	cfg := viper.New()
 
-	// set tls
-	cfg.Set("api.tls.certificateFile", data.Path("x509/server_cert.pem"))
-	cfg.Set("api.tls.privateKeyFile", data.Path("x509/server_key.pem"))
-	cfg.Set("api.tls.rootCertificateFile", data.Path("x509/ca_cert.pem"))
-
+	test.SetTLS(cfg)
 	test.NewRedis(t, cfg)
 	test.NewGamesFile(t, cfg)
 	test.NewOpenMatch(t, cfg)

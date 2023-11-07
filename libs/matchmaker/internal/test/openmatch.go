@@ -32,7 +32,7 @@ func NewOpenMatch(t *testing.T, extCfg config.Mutable) {
 	err = defaultCfg.ReadConfig(bytes.NewBufferString(defaultCfgString))
 	require.NoError(t, err, "failed to read default config")
 
-	// set tls
+	// set tls (open match has different key names, cannot use test.SetTLS)
 	defaultCfg.Set("api.tls.certificateFile", data.Path("x509/server_cert.pem"))
 	defaultCfg.Set("api.tls.privateKey", data.Path("x509/server_key.pem"))
 	defaultCfg.Set("api.tls.rootCertificateFile", data.Path("x509/ca_cert.pem"))

@@ -367,6 +367,8 @@ func runFrontendTest(t *testing.T, tc TestCase) {
 func newService(t *testing.T, cfg config.Mutable) {
 	test.NewRedis(t, cfg)
 	test.NewGamesFile(t, cfg)
+	test.NewOpenMatch(t, cfg)
+	test.SetTLS(cfg)
 
 	ln, err := net.Listen("tcp", ":0")
 	require.NoError(t, err, "net.Listen failed")
@@ -377,9 +379,6 @@ func newService(t *testing.T, cfg config.Mutable) {
 	services := []string{
 		apptest.ServiceName,
 		"matchmaker.frontend",
-		"openmatch.backend",
-		"openmatch.frontend",
-		"openmatch.query",
 	}
 	for _, svc := range services {
 		cfg.Set(svc+".hostname", "localhost")
@@ -420,7 +419,6 @@ func newService(t *testing.T, cfg config.Mutable) {
 
 			return nil
 		},
-		test.BindOpenMatchService,
 	)
 }
 
