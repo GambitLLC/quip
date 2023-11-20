@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/test"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
+	"github.com/GambitLLC/quip/libs/test"
 )
 
 func TestMatch(t *testing.T) {

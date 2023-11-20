@@ -9,8 +9,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/broker"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/test"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
+	"github.com/GambitLLC/quip/libs/test"
 )
 
 func TestStateUpdate(t *testing.T) {

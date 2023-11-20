@@ -13,8 +13,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/GambitLLC/quip/libs/config"
+	"github.com/GambitLLC/quip/libs/matchmaker/games"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/broker"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/statestore"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )

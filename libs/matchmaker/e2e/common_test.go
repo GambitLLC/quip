@@ -23,11 +23,11 @@ import (
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/director"
 	"github.com/GambitLLC/quip/libs/matchmaker/frontend"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/test"
 	"github.com/GambitLLC/quip/libs/matchmaker/manager"
 	"github.com/GambitLLC/quip/libs/matchmaker/matchfunction"
 	"github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/GambitLLC/quip/libs/rpc"
+	"github.com/GambitLLC/quip/libs/test"
 )
 
 const TestTimeout = 60 * time.Second

@@ -22,9 +22,9 @@ import (
 	"github.com/GambitLLC/quip/libs/appmain/apptest"
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/broker"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/test"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/GambitLLC/quip/libs/rpc"
+	"github.com/GambitLLC/quip/libs/test"
 )
 
 func TestConnect(t *testing.T) {

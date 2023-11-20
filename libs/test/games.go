@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/games"
+	"github.com/GambitLLC/quip/libs/matchmaker/games"
 	"github.com/stretchr/testify/require"
 )
 

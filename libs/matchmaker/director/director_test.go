@@ -18,9 +18,9 @@ import (
 	"github.com/GambitLLC/quip/libs/appmain/apptest"
 	"github.com/GambitLLC/quip/libs/config"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/test"
 	"github.com/GambitLLC/quip/libs/matchmaker/matchfunction"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
+	"github.com/GambitLLC/quip/libs/test"
 )
 
 func TestDirectorAllocates(t *testing.T) {

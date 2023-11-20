@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/test"
+	"github.com/GambitLLC/quip/libs/test"
 )
 
 func TestTicketId(t *testing.T) {
