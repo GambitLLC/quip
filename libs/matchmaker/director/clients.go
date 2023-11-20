@@ -8,9 +8,9 @@ import (
 	ompb "open-match.dev/open-match/pkg/pb"
 
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 	"github.com/GambitLLC/quip/libs/rpc"
+	"github.com/GambitLLC/quip/libs/sdk"
 	"github.com/pkg/errors"
 )
 
@@ -118,7 +118,7 @@ func (c *agonesClient) Allocate(ctx context.Context, details *pb.MatchDetails) (
 	md := &agonesPb.MetaPatch{
 		Annotations: make(map[string]string),
 	}
-	if err := protoext.SetAnnotationDetails(md, details); err != nil {
+	if err := sdk.SetAnnotationDetails(md, details); err != nil {
 		return nil, err
 	}
 

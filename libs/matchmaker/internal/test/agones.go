@@ -13,7 +13,6 @@ import (
 
 	"github.com/GambitLLC/quip/libs/appmain"
 	"github.com/GambitLLC/quip/libs/config"
-	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	"github.com/GambitLLC/quip/libs/sdk"
 	"github.com/pkg/errors"
 )
@@ -164,7 +163,7 @@ func newGameserver(t *testing.T, cfg config.View) (*gameserver, error) {
 }
 
 func (gs *gameserver) onAllocated(agonesgs *agonessdk.GameServer) {
-	_, err := protoext.AgonesMetadataMatchDetails(agonesgs.GetObjectMeta())
+	_, err := sdk.AgonesMatchDetails(agonesgs.GetObjectMeta())
 	if err != nil {
 		gs.t.Error(errors.WithMessage(err, "failed to get match details from agones sdk"))
 		err := gs.sdk.Cancel(context.Background())
