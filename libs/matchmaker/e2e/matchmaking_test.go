@@ -11,7 +11,7 @@ import (
 )
 
 func TestMatch(t *testing.T) {
-	cfg := start(t)
+	cfg, agones := start(t)
 	ctx, cancel := context.WithTimeout(test.NewContext(t), TestTimeout)
 	t.Cleanup(cancel)
 
@@ -58,6 +58,7 @@ func TestMatch(t *testing.T) {
 		t.Log("got status searching")
 	}
 
+	var matchId string
 	{
 		// expect match found
 		select {
@@ -74,11 +75,18 @@ func TestMatch(t *testing.T) {
 			case *pb.Response_Error:
 				require.FailNow(t, "received error while waiting for match found: %v", msg)
 			case *pb.Response_StatusUpdate:
-				require.NotNil(t, msg.StatusUpdate.GetMatchFound(), "expected match found")
+				matchFound := msg.StatusUpdate.GetMatchFound()
+				require.NotNil(t, matchFound, "expected match found")
+				matchId = matchFound.GetMatchId()
+				require.NotEmpty(t, matchId, "expected non empty match id")
 			}
 		}
 		t.Log("got match found")
 	}
+
+	gs := agones.GetGameserver(matchId)
+	require.NotNil(t, gs, "got nil gameserver")
+	require.NoError(t, gs.Finish(nil), "gs.Finish failed")
 
 	{
 		// wait for match finished

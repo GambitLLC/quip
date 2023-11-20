@@ -33,36 +33,13 @@ import (
 const TestTimeout = 60 * time.Second
 
 // start spins up all matchmaker services in memory for the duration of the test.
-func start(t *testing.T) config.View {
+func start(t *testing.T) (config.View, *test.AgonesAllocationService) {
 	cfg := viper.New()
 
 	test.SetTLS(cfg)
 	test.NewRedis(t, cfg)
 	test.NewGamesFile(t, cfg)
 	test.NewOpenMatch(t, cfg)
-
-	agonesSdkSvc := test.NewAgonesSDKServer(t)
-	{
-		// sdk must be created on an insecure grpc server -- spin it up separately
-		ln, err := net.Listen("tcp", ":0")
-		require.NoError(t, err, "net.Listen failed")
-
-		_, port, err := net.SplitHostPort(ln.Addr().String())
-		require.NoError(t, err, "net.SplitHostPort failed")
-
-		t.Setenv("AGONES_SDK_GRPC_PORT", port)
-
-		cfg := viper.New()
-		cfg.Set(apptest.ServiceName+".hostname", "localhost")
-		cfg.Set(apptest.ServiceName+".port", port)
-
-		apptest.TestGRPCService(
-			t,
-			cfg,
-			[]net.Listener{ln},
-			agonesSdkSvc.Bind,
-		)
-	}
 
 	// spin up server for the rest of the services
 	ln, err := net.Listen("tcp", ":0")
@@ -83,7 +60,7 @@ func start(t *testing.T) config.View {
 		cfg.Set(svc+".port", port)
 	}
 
-	agonesAllocSvc := test.NewAgonesAllocationService(t, cfg, agonesSdkSvc)
+	agonesAllocSvc := test.NewAgonesAllocationService(t, cfg)
 
 	apptest.TestGRPCService(
 		t,
@@ -98,7 +75,7 @@ func start(t *testing.T) config.View {
 	// start up director as well
 	apptest.TestDaemon(t, cfg, director.New)
 
-	return cfg
+	return cfg, agonesAllocSvc
 }
 
 // createDidToken returns an arbitrary DID Token and the associated id
