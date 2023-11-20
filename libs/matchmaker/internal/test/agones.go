@@ -76,6 +76,11 @@ func (s *AgonesAllocationService) GetGameserver(id string) *sdk.SDK {
 	return sdk
 }
 
+// Agones SDK relies on environment variable for connection: lock is necessary to
+// ensure sdk connects to the correct server in case multiple sdks are created
+// in parallel
+var sdkCreationLock sync.Mutex
+
 // createGameServer creates a new GameServer and agones SDK for the given test case
 func (s *AgonesAllocationService) createGameServer(t *testing.T, cfg config.View, md *pb.MetaPatch) error {
 	details, err := sdk.AgonesMatchDetails(md)
@@ -86,6 +91,9 @@ func (s *AgonesAllocationService) createGameServer(t *testing.T, cfg config.View
 	if details.GetMatchId() == "" {
 		return status.Error(codes.InvalidArgument, "MatchId is not set in Metadata")
 	}
+
+	sdkCreationLock.Lock()
+	defer sdkCreationLock.Unlock()
 
 	createAgonesSDKServer(t, md)
 	sdk, err := sdk.New(cfg, nil)
