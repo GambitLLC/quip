@@ -12,7 +12,7 @@ import (
 )
 
 type Daemon interface {
-	Start(context.Context) error
+	Run(context.Context) error
 }
 
 // RunDaemon runs the given service forever. For use in main functions.
@@ -30,9 +30,9 @@ func RunDaemon(daemonName string, daemon func(config.View) Daemon) {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		log.Info().Str("component", daemonName).Msg("Running daemon")
-		err := d.Start(ctx)
+		err := d.Run(ctx)
 		if err != nil {
-			log.Panic().Str("component", daemonName).Err(err).Msg("Failed to start daemon")
+			log.Panic().Str("component", daemonName).Err(err).Msg("Failed to run daemon")
 		}
 	}()
 

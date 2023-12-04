@@ -43,8 +43,8 @@ func New(cfg config.View) appmain.Daemon {
 	}
 }
 
-// Start continuously fetches and assigns matches until input context is cancelled.
-func (s *Service) Start(ctx context.Context) error {
+// Run continuously fetches and assigns matches until input context is cancelled.
+func (s *Service) Run(ctx context.Context) error {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 

@@ -15,7 +15,7 @@ func TestDaemon(t *testing.T, cfg config.View, daemon func(config.View) appmain.
 	t.Cleanup(cancel)
 
 	go func() {
-		err := d.Start(ctx)
+		err := d.Run(ctx)
 		if err != nil {
 			t.Error(err)
 		}
