@@ -87,14 +87,12 @@ func (s *SDK) Cancel(ctx context.Context) error {
 }
 
 // Finish sends final match results and marks the server as ready to be shutdown.
-func (s *SDK) Finish(results any) error {
-	// TODO: figure out results format
-
+func (s *SDK) Finish(results *pb.MatchResults) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := s.quipManagerClient.FinishMatch(ctx, &pb.FinishMatchRequest{
 		MatchId: s.details.MatchId,
-		Results: &pb.MatchResults{},
+		Results: results,
 	})
 	if err != nil {
 		return err

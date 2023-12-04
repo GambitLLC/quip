@@ -2,6 +2,7 @@ syntax = "proto3";
 package quip.matchmaker;
 option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
 
+import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
 
 message Player {
@@ -111,5 +112,13 @@ message MatchRoster {
 }
 
 message MatchResults {
-  // TODO: figure out format for results
+  // Placements is an ordered list of players in order of placement
+  // The first player should be the winner of the match (top of scoreboard)
+  repeated string placements = 1;
+
+  // Scores is a map of players to numeric scores dependent on gamemode
+  map<string, double> scores = 2;
+
+  // arbitrary additional info dependent on match
+  optional google.protobuf.Any memo = 3; // TODO: better name?
 }

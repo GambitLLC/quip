@@ -1,5 +1,6 @@
 /* eslint-disable */
 import _m0 from "protobufjs/minimal";
+import { Any } from "../google/protobuf/any";
 import { Timestamp } from "../google/protobuf/timestamp";
 
 export const protobufPackage = "quip.matchmaker";
@@ -168,8 +169,21 @@ export interface MatchRoster {
   players: string[];
 }
 
-/** TODO: figure out format for results */
 export interface MatchResults {
+  /**
+   * Placements is an ordered list of players in order of placement
+   * The first player should be the winner of the match (top of scoreboard)
+   */
+  placements: string[];
+  /** Scores is a map of players to numeric scores dependent on gamemode */
+  scores: { [key: string]: number };
+  /** arbitrary additional info dependent on match */
+  memo?: Any | undefined;
+}
+
+export interface MatchResults_ScoresEntry {
+  key: string;
+  value: number;
 }
 
 function createBasePlayer(): Player {
@@ -1150,11 +1164,20 @@ export const MatchRoster = {
 };
 
 function createBaseMatchResults(): MatchResults {
-  return {};
+  return { placements: [], scores: {}, memo: undefined };
 }
 
 export const MatchResults = {
-  encode(_: MatchResults, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(message: MatchResults, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    for (const v of message.placements) {
+      writer.uint32(10).string(v!);
+    }
+    Object.entries(message.scores).forEach(([key, value]) => {
+      MatchResults_ScoresEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).ldelim();
+    });
+    if (message.memo !== undefined) {
+      Any.encode(message.memo, writer.uint32(26).fork()).ldelim();
+    }
     return writer;
   },
 
@@ -1165,6 +1188,30 @@ export const MatchResults = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.placements.push(reader.string());
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          const entry2 = MatchResults_ScoresEntry.decode(reader, reader.uint32());
+          if (entry2.value !== undefined) {
+            message.scores[entry2.key] = entry2.value;
+          }
+          continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          message.memo = Any.decode(reader, reader.uint32());
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1174,12 +1221,36 @@ export const MatchResults = {
     return message;
   },
 
-  fromJSON(_: any): MatchResults {
-    return {};
+  fromJSON(object: any): MatchResults {
+    return {
+      placements: Array.isArray(object?.placements) ? object.placements.map((e: any) => String(e)) : [],
+      scores: isObject(object.scores)
+        ? Object.entries(object.scores).reduce<{ [key: string]: number }>((acc, [key, value]) => {
+          acc[key] = Number(value);
+          return acc;
+        }, {})
+        : {},
+      memo: isSet(object.memo) ? Any.fromJSON(object.memo) : undefined,
+    };
   },
 
-  toJSON(_: MatchResults): unknown {
+  toJSON(message: MatchResults): unknown {
     const obj: any = {};
+    if (message.placements?.length) {
+      obj.placements = message.placements;
+    }
+    if (message.scores) {
+      const entries = Object.entries(message.scores);
+      if (entries.length > 0) {
+        obj.scores = {};
+        entries.forEach(([k, v]) => {
+          obj.scores[k] = v;
+        });
+      }
+    }
+    if (message.memo !== undefined) {
+      obj.memo = Any.toJSON(message.memo);
+    }
     return obj;
   },
 
@@ -1187,8 +1258,88 @@ export const MatchResults = {
     return MatchResults.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<MatchResults>, I>>(_: I): MatchResults {
+  fromPartial<I extends Exact<DeepPartial<MatchResults>, I>>(object: I): MatchResults {
     const message = createBaseMatchResults();
+    message.placements = object.placements?.map((e) => e) || [];
+    message.scores = Object.entries(object.scores ?? {}).reduce<{ [key: string]: number }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = Number(value);
+      }
+      return acc;
+    }, {});
+    message.memo = (object.memo !== undefined && object.memo !== null) ? Any.fromPartial(object.memo) : undefined;
+    return message;
+  },
+};
+
+function createBaseMatchResults_ScoresEntry(): MatchResults_ScoresEntry {
+  return { key: "", value: 0 };
+}
+
+export const MatchResults_ScoresEntry = {
+  encode(message: MatchResults_ScoresEntry, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== 0) {
+      writer.uint32(17).double(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): MatchResults_ScoresEntry {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMatchResults_ScoresEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        case 2:
+          if (tag !== 17) {
+            break;
+          }
+
+          message.value = reader.double();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MatchResults_ScoresEntry {
+    return { key: isSet(object.key) ? String(object.key) : "", value: isSet(object.value) ? Number(object.value) : 0 };
+  },
+
+  toJSON(message: MatchResults_ScoresEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== 0) {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MatchResults_ScoresEntry>, I>>(base?: I): MatchResults_ScoresEntry {
+    return MatchResults_ScoresEntry.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<MatchResults_ScoresEntry>, I>>(object: I): MatchResults_ScoresEntry {
+    const message = createBaseMatchResults_ScoresEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? 0;
     return message;
   },
 };
@@ -1243,6 +1394,10 @@ function fromJsonTimestamp(o: any): Date {
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));
   }
+}
+
+function isObject(value: any): boolean {
+  return typeof value === "object" && value !== null;
 }
 
 function isSet(value: any): boolean {
