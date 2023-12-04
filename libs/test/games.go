@@ -21,9 +21,12 @@ var gameListing = games.GameListing{
 	},
 }
 
-func NewGamesFile(t *testing.T, cfg config.Mutable) {
-	bs, err := json.Marshal(gameListing)
-	require.NoError(t, err, "json.Marshal gameListing failed")
+func NewGamesFile(t *testing.T, cfg config.Mutable, listing games.GameListing) {
+	if listing == nil {
+		listing = gameListing
+	}
+	bs, err := json.Marshal(listing)
+	require.NoError(t, err, "json.Marshal game listing failed")
 
 	f, err := os.CreateTemp("", "games")
 	require.NoError(t, err, "os.CreateTemp failed")

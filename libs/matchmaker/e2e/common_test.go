@@ -38,7 +38,7 @@ func start(t *testing.T) (config.View, *test.AgonesAllocationService) {
 
 	test.SetTLS(cfg)
 	test.NewRedis(t, cfg)
-	test.NewGamesFile(t, cfg)
+	test.NewGamesFile(t, cfg, nil)
 	test.NewOpenMatch(t, cfg)
 
 	// spin up server for the rest of the services

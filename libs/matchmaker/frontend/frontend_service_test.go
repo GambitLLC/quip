@@ -366,7 +366,7 @@ func runFrontendTest(t *testing.T, tc TestCase) {
 
 func newService(t *testing.T, cfg config.Mutable) {
 	test.NewRedis(t, cfg)
-	test.NewGamesFile(t, cfg)
+	test.NewGamesFile(t, cfg, nil)
 	test.NewOpenMatch(t, cfg)
 	test.SetTLS(cfg)
 

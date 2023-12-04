@@ -88,7 +88,7 @@ func newAgones(t *testing.T, cfg config.Mutable) *mockAgones {
 
 func newService(t *testing.T, cfg config.Mutable) {
 	test.NewRedis(t, cfg)
-	test.NewGamesFile(t, cfg)
+	test.NewGamesFile(t, cfg, nil)
 	newOMBackend(t, cfg)
 
 	apptest.TestDaemon(t, cfg, func(v config.View) appmain.Daemon {
