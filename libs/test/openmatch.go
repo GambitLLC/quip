@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
 	"os/exec"
 	"syscall"
 	"testing"
@@ -19,17 +18,12 @@ import (
 )
 
 func NewOpenMatch(t *testing.T, extCfg config.Mutable) {
-	dir, err := os.MkdirTemp("", "app")
-	require.NoError(t, err, "failed to create temporary directory")
-
-	t.Cleanup(func() {
-		require.NoError(t, os.RemoveAll(dir), "failed to cleanup temp dir")
-	})
+	dir := t.TempDir()
 
 	// create default cfg
 	defaultCfg := viper.New()
 	defaultCfg.SetConfigType("yaml")
-	err = defaultCfg.ReadConfig(bytes.NewBufferString(defaultCfgString))
+	err := defaultCfg.ReadConfig(bytes.NewBufferString(defaultCfgString))
 	require.NoError(t, err, "failed to read default config")
 
 	// set tls (open match has different key names, cannot use test.SetTLS)
