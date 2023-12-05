@@ -21,7 +21,45 @@ func TestMatchmaking(t *testing.T) {
 				require.Equal(t, id, r.GetPlayer().GetId())
 			}),
 		},
-		"full": {
+		"start queue should fail with unknown gamemode": {
+			sendRequest(&pb.Request{
+				Action: &pb.Request_StartQueue{
+					StartQueue: &pb.StartQueue{
+						Config: &pb.QueueConfiguration{
+							Gamemode: "unknown gamemode",
+						},
+					},
+				}},
+			),
+			expectResponse(func(r *pb.Response, id string) {
+				require.IsType(t, &pb.Response_Error{}, r.GetMessage())
+			}),
+		},
+		"stop queue": {
+			sendRequest(&pb.Request{
+				Action: &pb.Request_StartQueue{
+					StartQueue: &pb.StartQueue{
+						Config: &pb.QueueConfiguration{
+							Gamemode: "test_2x1",
+						},
+					},
+				}},
+			),
+			// wait for status searching
+			expectResponse(func(r *pb.Response, id string) {
+				require.IsType(t, &pb.Response_StatusUpdate{}, r.GetMessage())
+				require.IsType(t, &pb.StatusUpdate_QueueStarted{}, r.GetStatusUpdate().GetUpdate())
+			}),
+			sendRequest(&pb.Request{
+				Action: &pb.Request_StopQueue{}},
+			),
+			// wait for status queue stopped
+			expectResponse(func(r *pb.Response, id string) {
+				require.IsType(t, &pb.Response_StatusUpdate{}, r.GetMessage())
+				require.IsType(t, &pb.StatusUpdate_QueueStopped{}, r.GetStatusUpdate().GetUpdate())
+			}),
+		},
+		"expected flow": {
 			// Send start queue request
 			sendRequest(&pb.Request{
 				Action: &pb.Request_StartQueue{
@@ -73,20 +111,22 @@ func TestMatchmaking(t *testing.T) {
 			client, err := fc.Connect(ctx)
 			require.NoError(t, err, "client.Connect failed")
 
+			t.Cleanup(func() {
+				// wait for client to close before ending test
+				require.NoError(t, client.CloseSend(), "client.CloseSend failed")
+				select {
+				case <-ctx.Done():
+					require.Fail(t, "test timed out waiting for client to close")
+				case <-client.Context().Done():
+					// no op: stream closed
+				}
+			})
+
 			resps := recvStream(t, ctx, client)
 			memo := map[string]any{}
 
 			for _, action := range actions {
 				action(t, ctx, id, client, resps, agones, memo)
-			}
-
-			// wait for client to close before ending test
-			require.NoError(t, client.CloseSend(), "client.CloseSend failed")
-			select {
-			case <-ctx.Done():
-				require.Fail(t, "test timed out waiting for client to close")
-			case <-client.Context().Done():
-				// no op: stream closed
 			}
 		})
 	}
