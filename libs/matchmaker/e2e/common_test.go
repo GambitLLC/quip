@@ -145,3 +145,42 @@ func recvStream(t *testing.T, ctx context.Context, stream matchmaker.QuipFronten
 
 	return resps
 }
+
+type testAction func(
+	t *testing.T,
+	ctx context.Context,
+	id string,
+	client matchmaker.QuipFrontend_ConnectClient,
+	resps <-chan *matchmaker.Response,
+	agones *test.AgonesAllocationService,
+	memo map[string]any,
+)
+
+func sendRequest(r *matchmaker.Request) testAction {
+	return func(t *testing.T, ctx context.Context, id string, client matchmaker.QuipFrontend_ConnectClient, resps <-chan *matchmaker.Response, agones *test.AgonesAllocationService, memo map[string]any) {
+		require.NotNil(t, r)
+		err := client.Send(r)
+		require.NoError(t, err, "Send failed")
+	}
+}
+
+func expectResponse(check func(r *matchmaker.Response, id string)) testAction {
+	return expectResponseWithMemo(func(r *matchmaker.Response, id string, memo map[string]any) {
+		check(r, id)
+	})
+}
+
+func expectResponseWithMemo(check func(r *matchmaker.Response, id string, memo map[string]any)) testAction {
+	return func(t *testing.T, ctx context.Context, id string, client matchmaker.QuipFrontend_ConnectClient, resps <-chan *matchmaker.Response, agones *test.AgonesAllocationService, memo map[string]any) {
+		select {
+		case <-ctx.Done():
+			require.FailNow(t, "test timed out waiting for response")
+		case resp, ok := <-resps:
+			if !ok {
+				require.FailNow(t, "client response stream closed")
+			}
+
+			check(resp, id, memo)
+		}
+	}
+}
