@@ -15,8 +15,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@quip/native-ui": ["libs/native-ui/src/index.ts"],
-      "@quip/pb/*": ["libs/pb/*"]
+      "@quip/pb/matchmaker/*": ["libs/pb/matchmaker/*"],
+      "@quip/react/matchmaker": ["libs/react/matchmaker/src/index.ts"]
     },
     "esModuleInterop": true
   },
