@@ -2,17 +2,40 @@ import React, { useState, createContext, useEffect, useContext } from 'react';
 import { credentials } from '@grpc/grpc-js';
 import { QuipFrontendClient } from '@quip/pb/matchmaker/frontend';
 import * as messages from '@quip/pb/matchmaker/messages';
+import { Status as grpcStatus } from '@grpc/grpc-js/build/src/constants';
 
-export type Status = 'offline' | 'online' | 'searching' | 'playing';
+export type QuipStatus = 'offline' | 'online' | 'searching' | 'playing';
 
 export interface Matchmaker {
-  status: Status;
+  /**
+   * status is the current state of the QuipFrontendClient.
+   */
+  status: QuipStatus;
+
+  // TODO: is there a better way of handling errors? perhaps useMatchmaker
+  // should register subscribers or MatchmakerProvider takes in an onError?...
+  /**
+   * error is the most recent error message received.
+   */
+  error?: Error;
+  /**
+   * errorUpdatedAt is the timestamp error was last updated.
+   */
+  errorUpdatedAt?: number;
+
+  /**
+   * startQueue asynchronously attempts to start queue for the
+   * currently logged in user.
+   */
   startQueue: (config: messages.QueueConfiguration) => void;
 }
 
 export const MatchmakerContext = createContext<Matchmaker | null>(null);
 
 export interface MatchmakerProviderProps extends React.PropsWithChildren {
+  /**
+   * address of the QuipFrontendServer to connect to.
+   */
   address?: string;
 }
 
@@ -39,16 +62,22 @@ export function MatchmakerProvider({
     const stream = client.connect();
 
     stream.on('status', (status) => {
-      console.log(status);
+      // grpc status
+      console.log('status', status);
     });
     stream.on('data', (msg) => {
-      console.log(msg);
+      console.log('data', msg);
     });
     stream.on('end', () => {
       stream.end();
     });
     stream.on('error', (err) => {
-      console.error(err);
+      console.error('error', err);
+      setMatchmaker({
+        ...matchmaker,
+        error: err,
+        errorUpdatedAt: Date.now(),
+      });
     });
 
     return () => client.close();

@@ -6,6 +6,7 @@ import '@testing-library/jest-dom';
 import {
   Matchmaker,
   MatchmakerProvider,
+  MatchmakerProviderProps,
   useMatchmaker,
 } from './react-matchmaker';
 
@@ -17,15 +18,22 @@ import {
 } from '@quip/pb/matchmaker/frontend';
 
 import { Server, ServerCredentials, ServerDuplexStream } from '@grpc/grpc-js';
+import React from 'react';
 
-interface mockFrontendServer {
+interface mockQuipFrontendServer {
+  // start begins listening port and returns the port
   start: () => Promise<number>;
+
+  // stop gracefully stops the grpc server
   stop: (callback: (error?: Error) => void) => void;
 
-  connect: jest.Mock;
+  /**
+   * connect is a mock of QuipFrontendServer's connect method
+   */
+  connect: jest.Mock<void, [ServerDuplexStream<Request, Response>]>;
 }
 
-function mockFrontendServer(): mockFrontendServer {
+function mockFrontendServer(): mockQuipFrontendServer {
   const server = new Server();
 
   const connect = jest.fn(
@@ -45,10 +53,11 @@ function mockFrontendServer(): mockFrontendServer {
       return;
     }
   );
-  const mock: QuipFrontendServer = {
+
+  const impl: QuipFrontendServer = {
     connect,
   };
-  server.addService(QuipFrontendService, mock);
+  server.addService(QuipFrontendService, impl);
 
   return {
     start: async () => {
@@ -80,13 +89,16 @@ describe('MatchmakerProvider', () => {
       <MatchmakerProvider address={`localhost:${port}`}></MatchmakerProvider>
     );
 
-    await waitFor(() => expect(server.connect.mock.calls).toHaveLength(1));
+    await waitFor(() => expect(server.connect).toHaveBeenCalled());
   });
 });
 
 describe('useMatchmaker', () => {
   function TestComponent() {
     const matchmaker = useMatchmaker();
+    if (matchmaker.error) {
+      return <p>Error: {matchmaker.error.message}</p>;
+    }
     return <p>Status: {matchmaker.status}</p>;
   }
 
@@ -101,10 +113,38 @@ describe('useMatchmaker', () => {
 
   it('should throw error outside of MatchmakerProvider', async () => {
     // Hide expected uncaught error message thrown by React (suggests adding ErrorBoundary)
-    jest.spyOn(console, 'error').mockImplementation(() => null);
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => null);
 
     expect(() => {
       render(<TestComponent />);
     }).toThrowError();
+
+    spy.mockRestore();
+  });
+
+  it('should have error set', async () => {
+    // Hide expected uncaught error message thrown by React (suggests adding ErrorBoundary)
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => null);
+
+    const server = mockFrontendServer();
+    const port = await server.start();
+    server.connect.mockImplementation((call) => {
+      call.emit('error', new Error('some error'));
+    });
+
+    const wrapper = ({ children }: React.PropsWithChildren) => (
+      <MatchmakerProvider address={`localhost:${port}`}>
+        {children}
+      </MatchmakerProvider>
+    );
+
+    const { rerender } = render(<TestComponent />, { wrapper });
+
+    await waitFor(() => {
+      rerender(<TestComponent />);
+      expect(screen.getByText(/^Error:/)).toBeVisible();
+    });
+
+    spy.mockRestore();
   });
 });
