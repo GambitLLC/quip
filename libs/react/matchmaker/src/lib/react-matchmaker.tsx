@@ -73,11 +73,11 @@ export function MatchmakerProvider({
     });
     stream.on('error', (err) => {
       console.error('error', err);
-      setMatchmaker({
+      setMatchmaker((matchmaker) => ({
         ...matchmaker,
         error: err,
         errorUpdatedAt: Date.now(),
-      });
+      }));
     });
 
     return () => client.close();
