@@ -3,45 +3,34 @@ package quip.matchmaker;
 option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
 
 import "matchmaker/messages.proto";
-import "google/rpc/status.proto";
+import "google/protobuf/empty.proto";
 
 // Matchmaker service for end user clients.
 service QuipFrontend {
-  // Connect is a long-lived rpc for clients to send queue actions and
-  // receive queue updates.
-  rpc Connect(stream Request) returns (stream Response);
-}
+  // Connect is a long-lived rpc for clients to receive status updates.
+  // A client must be connected before any other frontend methods (start queue, etc)
+  // may be called.
+  rpc Connect(google.protobuf.Empty) returns (stream PlayerUpdate);
 
-message Request {
-  oneof action {
-    // TODO: is a keepalive message needed?
+  rpc GetPlayer(GetPlayerRequest) returns (Player);
 
-    GetPlayer get_player = 1; 
-    StartQueue start_queue = 2;
-    StopQueue stop_queue = 3;
-  }
+  rpc StartQueue(StartQueueRequest) returns (google.protobuf.Empty);
+
+  rpc StopQueue(StopQueueRequest) returns (google.protobuf.Empty);
 }
 
 // GetPlayer gets the details for the currently logged in player.
-message GetPlayer {
+message GetPlayerRequest {
 }
 
-message StartQueue {
+message StartQueueRequest {
   QueueConfiguration config = 1;
 }
 
-message StopQueue {
+message StopQueueRequest {
 }
 
-message Response {
-  oneof message {
-    // error is sent if any request failed.
-    google.rpc.Status error = 1;
-
-    // Response to GetPlayer or any StateUpdate messages for friends.
-    Player player = 2;
-
-    // Status updates for the current player.
-    StatusUpdate status_update = 4;
-  }
+message PlayerUpdate {
+  Player player = 1;
+  StatusUpdate update = 2;
 }

@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -22,6 +23,28 @@ func BindService(cfg config.View, b *appmain.GRPCBindings) error {
 		pb.RegisterQuipFrontendServer(s, service)
 	})
 	b.AddCloser(service.Close)
+	b.AddUnaryInterceptor(func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+		if info.FullMethod != pb.QuipFrontend_GetPlayer_FullMethodName && info.FullMethod != pb.QuipFrontend_StartQueue_FullMethodName && info.FullMethod != pb.QuipFrontend_StopQueue_FullMethodName {
+			return handler(ctx, req)
+		}
+
+		md := metautils.ExtractIncoming(ctx)
+		token := strings.TrimPrefix(md.Get("authorization"), "Bearer ")
+
+		if token == "" {
+			return nil, status.Error(codes.Unauthenticated, "missing authorization metadata")
+		}
+
+		didToken, err := auth.ValidateMagicDIDToken(token)
+		if err != nil {
+			return nil, status.Errorf(codes.Unauthenticated, fmt.Sprintf("invalid authorization token: %s", err.Error()))
+		}
+
+		playerId := didToken.GetIssuer()
+		md.Set("Player-Id", playerId)
+
+		return handler(md.ToIncoming(ctx), req)
+	})
 	b.AddStreamInterceptor(func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		if info.FullMethod != pb.QuipFrontend_Connect_FullMethodName {
 			return handler(srv, ss)

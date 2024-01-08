@@ -534,22 +534,22 @@ function createBaseStatusUpdate(): StatusUpdate {
 export const StatusUpdate = {
   encode(message: StatusUpdate, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.queueStarted !== undefined) {
-      QueueAssignment.encode(message.queueStarted, writer.uint32(18).fork()).ldelim();
+      QueueAssignment.encode(message.queueStarted, writer.uint32(10).fork()).ldelim();
     }
     if (message.queueStopped !== undefined) {
-      QueueStopped.encode(message.queueStopped, writer.uint32(26).fork()).ldelim();
+      QueueStopped.encode(message.queueStopped, writer.uint32(18).fork()).ldelim();
     }
     if (message.matchFound !== undefined) {
-      MatchFound.encode(message.matchFound, writer.uint32(34).fork()).ldelim();
+      MatchFound.encode(message.matchFound, writer.uint32(26).fork()).ldelim();
     }
     if (message.matchCancelled !== undefined) {
-      MatchCancelled.encode(message.matchCancelled, writer.uint32(42).fork()).ldelim();
+      MatchCancelled.encode(message.matchCancelled, writer.uint32(34).fork()).ldelim();
     }
     if (message.matchStarted !== undefined) {
-      MatchStarted.encode(message.matchStarted, writer.uint32(50).fork()).ldelim();
+      MatchStarted.encode(message.matchStarted, writer.uint32(42).fork()).ldelim();
     }
     if (message.matchFinished !== undefined) {
-      MatchFinished.encode(message.matchFinished, writer.uint32(58).fork()).ldelim();
+      MatchFinished.encode(message.matchFinished, writer.uint32(50).fork()).ldelim();
     }
     return writer;
   },
@@ -561,43 +561,43 @@ export const StatusUpdate = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.queueStarted = QueueAssignment.decode(reader, reader.uint32());
+          continue;
         case 2:
           if (tag !== 18) {
             break;
           }
 
-          message.queueStarted = QueueAssignment.decode(reader, reader.uint32());
+          message.queueStopped = QueueStopped.decode(reader, reader.uint32());
           continue;
         case 3:
           if (tag !== 26) {
             break;
           }
 
-          message.queueStopped = QueueStopped.decode(reader, reader.uint32());
+          message.matchFound = MatchFound.decode(reader, reader.uint32());
           continue;
         case 4:
           if (tag !== 34) {
             break;
           }
 
-          message.matchFound = MatchFound.decode(reader, reader.uint32());
+          message.matchCancelled = MatchCancelled.decode(reader, reader.uint32());
           continue;
         case 5:
           if (tag !== 42) {
             break;
           }
 
-          message.matchCancelled = MatchCancelled.decode(reader, reader.uint32());
+          message.matchStarted = MatchStarted.decode(reader, reader.uint32());
           continue;
         case 6:
           if (tag !== 50) {
-            break;
-          }
-
-          message.matchStarted = MatchStarted.decode(reader, reader.uint32());
-          continue;
-        case 7:
-          if (tag !== 58) {
             break;
           }
 

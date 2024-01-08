@@ -3,158 +3,51 @@ import {
   CallOptions,
   ChannelCredentials,
   Client,
-  ClientDuplexStream,
   ClientOptions,
-  handleBidiStreamingCall,
+  ClientReadableStream,
+  ClientUnaryCall,
+  handleServerStreamingCall,
+  handleUnaryCall,
   makeGenericClientConstructor,
   Metadata,
+  ServiceError,
   UntypedServiceImplementation,
 } from "@grpc/grpc-js";
 import _m0 from "protobufjs/minimal";
-import { Status } from "../google/rpc/status";
+import { Empty } from "../google/protobuf/empty";
 import { Player, QueueConfiguration, StatusUpdate } from "./messages";
 
 export const protobufPackage = "quip.matchmaker";
 
-export interface Request {
-  getPlayer?: GetPlayer | undefined;
-  startQueue?: StartQueue | undefined;
-  stopQueue?: StopQueue | undefined;
-}
-
 /** GetPlayer gets the details for the currently logged in player. */
-export interface GetPlayer {
+export interface GetPlayerRequest {
 }
 
-export interface StartQueue {
+export interface StartQueueRequest {
   config: QueueConfiguration | undefined;
 }
 
-export interface StopQueue {
+export interface StopQueueRequest {
 }
 
-export interface Response {
-  /** error is sent if any request failed. */
-  error?:
-    | Status
-    | undefined;
-  /** Response to GetPlayer or any StateUpdate messages for friends. */
-  player?:
-    | Player
-    | undefined;
-  /** Status updates for the current player. */
-  statusUpdate?: StatusUpdate | undefined;
+export interface PlayerUpdate {
+  player: Player | undefined;
+  update: StatusUpdate | undefined;
 }
 
-function createBaseRequest(): Request {
-  return { getPlayer: undefined, startQueue: undefined, stopQueue: undefined };
-}
-
-export const Request = {
-  encode(message: Request, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.getPlayer !== undefined) {
-      GetPlayer.encode(message.getPlayer, writer.uint32(10).fork()).ldelim();
-    }
-    if (message.startQueue !== undefined) {
-      StartQueue.encode(message.startQueue, writer.uint32(18).fork()).ldelim();
-    }
-    if (message.stopQueue !== undefined) {
-      StopQueue.encode(message.stopQueue, writer.uint32(26).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): Request {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.getPlayer = GetPlayer.decode(reader, reader.uint32());
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.startQueue = StartQueue.decode(reader, reader.uint32());
-          continue;
-        case 3:
-          if (tag !== 26) {
-            break;
-          }
-
-          message.stopQueue = StopQueue.decode(reader, reader.uint32());
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): Request {
-    return {
-      getPlayer: isSet(object.getPlayer) ? GetPlayer.fromJSON(object.getPlayer) : undefined,
-      startQueue: isSet(object.startQueue) ? StartQueue.fromJSON(object.startQueue) : undefined,
-      stopQueue: isSet(object.stopQueue) ? StopQueue.fromJSON(object.stopQueue) : undefined,
-    };
-  },
-
-  toJSON(message: Request): unknown {
-    const obj: any = {};
-    if (message.getPlayer !== undefined) {
-      obj.getPlayer = GetPlayer.toJSON(message.getPlayer);
-    }
-    if (message.startQueue !== undefined) {
-      obj.startQueue = StartQueue.toJSON(message.startQueue);
-    }
-    if (message.stopQueue !== undefined) {
-      obj.stopQueue = StopQueue.toJSON(message.stopQueue);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<Request>, I>>(base?: I): Request {
-    return Request.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<Request>, I>>(object: I): Request {
-    const message = createBaseRequest();
-    message.getPlayer = (object.getPlayer !== undefined && object.getPlayer !== null)
-      ? GetPlayer.fromPartial(object.getPlayer)
-      : undefined;
-    message.startQueue = (object.startQueue !== undefined && object.startQueue !== null)
-      ? StartQueue.fromPartial(object.startQueue)
-      : undefined;
-    message.stopQueue = (object.stopQueue !== undefined && object.stopQueue !== null)
-      ? StopQueue.fromPartial(object.stopQueue)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseGetPlayer(): GetPlayer {
+function createBaseGetPlayerRequest(): GetPlayerRequest {
   return {};
 }
 
-export const GetPlayer = {
-  encode(_: GetPlayer, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const GetPlayerRequest = {
+  encode(_: GetPlayerRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetPlayer {
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetPlayerRequest {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetPlayer();
+    const message = createBaseGetPlayerRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -167,41 +60,41 @@ export const GetPlayer = {
     return message;
   },
 
-  fromJSON(_: any): GetPlayer {
+  fromJSON(_: any): GetPlayerRequest {
     return {};
   },
 
-  toJSON(_: GetPlayer): unknown {
+  toJSON(_: GetPlayerRequest): unknown {
     const obj: any = {};
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<GetPlayer>, I>>(base?: I): GetPlayer {
-    return GetPlayer.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<GetPlayerRequest>, I>>(base?: I): GetPlayerRequest {
+    return GetPlayerRequest.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetPlayer>, I>>(_: I): GetPlayer {
-    const message = createBaseGetPlayer();
+  fromPartial<I extends Exact<DeepPartial<GetPlayerRequest>, I>>(_: I): GetPlayerRequest {
+    const message = createBaseGetPlayerRequest();
     return message;
   },
 };
 
-function createBaseStartQueue(): StartQueue {
+function createBaseStartQueueRequest(): StartQueueRequest {
   return { config: undefined };
 }
 
-export const StartQueue = {
-  encode(message: StartQueue, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const StartQueueRequest = {
+  encode(message: StartQueueRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.config !== undefined) {
       QueueConfiguration.encode(message.config, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): StartQueue {
+  decode(input: _m0.Reader | Uint8Array, length?: number): StartQueueRequest {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseStartQueue();
+    const message = createBaseStartQueueRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -221,11 +114,11 @@ export const StartQueue = {
     return message;
   },
 
-  fromJSON(object: any): StartQueue {
+  fromJSON(object: any): StartQueueRequest {
     return { config: isSet(object.config) ? QueueConfiguration.fromJSON(object.config) : undefined };
   },
 
-  toJSON(message: StartQueue): unknown {
+  toJSON(message: StartQueueRequest): unknown {
     const obj: any = {};
     if (message.config !== undefined) {
       obj.config = QueueConfiguration.toJSON(message.config);
@@ -233,12 +126,12 @@ export const StartQueue = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<StartQueue>, I>>(base?: I): StartQueue {
-    return StartQueue.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<StartQueueRequest>, I>>(base?: I): StartQueueRequest {
+    return StartQueueRequest.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<StartQueue>, I>>(object: I): StartQueue {
-    const message = createBaseStartQueue();
+  fromPartial<I extends Exact<DeepPartial<StartQueueRequest>, I>>(object: I): StartQueueRequest {
+    const message = createBaseStartQueueRequest();
     message.config = (object.config !== undefined && object.config !== null)
       ? QueueConfiguration.fromPartial(object.config)
       : undefined;
@@ -246,19 +139,19 @@ export const StartQueue = {
   },
 };
 
-function createBaseStopQueue(): StopQueue {
+function createBaseStopQueueRequest(): StopQueueRequest {
   return {};
 }
 
-export const StopQueue = {
-  encode(_: StopQueue, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const StopQueueRequest = {
+  encode(_: StopQueueRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): StopQueue {
+  decode(input: _m0.Reader | Uint8Array, length?: number): StopQueueRequest {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseStopQueue();
+    const message = createBaseStopQueueRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -271,47 +164,44 @@ export const StopQueue = {
     return message;
   },
 
-  fromJSON(_: any): StopQueue {
+  fromJSON(_: any): StopQueueRequest {
     return {};
   },
 
-  toJSON(_: StopQueue): unknown {
+  toJSON(_: StopQueueRequest): unknown {
     const obj: any = {};
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<StopQueue>, I>>(base?: I): StopQueue {
-    return StopQueue.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<StopQueueRequest>, I>>(base?: I): StopQueueRequest {
+    return StopQueueRequest.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<StopQueue>, I>>(_: I): StopQueue {
-    const message = createBaseStopQueue();
+  fromPartial<I extends Exact<DeepPartial<StopQueueRequest>, I>>(_: I): StopQueueRequest {
+    const message = createBaseStopQueueRequest();
     return message;
   },
 };
 
-function createBaseResponse(): Response {
-  return { error: undefined, player: undefined, statusUpdate: undefined };
+function createBasePlayerUpdate(): PlayerUpdate {
+  return { player: undefined, update: undefined };
 }
 
-export const Response = {
-  encode(message: Response, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.error !== undefined) {
-      Status.encode(message.error, writer.uint32(10).fork()).ldelim();
-    }
+export const PlayerUpdate = {
+  encode(message: PlayerUpdate, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.player !== undefined) {
-      Player.encode(message.player, writer.uint32(18).fork()).ldelim();
+      Player.encode(message.player, writer.uint32(10).fork()).ldelim();
     }
-    if (message.statusUpdate !== undefined) {
-      StatusUpdate.encode(message.statusUpdate, writer.uint32(34).fork()).ldelim();
+    if (message.update !== undefined) {
+      StatusUpdate.encode(message.update, writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): Response {
+  decode(input: _m0.Reader | Uint8Array, length?: number): PlayerUpdate {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseResponse();
+    const message = createBasePlayerUpdate();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -320,21 +210,14 @@ export const Response = {
             break;
           }
 
-          message.error = Status.decode(reader, reader.uint32());
+          message.player = Player.decode(reader, reader.uint32());
           continue;
         case 2:
           if (tag !== 18) {
             break;
           }
 
-          message.player = Player.decode(reader, reader.uint32());
-          continue;
-        case 4:
-          if (tag !== 34) {
-            break;
-          }
-
-          message.statusUpdate = StatusUpdate.decode(reader, reader.uint32());
+          message.update = StatusUpdate.decode(reader, reader.uint32());
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -345,42 +228,35 @@ export const Response = {
     return message;
   },
 
-  fromJSON(object: any): Response {
+  fromJSON(object: any): PlayerUpdate {
     return {
-      error: isSet(object.error) ? Status.fromJSON(object.error) : undefined,
       player: isSet(object.player) ? Player.fromJSON(object.player) : undefined,
-      statusUpdate: isSet(object.statusUpdate) ? StatusUpdate.fromJSON(object.statusUpdate) : undefined,
+      update: isSet(object.update) ? StatusUpdate.fromJSON(object.update) : undefined,
     };
   },
 
-  toJSON(message: Response): unknown {
+  toJSON(message: PlayerUpdate): unknown {
     const obj: any = {};
-    if (message.error !== undefined) {
-      obj.error = Status.toJSON(message.error);
-    }
     if (message.player !== undefined) {
       obj.player = Player.toJSON(message.player);
     }
-    if (message.statusUpdate !== undefined) {
-      obj.statusUpdate = StatusUpdate.toJSON(message.statusUpdate);
+    if (message.update !== undefined) {
+      obj.update = StatusUpdate.toJSON(message.update);
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<Response>, I>>(base?: I): Response {
-    return Response.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<PlayerUpdate>, I>>(base?: I): PlayerUpdate {
+    return PlayerUpdate.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<Response>, I>>(object: I): Response {
-    const message = createBaseResponse();
-    message.error = (object.error !== undefined && object.error !== null)
-      ? Status.fromPartial(object.error)
-      : undefined;
+  fromPartial<I extends Exact<DeepPartial<PlayerUpdate>, I>>(object: I): PlayerUpdate {
+    const message = createBasePlayerUpdate();
     message.player = (object.player !== undefined && object.player !== null)
       ? Player.fromPartial(object.player)
       : undefined;
-    message.statusUpdate = (object.statusUpdate !== undefined && object.statusUpdate !== null)
-      ? StatusUpdate.fromPartial(object.statusUpdate)
+    message.update = (object.update !== undefined && object.update !== null)
+      ? StatusUpdate.fromPartial(object.update)
       : undefined;
     return message;
   },
@@ -390,36 +266,113 @@ export const Response = {
 export type QuipFrontendService = typeof QuipFrontendService;
 export const QuipFrontendService = {
   /**
-   * Connect is a long-lived rpc for clients to send queue actions and
-   * receive queue updates.
+   * Connect is a long-lived rpc for clients to receive status updates.
+   * A client must be connected before any other frontend methods (start queue, etc)
+   * may be called.
    */
   connect: {
     path: "/quip.matchmaker.QuipFrontend/Connect",
-    requestStream: true,
+    requestStream: false,
     responseStream: true,
-    requestSerialize: (value: Request) => Buffer.from(Request.encode(value).finish()),
-    requestDeserialize: (value: Buffer) => Request.decode(value),
-    responseSerialize: (value: Response) => Buffer.from(Response.encode(value).finish()),
-    responseDeserialize: (value: Buffer) => Response.decode(value),
+    requestSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => Empty.decode(value),
+    responseSerialize: (value: PlayerUpdate) => Buffer.from(PlayerUpdate.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => PlayerUpdate.decode(value),
+  },
+  getPlayer: {
+    path: "/quip.matchmaker.QuipFrontend/GetPlayer",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetPlayerRequest) => Buffer.from(GetPlayerRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => GetPlayerRequest.decode(value),
+    responseSerialize: (value: Player) => Buffer.from(Player.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => Player.decode(value),
+  },
+  startQueue: {
+    path: "/quip.matchmaker.QuipFrontend/StartQueue",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: StartQueueRequest) => Buffer.from(StartQueueRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => StartQueueRequest.decode(value),
+    responseSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => Empty.decode(value),
+  },
+  stopQueue: {
+    path: "/quip.matchmaker.QuipFrontend/StopQueue",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: StopQueueRequest) => Buffer.from(StopQueueRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => StopQueueRequest.decode(value),
+    responseSerialize: (value: Empty) => Buffer.from(Empty.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => Empty.decode(value),
   },
 } as const;
 
 export interface QuipFrontendServer extends UntypedServiceImplementation {
   /**
-   * Connect is a long-lived rpc for clients to send queue actions and
-   * receive queue updates.
+   * Connect is a long-lived rpc for clients to receive status updates.
+   * A client must be connected before any other frontend methods (start queue, etc)
+   * may be called.
    */
-  connect: handleBidiStreamingCall<Request, Response>;
+  connect: handleServerStreamingCall<Empty, PlayerUpdate>;
+  getPlayer: handleUnaryCall<GetPlayerRequest, Player>;
+  startQueue: handleUnaryCall<StartQueueRequest, Empty>;
+  stopQueue: handleUnaryCall<StopQueueRequest, Empty>;
 }
 
 export interface QuipFrontendClient extends Client {
   /**
-   * Connect is a long-lived rpc for clients to send queue actions and
-   * receive queue updates.
+   * Connect is a long-lived rpc for clients to receive status updates.
+   * A client must be connected before any other frontend methods (start queue, etc)
+   * may be called.
    */
-  connect(): ClientDuplexStream<Request, Response>;
-  connect(options: Partial<CallOptions>): ClientDuplexStream<Request, Response>;
-  connect(metadata: Metadata, options?: Partial<CallOptions>): ClientDuplexStream<Request, Response>;
+  connect(request: Empty, options?: Partial<CallOptions>): ClientReadableStream<PlayerUpdate>;
+  connect(request: Empty, metadata?: Metadata, options?: Partial<CallOptions>): ClientReadableStream<PlayerUpdate>;
+  getPlayer(
+    request: GetPlayerRequest,
+    callback: (error: ServiceError | null, response: Player) => void,
+  ): ClientUnaryCall;
+  getPlayer(
+    request: GetPlayerRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: Player) => void,
+  ): ClientUnaryCall;
+  getPlayer(
+    request: GetPlayerRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: Player) => void,
+  ): ClientUnaryCall;
+  startQueue(
+    request: StartQueueRequest,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  startQueue(
+    request: StartQueueRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  startQueue(
+    request: StartQueueRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  stopQueue(
+    request: StopQueueRequest,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  stopQueue(
+    request: StopQueueRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  stopQueue(
+    request: StopQueueRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
 }
 
 export const QuipFrontendClient = makeGenericClientConstructor(

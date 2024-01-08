@@ -2,125 +2,59 @@ package frontend
 
 import (
 	"context"
-	"fmt"
-	"io"
-	"time"
 
-	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
-	"github.com/pkg/errors"
 )
 
 type session struct {
-	srv pb.QuipFrontend_ConnectServer
 	svc *Service
 
-	id  string
-	out chan *pb.Response
-}
-
-// recv consumes from the stream and handles all requests until the stream closes.
-func (s *session) recv() error {
-	for {
-		in, err := s.srv.Recv()
-		if err == io.EOF {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-
-		switch msg := in.Action.(type) {
-		default:
-			return status.Errorf(codes.InvalidArgument, ".Action type '%T' is not supported", msg)
-		case nil:
-			return status.Error(codes.InvalidArgument, ".Action is nil")
-		case *pb.Request_GetPlayer:
-			err = s.getPlayer(msg)
-		case *pb.Request_StartQueue:
-			err = s.startQueue(msg)
-		case *pb.Request_StopQueue:
-			err = s.stopQueue(msg)
-		}
-
-		if err != nil {
-			logger.Err(err).Msgf("Failed to handle %T: %v", in.Action, in.Action)
-			return status.Error(codes.Internal, "action failed to complete")
-		}
-	}
-}
-
-// send consumes from the session's out channel and sends them to the stream until closed.
-func (s *session) send() {
-	for {
-		select {
-		case <-s.srv.Context().Done():
-			s.cleanup()
-			return
-		case msg := <-s.out:
-			err := s.srv.Send(msg)
-			if s, ok := status.FromError(err); ok {
-				switch s.Code() {
-				case codes.OK:
-					// noop
-				case codes.Canceled, codes.DeadlineExceeded:
-					// client closed
-					return
-				default:
-					logger.Err(s.Err()).Msg("stream.Send failed")
-				}
-			} else {
-				logger.Err(err).Msg("stream.Send failed")
-			}
-		}
-	}
+	id    string
+	out   chan *pb.PlayerUpdate
+	close chan error
 }
 
 func (s *session) cleanup() {
 	// stop queue
 }
 
-const requestTimeout = 10 * time.Second
+// TODO: redsync lock expiry defaults to 8 seconds
+// should all methods have a lower timeout to avoid concurrency issues?
+// const requestTimeout = 5 * time.Second
 
-func (s *session) getPlayer(req *pb.Request_GetPlayer) error {
-	ctx, cancel := context.WithTimeout(s.srv.Context(), requestTimeout)
-	defer cancel()
-
+func (s *session) getPlayer(ctx context.Context) (*pb.Player, error) {
 	lock := s.svc.statestore.NewMutex(s.id)
 	if err := lock.Lock(ctx); err != nil {
-		return err
+		logger.Err(err).Msgf("Failed to obtain lock for player '%s'", s.id)
+		return nil, status.Error(codes.Internal, "Failed to obtain lock")
 	}
+
 	// TODO: handle unlock error?
 	defer lock.Unlock(context.Background())
 
 	tid, mid, err := s.svc.statestore.GetPlayer(ctx, s.id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if mid != "" {
 		// TODO: get match information from statestore
 		// match, err := s.statestore.GetMatch(ctx, mid)
 
-		s.out <- &pb.Response{
-			Message: &pb.Response_Player{
-				Player: &pb.Player{
-					Id:    s.id,
-					State: pb.PlayerState_PLAYER_STATE_PLAYING,
-					Assignment: &pb.Player_MatchAssignment{
-						MatchAssignment: &pb.MatchAssignment{
-							Id: mid,
-							// TODO: populate match information
-						},
-					},
+		return &pb.Player{
+			Id:    s.id,
+			State: pb.PlayerState_PLAYER_STATE_PLAYING,
+			Assignment: &pb.Player_MatchAssignment{
+				MatchAssignment: &pb.MatchAssignment{
+					Id: mid,
+					// TODO: populate match information
 				},
 			},
-		}
-		return nil
+		}, nil
 	}
 
 	if tid != "" {
@@ -132,8 +66,8 @@ func (s *session) getPlayer(req *pb.Request_GetPlayer) error {
 				goto end
 			}
 
-			// TODO: handle err
-			return err
+			logger.Err(err).Str("player", s.id).Str("tid", ticket.Id).Msg("Failed to get ticket details from OpenMatch")
+			return nil, status.Error(codes.Internal, "Failed to get player queue details")
 		}
 
 		// ticket has been assigned, unset ticket
@@ -146,93 +80,56 @@ func (s *session) getPlayer(req *pb.Request_GetPlayer) error {
 
 		details, err := protoext.OpenMatchTicketDetails(ticket)
 		if err != nil {
-			// TODO: handle err
-			return err
+			logger.Err(err).Str("player", s.id).Str("tid", ticket.Id).Msg("Failed to parse Open Match ticket details")
+			return nil, status.Error(codes.Internal, "Failed to get player queue details")
 		}
 
-		s.out <- &pb.Response{
-			Message: &pb.Response_Player{
-				Player: &pb.Player{
-					Id:    s.id,
-					State: pb.PlayerState_PLAYER_STATE_SEARCHING,
-					Assignment: &pb.Player_QueueAssignment{
-						QueueAssignment: &pb.QueueAssignment{
-							Id:        tid,
-							Config:    details.Config,
-							StartTime: ticket.CreateTime,
-							// TODO: get ticket information from open match
-						},
-					},
+		return &pb.Player{
+			Id:    s.id,
+			State: pb.PlayerState_PLAYER_STATE_SEARCHING,
+			Assignment: &pb.Player_QueueAssignment{
+				QueueAssignment: &pb.QueueAssignment{
+					Id:        tid,
+					Config:    details.Config,
+					StartTime: ticket.CreateTime,
 				},
 			},
-		}
-		return nil
+		}, nil
 	}
 
 end:
-	s.out <- &pb.Response{
-		Message: &pb.Response_Player{
-			Player: &pb.Player{
-				Id:    s.id,
-				State: pb.PlayerState_PLAYER_STATE_ONLINE,
-			},
-		},
-	}
-
-	return nil
+	return &pb.Player{
+		Id:    s.id,
+		State: pb.PlayerState_PLAYER_STATE_ONLINE,
+	}, nil
 }
 
-func (s *session) startQueue(req *pb.Request_StartQueue) error {
-	cfg := req.StartQueue.GetConfig()
+func (s *session) startQueue(ctx context.Context, req *pb.StartQueueRequest) error {
+	cfg := req.GetConfig()
 	if cfg == nil {
-		s.out <- &pb.Response{
-			Message: &pb.Response_Error{
-				Error: &rpcstatus.Status{
-					Code:    int32(codes.InvalidArgument),
-					Message: ".Config is required",
-				},
-			},
-		}
-		return nil
+		return status.Error(codes.InvalidArgument, ".Config is required")
 	}
 
 	if cfg.Gamemode == "" {
-		s.out <- &pb.Response{
-			Message: &pb.Response_Error{
-				Error: &rpcstatus.Status{
-					Code:    int32(codes.InvalidArgument),
-					Message: ".Config.Gamemode is required",
-				},
-			},
-		}
-		return nil
+		return status.Error(codes.InvalidArgument, ".Config.Gamemode is required")
 	}
 
 	gamesListing, err := s.svc.games.Get()
 	if err != nil {
-		return errors.WithMessage(err, "failed to get game listing")
+		logger.Err(err).Msg("failed to get game listing")
+		return status.Error(codes.Internal, "failed to get available games")
 	}
 
-	// TODO: when parties are available, confirm party size < team size
 	_, ok := gamesListing[cfg.Gamemode]
 	if !ok {
-		s.out <- &pb.Response{
-			Message: &pb.Response_Error{
-				Error: &rpcstatus.Status{
-					Code:    int32(codes.InvalidArgument),
-					Message: fmt.Sprintf("invalid gamemode '%s'", cfg.Gamemode),
-				},
-			},
-		}
-		return nil
+		return status.Errorf(codes.InvalidArgument, "Invalid gamemode '%s'", cfg.Gamemode)
 	}
-
-	ctx, cancel := context.WithTimeout(s.srv.Context(), requestTimeout)
-	defer cancel()
+	// TODO: when parties are available, confirm party size < max team size
 
 	lock := s.svc.statestore.NewMutex(s.id)
 	if err := lock.Lock(ctx); err != nil {
-		return err
+		logger.Err(err).Msgf("Failed to obtain lock for player '%s'", s.id)
+		return status.Error(codes.Internal, "Failed to obtain lock")
 	}
 	// TODO: handle unlock error?
 	defer lock.Unlock(context.Background())
@@ -244,29 +141,11 @@ func (s *session) startQueue(req *pb.Request_StartQueue) error {
 	}
 
 	if mid != "" {
-		s.out <- &pb.Response{
-			Message: &pb.Response_Error{
-				Error: &rpcstatus.Status{
-					Code:    int32(codes.FailedPrecondition),
-					Message: "Player is in game",
-				},
-			},
-		}
-
-		return nil
+		return status.Error(codes.FailedPrecondition, "Player is in game")
 	}
 
 	if tid != "" {
-		s.out <- &pb.Response{
-			Message: &pb.Response_Error{
-				Error: &rpcstatus.Status{
-					Code:    int32(codes.FailedPrecondition),
-					Message: "Player is in queue",
-				},
-			},
-		}
-
-		return nil
+		return status.Error(codes.FailedPrecondition, "Player is in queue")
 	}
 
 	ticket, err := s.svc.omfc.CreateTicket(ctx, &pb.TicketDetails{
@@ -274,16 +153,8 @@ func (s *session) startQueue(req *pb.Request_StartQueue) error {
 		Config:   cfg,
 	})
 	if err != nil {
-		// TODO: handle error, probably shouldn't propagate to player
-		s.out <- &pb.Response{
-			Message: &pb.Response_Error{
-				Error: &rpcstatus.Status{
-					Code:    int32(codes.Internal),
-					Message: fmt.Sprintf("Failed to create matchmaking ticket: %s", err.Error()),
-				},
-			},
-		}
-		return nil
+		logger.Err(err).Msgf("Failed to create matchmaking ticket for player '%s'", s.id)
+		return status.Error(codes.Internal, "Failed to start queue")
 	}
 
 	b, err := s.svc.statestore.SetTicketId(ctx, ticket.Id, []string{s.id})
@@ -291,32 +162,49 @@ func (s *session) startQueue(req *pb.Request_StartQueue) error {
 	// but check anyways for sanity
 	if err != nil || !b {
 		// setting ticket id failed -- delete ticket
-		// TODO: handle delete ticket error
+		// TODO: handle delete ticket error?
 		go s.svc.omfc.DeleteTicket(context.Background(), ticket.Id)
 
-		// TODO: handle error, probably shouldn't propagate to player
-		s.out <- &pb.Response{
-			Message: &pb.Response_Error{
-				Error: &rpcstatus.Status{
-					Code:    int32(codes.Internal),
-					Message: fmt.Sprintf("Failed to set ticket id: %s", err.Error()),
-				},
-			},
-		}
-		return nil
+		logger.Err(err).Msgf("Failed to set ticket id for player '%s'", s.id)
+		return status.Error(codes.Internal, "Failed to start queue")
 	}
 
 	// TODO: publish status update to broker so friends/party members are notified
+	// err = s.svc.rb.Publish(
+	// 	context.Background(),
+	// 	broker.StatusUpdateRoute,
+	// 	&pb.StatusUpdateMessage{
+	// 		Targets: []string{s.id},
+	// 		Update: &pb.StatusUpdate{
+	// 			Update: &pb.StatusUpdate_QueueStarted{
+	// 				QueueStarted: &pb.QueueAssignment{
+	// 					Id:        ticket.Id,
+	// 					Config:    cfg,
+	// 					StartTime: ticket.CreateTime,
+	// 				},
+	// 			},
+	// 		},
+	// 	},
+	// )
 
-	s.out <- &pb.Response{
-		Message: &pb.Response_StatusUpdate{
-			StatusUpdate: &pb.StatusUpdate{
-				Update: &pb.StatusUpdate_QueueStarted{
-					QueueStarted: &pb.QueueAssignment{
-						Id:        ticket.Id,
-						Config:    cfg,
-						StartTime: ticket.CreateTime,
-					},
+	s.out <- &pb.PlayerUpdate{
+		Player: &pb.Player{
+			Id:    s.id,
+			State: pb.PlayerState_PLAYER_STATE_SEARCHING,
+			Assignment: &pb.Player_QueueAssignment{
+				QueueAssignment: &pb.QueueAssignment{
+					Id:        ticket.Id,
+					Config:    cfg,
+					StartTime: ticket.CreateTime,
+				},
+			},
+		},
+		Update: &pb.StatusUpdate{
+			Update: &pb.StatusUpdate_QueueStarted{
+				QueueStarted: &pb.QueueAssignment{
+					Id:        ticket.Id,
+					Config:    cfg,
+					StartTime: ticket.CreateTime,
 				},
 			},
 		},
@@ -325,21 +213,19 @@ func (s *session) startQueue(req *pb.Request_StartQueue) error {
 	return nil
 }
 
-func (s *session) stopQueue(req *pb.Request_StopQueue) error {
-	ctx, cancel := context.WithTimeout(s.srv.Context(), requestTimeout)
-	defer cancel()
-
+func (s *session) stopQueue(ctx context.Context) error {
 	lock := s.svc.statestore.NewMutex(s.id)
 	if err := lock.Lock(ctx); err != nil {
-		return err
+		logger.Err(err).Str("player", s.id).Msgf("Failed to obtain lock")
+		return status.Error(codes.Internal, "Failed to obtain lock")
 	}
 	// TODO: handle unlock error?
 	defer lock.Unlock(context.Background())
 
 	tid, _, err := s.svc.statestore.GetPlayer(ctx, s.id)
 	if err != nil {
-		// TODO: handle err
-		return err
+		logger.Err(err).Str("player", s.id).Msgf("Failed to get player from statestore")
+		return status.Error(codes.Internal, "Failed to stop queue")
 	}
 
 	if tid == "" {
@@ -348,25 +234,28 @@ func (s *session) stopQueue(req *pb.Request_StopQueue) error {
 
 	err = s.svc.omfc.DeleteTicket(ctx, tid)
 	if err != nil && status.Code(err) != codes.NotFound {
-		// TODO: handle err
-		return err
+		logger.Err(err).Str("player", s.id).Str("ticket_id", tid).Msgf("Failed to delete ticket")
+		return status.Error(codes.Unknown, "Failed to stop queue")
 	}
 
-	// TODO: unset for all players on the ticket when that is implemented
+	// TODO: unset for all players on the ticket when parties are implemented
 	err = s.svc.statestore.UnsetTicketId(ctx, []string{s.id})
 	if err != nil {
-		// TODO: handle err
-		return err
+		logger.Err(err).Str("player", s.id).Str("ticket_id", tid).Msgf("Failed to unset ticket id")
+		// do not return here -- not a big issue if tid isn't unset, it gets checked in other methods
 	}
 
-	s.out <- &pb.Response{
-		Message: &pb.Response_StatusUpdate{
-			StatusUpdate: &pb.StatusUpdate{
-				Update: &pb.StatusUpdate_QueueStopped{
-					QueueStopped: &pb.QueueStopped{
-						Id:     tid,
-						Reason: pb.Reason_REASON_PLAYER,
-					},
+	// TODO: send msg to broker
+	s.out <- &pb.PlayerUpdate{
+		Player: &pb.Player{
+			Id:    s.id,
+			State: pb.PlayerState_PLAYER_STATE_ONLINE,
+		},
+		Update: &pb.StatusUpdate{
+			Update: &pb.StatusUpdate_QueueStopped{
+				QueueStopped: &pb.QueueStopped{
+					Id:     tid,
+					Reason: pb.Reason_REASON_PLAYER,
 				},
 			},
 		},

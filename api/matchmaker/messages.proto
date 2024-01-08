@@ -55,12 +55,12 @@ message MatchAssignment {
 
 message StatusUpdate {
   oneof update {
-    QueueAssignment queue_started = 2;
-    QueueStopped queue_stopped = 3;
-    MatchFound match_found = 4;
-    MatchCancelled match_cancelled = 5;
-    MatchStarted match_started = 6;
-    MatchFinished match_finished = 7;
+    QueueAssignment queue_started = 1;
+    QueueStopped queue_stopped = 2;
+    MatchFound match_found = 3;
+    MatchCancelled match_cancelled = 4;
+    MatchStarted match_started = 5;
+    MatchFinished match_finished = 6;
   }
 }
 

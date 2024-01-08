@@ -125,8 +125,8 @@ func newFrontendClient(t *testing.T, cfg config.View) (client matchmaker.QuipFro
 	return matchmaker.NewQuipFrontendClient(conn), id
 }
 
-func recvStream(t *testing.T, ctx context.Context, stream matchmaker.QuipFrontend_ConnectClient) <-chan *matchmaker.Response {
-	resps := make(chan *matchmaker.Response, 1)
+func recvStream(t *testing.T, ctx context.Context, stream matchmaker.QuipFrontend_ConnectClient) <-chan *matchmaker.PlayerUpdate {
+	resps := make(chan *matchmaker.PlayerUpdate, 1)
 	go func() {
 		for {
 			msg, err := stream.Recv()
@@ -134,7 +134,9 @@ func recvStream(t *testing.T, ctx context.Context, stream matchmaker.QuipFronten
 				return
 			}
 
-			if err != nil {
+			// ignore context cancelled and deadline exceeded: cancel occurs when test is done
+			// and deadline exceeded is handled in test case functions
+			if err != nil && ctx.Err() == nil {
 				t.Error(err)
 			}
 
@@ -150,32 +152,39 @@ type testAction func(
 	t *testing.T,
 	ctx context.Context,
 	id string,
-	client matchmaker.QuipFrontend_ConnectClient,
-	resps <-chan *matchmaker.Response,
+	client matchmaker.QuipFrontendClient,
+	updates <-chan *matchmaker.PlayerUpdate,
 	agones *test.AgonesAllocationService,
 	memo map[string]any,
 )
 
-func sendRequest(r *matchmaker.Request) testAction {
-	return func(t *testing.T, ctx context.Context, id string, client matchmaker.QuipFrontend_ConnectClient, resps <-chan *matchmaker.Response, agones *test.AgonesAllocationService, memo map[string]any) {
-		require.NotNil(t, r)
-		err := client.Send(r)
-		require.NoError(t, err, "Send failed")
+func getPlayerRequest(check func(p *matchmaker.Player, err error, id string, memo map[string]any)) testAction {
+	return func(t *testing.T, ctx context.Context, id string, client matchmaker.QuipFrontendClient, updates <-chan *matchmaker.PlayerUpdate, agones *test.AgonesAllocationService, memo map[string]any) {
+		player, err := client.GetPlayer(ctx, &matchmaker.GetPlayerRequest{})
+		check(player, err, id, memo)
 	}
 }
 
-func expectResponse(check func(r *matchmaker.Response, id string)) testAction {
-	return expectResponseWithMemo(func(r *matchmaker.Response, id string, memo map[string]any) {
-		check(r, id)
-	})
+func startQueueRequest(req *matchmaker.StartQueueRequest, check func(err error, id string, memo map[string]any)) testAction {
+	return func(t *testing.T, ctx context.Context, id string, client matchmaker.QuipFrontendClient, updates <-chan *matchmaker.PlayerUpdate, agones *test.AgonesAllocationService, memo map[string]any) {
+		_, err := client.StartQueue(ctx, req)
+		check(err, id, memo)
+	}
 }
 
-func expectResponseWithMemo(check func(r *matchmaker.Response, id string, memo map[string]any)) testAction {
-	return func(t *testing.T, ctx context.Context, id string, client matchmaker.QuipFrontend_ConnectClient, resps <-chan *matchmaker.Response, agones *test.AgonesAllocationService, memo map[string]any) {
+func stopQueueRequest(check func(err error, id string, memo map[string]any)) testAction {
+	return func(t *testing.T, ctx context.Context, id string, client matchmaker.QuipFrontendClient, updates <-chan *matchmaker.PlayerUpdate, agones *test.AgonesAllocationService, memo map[string]any) {
+		_, err := client.StopQueue(ctx, &matchmaker.StopQueueRequest{})
+		check(err, id, memo)
+	}
+}
+
+func expectUpdate(check func(p *matchmaker.PlayerUpdate, id string, memo map[string]any)) testAction {
+	return func(t *testing.T, ctx context.Context, id string, client matchmaker.QuipFrontendClient, updates <-chan *matchmaker.PlayerUpdate, agones *test.AgonesAllocationService, memo map[string]any) {
 		select {
 		case <-ctx.Done():
 			require.FailNow(t, "test timed out waiting for response")
-		case resp, ok := <-resps:
+		case resp, ok := <-updates:
 			if !ok {
 				require.FailNow(t, "client response stream closed")
 			}
