@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/GambitLLC/quip/libs/matchmaker/internal/broker"
 	"github.com/GambitLLC/quip/libs/matchmaker/internal/protoext"
 	pb "github.com/GambitLLC/quip/libs/pb/matchmaker"
 )
@@ -169,45 +170,24 @@ func (s *session) startQueue(ctx context.Context, req *pb.StartQueueRequest) err
 		return status.Error(codes.Internal, "Failed to start queue")
 	}
 
-	// TODO: publish status update to broker so friends/party members are notified
-	// err = s.svc.rb.Publish(
-	// 	context.Background(),
-	// 	broker.StatusUpdateRoute,
-	// 	&pb.StatusUpdateMessage{
-	// 		Targets: []string{s.id},
-	// 		Update: &pb.StatusUpdate{
-	// 			Update: &pb.StatusUpdate_QueueStarted{
-	// 				QueueStarted: &pb.QueueAssignment{
-	// 					Id:        ticket.Id,
-	// 					Config:    cfg,
-	// 					StartTime: ticket.CreateTime,
-	// 				},
-	// 			},
-	// 		},
-	// 	},
-	// )
-
-	s.out <- &pb.PlayerUpdate{
-		Player: &pb.Player{
-			Id:    s.id,
-			State: pb.PlayerState_PLAYER_STATE_SEARCHING,
-			Assignment: &pb.Player_QueueAssignment{
-				QueueAssignment: &pb.QueueAssignment{
-					Id:        ticket.Id,
-					Config:    cfg,
-					StartTime: ticket.CreateTime,
+	err = s.svc.rb.Publish(
+		context.Background(),
+		broker.StatusUpdateRoute,
+		&pb.StatusUpdateMessage{
+			Targets: []string{s.id},
+			Update: &pb.StatusUpdate{
+				Update: &pb.StatusUpdate_QueueStarted{
+					QueueStarted: &pb.QueueAssignment{
+						Id:        ticket.Id,
+						Config:    cfg,
+						StartTime: ticket.CreateTime,
+					},
 				},
 			},
 		},
-		Update: &pb.StatusUpdate{
-			Update: &pb.StatusUpdate_QueueStarted{
-				QueueStarted: &pb.QueueAssignment{
-					Id:        ticket.Id,
-					Config:    cfg,
-					StartTime: ticket.CreateTime,
-				},
-			},
-		},
+	)
+	if err != nil {
+		logger.Err(err).Msg("Failed to publish QueueStarted msg")
 	}
 
 	return nil
@@ -246,19 +226,23 @@ func (s *session) stopQueue(ctx context.Context) error {
 	}
 
 	// TODO: send msg to broker
-	s.out <- &pb.PlayerUpdate{
-		Player: &pb.Player{
-			Id:    s.id,
-			State: pb.PlayerState_PLAYER_STATE_ONLINE,
-		},
-		Update: &pb.StatusUpdate{
-			Update: &pb.StatusUpdate_QueueStopped{
-				QueueStopped: &pb.QueueStopped{
-					Id:     tid,
-					Reason: pb.Reason_REASON_PLAYER,
+	err = s.svc.rb.Publish(
+		context.TODO(),
+		broker.StatusUpdateRoute,
+		&pb.StatusUpdateMessage{
+			Targets: []string{s.id},
+			Update: &pb.StatusUpdate{
+				Update: &pb.StatusUpdate_QueueStopped{
+					QueueStopped: &pb.QueueStopped{
+						Id:     tid,
+						Reason: pb.Reason_REASON_PLAYER,
+					},
 				},
 			},
 		},
+	)
+	if err != nil {
+		logger.Err(err).Msg("Failed to publish QueueStopped status update")
 	}
 
 	return nil
