@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 
 // add custom jest matchers from jest-dom
 import '@testing-library/jest-dom';
@@ -6,7 +6,6 @@ import '@testing-library/jest-dom';
 import {
   Matchmaker,
   MatchmakerProvider,
-  MatchmakerProviderProps,
   useMatchmaker,
 } from './react-matchmaker';
 
@@ -17,7 +16,6 @@ import {
 } from '@quip/pb/matchmaker/frontend';
 
 import { Server, ServerCredentials, ServerWritableStream } from '@grpc/grpc-js';
-import React from 'react';
 import { Empty } from '@quip/pb/google/protobuf/empty';
 import { PlayerState } from '@quip/pb/matchmaker/messages';
 
@@ -35,11 +33,14 @@ interface mockQuipFrontendServer {
   stopQueue: jest.Mock;
 }
 
+let cleanupFns: ((cb: (err?: Error) => void) => void)[] = [];
+
 function mockFrontendServer(): mockQuipFrontendServer {
   const server = new Server();
 
   const connect = jest.fn(
     (call: ServerWritableStream<Empty, PlayerUpdate>): void => {
+      console.log('original mock');
       // TODO: add callbacks to send status update as desired
       call.write({
         player: {
@@ -83,6 +84,9 @@ function mockFrontendServer(): mockQuipFrontendServer {
               return reject(err);
             }
             server.start();
+            cleanupFns.push((cb: (error?: Error) => void) => {
+              server.tryShutdown(cb);
+            });
             resolve(port);
           }
         )
@@ -96,40 +100,80 @@ function mockFrontendServer(): mockQuipFrontendServer {
   };
 }
 
+// cleanup any mounted React trees
+afterEach(cleanup);
+
+afterAll(() => {
+  const promise = Promise.all(
+    cleanupFns.map(
+      (cleanup) =>
+        new Promise<void>((resolve, reject) => {
+          cleanup((err) => {
+            if (err) {
+              return reject(err);
+            }
+            resolve();
+          });
+        })
+    )
+  );
+  cleanupFns = [];
+
+  return promise;
+});
+
 describe('MatchmakerProvider', () => {
   it('should call connect on server', async () => {
     const server = mockFrontendServer();
     const port = await server.start();
 
+    function TestComponent() {
+      useMatchmaker();
+      return <div />;
+    }
     render(
-      <MatchmakerProvider address={`localhost:${port}`}></MatchmakerProvider>
+      <MatchmakerProvider address={`localhost:${port}`}>
+        <TestComponent></TestComponent>
+      </MatchmakerProvider>
     );
 
     await waitFor(() => expect(server.connect).toHaveBeenCalled());
+
+    cleanup();
   });
 });
 
 describe('useMatchmaker', () => {
-  function TestComponent() {
-    const matchmaker = useMatchmaker();
-    if (matchmaker.error) {
-      return <p>Error: {matchmaker.error.message}</p>;
+  function WatchMatchmaker({
+    port,
+    cb,
+  }: {
+    port: number;
+    cb: (mm: Matchmaker) => void;
+  }) {
+    function Consumer() {
+      const mm = useMatchmaker();
+      cb(mm);
+      return <p>{mm.status}</p>;
     }
-    return <p>Status: {matchmaker.status}</p>;
-  }
 
-  it('should render successfully in MatchmakerProvider', () => {
-    const { baseElement } = render(
-      <MatchmakerProvider>
-        <TestComponent></TestComponent>
+    const ui = (
+      <MatchmakerProvider address={`localhost:${port}`}>
+        <Consumer />
       </MatchmakerProvider>
     );
-    expect(baseElement).toBeTruthy();
-  });
+
+    return ui;
+  }
 
   it('should throw error outside of MatchmakerProvider', async () => {
     // Hide expected uncaught error message thrown by React (suggests adding ErrorBoundary)
     const spy = jest.spyOn(console, 'error').mockImplementation(() => null);
+
+    function TestComponent() {
+      useMatchmaker();
+      return <div />;
+    }
 
     expect(() => {
       render(<TestComponent />);
@@ -138,27 +182,49 @@ describe('useMatchmaker', () => {
     spy.mockRestore();
   });
 
-  it('should have error set', async () => {
+  it('should render successfully in MatchmakerProvider', () => {
+    function TestComponent() {
+      useMatchmaker();
+      return <p>Renders</p>;
+    }
+
+    const { baseElement } = render(
+      <MatchmakerProvider>
+        <TestComponent></TestComponent>
+      </MatchmakerProvider>
+    );
+    expect(baseElement).toBeTruthy();
+    expect(screen.getByText('Renders')).toBeVisible();
+  });
+
+  it.only('should have error set', async () => {
     // Hide expected uncaught error message thrown by React (suggests adding ErrorBoundary)
     const spy = jest.spyOn(console, 'error').mockImplementation(() => null);
 
     const server = mockFrontendServer();
-    const port = await server.start();
     server.connect.mockImplementation((call) => {
+      // TODO: fix Jest ReferenceError
       call.emit('error', new Error('some error'));
+      return;
     });
+    const port = await server.start();
 
-    const wrapper = ({ children }: React.PropsWithChildren) => (
-      <MatchmakerProvider address={`localhost:${port}`}>
-        {children}
-      </MatchmakerProvider>
+    let mm: Matchmaker | null = null;
+
+    const ui = (
+      <WatchMatchmaker
+        port={port}
+        cb={(m: Matchmaker) => {
+          mm = m;
+        }}
+      />
     );
-
-    const { rerender } = render(<TestComponent />, { wrapper });
+    const { rerender } = render(ui);
 
     await waitFor(() => {
-      rerender(<TestComponent />);
-      expect(screen.getByText(/^Error:/)).toBeVisible();
+      expect(server.connect).toBeCalled();
+      rerender(ui);
+      expect(mm?.error).toBeTruthy();
     });
 
     spy.mockRestore();

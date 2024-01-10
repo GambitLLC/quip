@@ -1,8 +1,7 @@
 import React, { useState, createContext, useEffect, useContext } from 'react';
-import { credentials } from '@grpc/grpc-js';
-import { QuipFrontendClient } from '@quip/pb/matchmaker/frontend';
+import { ClientReadableStream, StatusObject, credentials } from '@grpc/grpc-js';
+import { PlayerUpdate, QuipFrontendClient } from '@quip/pb/matchmaker/frontend';
 import * as messages from '@quip/pb/matchmaker/messages';
-import { Status as grpcStatus } from '@grpc/grpc-js/build/src/constants';
 import { Empty } from '@quip/pb/google/protobuf/empty';
 
 export type QuipStatus = 'offline' | 'online' | 'searching' | 'playing';
@@ -16,7 +15,7 @@ export interface Matchmaker {
   // TODO: is there a better way of handling errors? perhaps useMatchmaker
   // should register subscribers or MatchmakerProvider takes in an onError?...
   /**
-   * error is the most recent error message received.
+   * error is the most recent error message from the QuipFrontendClient connect method.
    */
   error?: Error;
   /**
@@ -61,20 +60,20 @@ export function MatchmakerProvider({
 
   useEffect(() => {
     const stream = client.connect(Empty.create());
-
     stream.on('status', (status) => {
       // grpc status
-      console.log('status', status);
+      // console.log('status', status);
     });
     stream.on('data', (msg) => {
-      console.log('data', msg);
+      // console.log('data', msg);?
     });
     stream.on('end', () => {
-      console.log('stream ended');
+      // console.log('stream ended');
+      // stream = null;
       // TODO: reconnenct?
     });
     stream.on('error', (err) => {
-      console.error('error', err);
+      // console.error('error', err);
       setMatchmaker((matchmaker) => ({
         ...matchmaker,
         error: err,
@@ -82,7 +81,10 @@ export function MatchmakerProvider({
       }));
     });
 
-    return () => client.close();
+    return () => {
+      stream?.cancel();
+      client.close();
+    };
   }, [client]);
 
   return (
