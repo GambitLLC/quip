@@ -15,7 +15,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@quip/pb/matchmaker/*": ["libs/pb/matchmaker/*"],
+      "@quip/pb/*": ["libs/pb/*"],
       "@quip/react/matchmaker": ["libs/react/matchmaker/src/index.ts"]
     },
     "esModuleInterop": true

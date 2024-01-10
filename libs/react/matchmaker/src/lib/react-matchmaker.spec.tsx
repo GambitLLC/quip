@@ -11,14 +11,15 @@ import {
 } from './react-matchmaker';
 
 import {
-  Request,
-  Response,
+  PlayerUpdate,
   QuipFrontendServer,
   QuipFrontendService,
 } from '@quip/pb/matchmaker/frontend';
 
-import { Server, ServerCredentials, ServerDuplexStream } from '@grpc/grpc-js';
+import { Server, ServerCredentials, ServerWritableStream } from '@grpc/grpc-js';
 import React from 'react';
+import { Empty } from '@quip/pb/google/protobuf/empty';
+import { PlayerState } from '@quip/pb/matchmaker/messages';
 
 interface mockQuipFrontendServer {
   // start begins listening port and returns the port
@@ -27,20 +28,25 @@ interface mockQuipFrontendServer {
   // stop gracefully stops the grpc server
   stop: (callback: (error?: Error) => void) => void;
 
-  /**
-   * connect is a mock of QuipFrontendServer's connect method
-   */
-  connect: jest.Mock<void, [ServerDuplexStream<Request, Response>]>;
+  // Mock methods of QuipFrontendServer
+  connect: jest.Mock<void, [ServerWritableStream<Empty, PlayerUpdate>]>;
+  getPlayer: jest.Mock;
+  startQueue: jest.Mock;
+  stopQueue: jest.Mock;
 }
 
 function mockFrontendServer(): mockQuipFrontendServer {
   const server = new Server();
 
   const connect = jest.fn(
-    (call: ServerDuplexStream<Request, Response>): void => {
+    (call: ServerWritableStream<Empty, PlayerUpdate>): void => {
       // TODO: add callbacks to send status update as desired
       call.write({
-        statusUpdate: {
+        player: {
+          id: 'asd',
+          state: PlayerState.ONLINE,
+        },
+        update: {
           queueStarted: {
             id: 'asd',
             config: {
@@ -54,8 +60,15 @@ function mockFrontendServer(): mockQuipFrontendServer {
     }
   );
 
+  const getPlayer = jest.fn();
+  const startQueue = jest.fn();
+  const stopQueue = jest.fn();
+
   const impl: QuipFrontendServer = {
     connect,
+    getPlayer,
+    startQueue,
+    stopQueue,
   };
   server.addService(QuipFrontendService, impl);
 
@@ -77,6 +90,9 @@ function mockFrontendServer(): mockQuipFrontendServer {
     },
     stop: (cb) => server.tryShutdown(cb),
     connect,
+    getPlayer,
+    startQueue,
+    stopQueue,
   };
 }
 

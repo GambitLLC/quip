@@ -3,6 +3,7 @@ import { credentials } from '@grpc/grpc-js';
 import { QuipFrontendClient } from '@quip/pb/matchmaker/frontend';
 import * as messages from '@quip/pb/matchmaker/messages';
 import { Status as grpcStatus } from '@grpc/grpc-js/build/src/constants';
+import { Empty } from '@quip/pb/google/protobuf/empty';
 
 export type QuipStatus = 'offline' | 'online' | 'searching' | 'playing';
 
@@ -59,7 +60,7 @@ export function MatchmakerProvider({
   });
 
   useEffect(() => {
-    const stream = client.connect();
+    const stream = client.connect(Empty.create());
 
     stream.on('status', (status) => {
       // grpc status
@@ -69,7 +70,8 @@ export function MatchmakerProvider({
       console.log('data', msg);
     });
     stream.on('end', () => {
-      stream.end();
+      console.log('stream ended');
+      // TODO: reconnenct?
     });
     stream.on('error', (err) => {
       console.error('error', err);
