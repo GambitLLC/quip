@@ -1,10 +1,21 @@
 import React, { useState, createContext, useEffect, useContext } from 'react';
-import { ClientReadableStream, StatusObject, credentials } from '@grpc/grpc-js';
-import { PlayerUpdate, QuipFrontendClient } from '@quip/pb/matchmaker/frontend';
+import { credentials } from '@grpc/grpc-js';
+import {
+  GetPlayerRequest,
+  PlayerUpdate,
+  QuipFrontendClient,
+  StartQueueRequest,
+  StopQueueRequest,
+} from '@quip/pb/matchmaker/frontend';
 import * as messages from '@quip/pb/matchmaker/messages';
 import { Empty } from '@quip/pb/google/protobuf/empty';
 
-export type QuipStatus = 'offline' | 'online' | 'searching' | 'playing';
+export type QuipStatus =
+  | 'offline'
+  | 'online'
+  | 'idle'
+  | 'searching'
+  | 'playing';
 
 export interface Matchmaker {
   /**
@@ -23,11 +34,15 @@ export interface Matchmaker {
    */
   errorUpdatedAt?: number;
 
+  getPlayer: () => Promise<messages.Player>;
+
   /**
    * startQueue asynchronously attempts to start queue for the
    * currently logged in user.
    */
-  startQueue: (config: messages.QueueConfiguration) => void;
+  startQueue: (config: StartQueueRequest) => Promise<void>;
+
+  stopQueue: () => Promise<void>;
 }
 
 export const MatchmakerContext = createContext<Matchmaker | null>(null);
@@ -53,9 +68,27 @@ export function MatchmakerProvider({
 
   const [matchmaker, setMatchmaker] = useState<Matchmaker>({
     status: 'offline',
-    startQueue: () => {
-      return;
-    },
+    getPlayer: () =>
+      new Promise<messages.Player>((resolve, reject) =>
+        client.getPlayer({}, (err, resp) => {
+          if (err) return reject(err);
+          resolve(resp);
+        })
+      ),
+    startQueue: (req: StartQueueRequest) =>
+      new Promise<void>((resolve, reject) =>
+        client.startQueue(req, (err, _) => {
+          if (err) return reject(err);
+          resolve();
+        })
+      ),
+    stopQueue: () =>
+      new Promise<void>((resolve, reject) =>
+        client.stopQueue({}, (err, _) => {
+          if (err) return reject(err);
+          resolve();
+        })
+      ),
   });
 
   useEffect(() => {
@@ -64,13 +97,40 @@ export function MatchmakerProvider({
       // grpc status
       // console.log('status', status);
     });
-    stream.on('data', (msg) => {
-      // console.log('data', msg);?
+    stream.on('data', (msg: PlayerUpdate) => {
+      // TODO: confirm update is for current player?
+      setMatchmaker((matchmaker) => {
+        let status = matchmaker.status;
+        switch (msg.player?.state) {
+          default:
+            return matchmaker;
+          case messages.PlayerState.OFFLINE:
+            status = 'offline';
+            break;
+          case messages.PlayerState.ONLINE:
+            status = 'online';
+            break;
+          case messages.PlayerState.IDLE:
+            status = 'idle';
+            break;
+          case messages.PlayerState.SEARCHING:
+            status = 'searching';
+            break;
+          case messages.PlayerState.PLAYING:
+            status = 'playing';
+            break;
+        }
+        return {
+          ...matchmaker,
+          status,
+        };
+      });
+      // console.log('data', msg);
     });
     stream.on('end', () => {
-      // console.log('stream ended');
-      // stream = null;
-      // TODO: reconnenct?
+      // TODO: reconnect?
+      stream.cancel();
+      client.close();
     });
     stream.on('error', (err) => {
       // console.error('error', err);

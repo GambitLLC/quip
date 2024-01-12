@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 
 // add custom jest matchers from jest-dom
 import '@testing-library/jest-dom';
@@ -10,14 +10,29 @@ import {
 } from './react-matchmaker';
 
 import {
+  GetPlayerRequest,
   PlayerUpdate,
   QuipFrontendServer,
   QuipFrontendService,
+  StartQueueRequest,
+  StopQueueRequest,
 } from '@quip/pb/matchmaker/frontend';
 
-import { Server, ServerCredentials, ServerWritableStream } from '@grpc/grpc-js';
+import {
+  Server,
+  ServerCredentials,
+  ServerUnaryCall,
+  ServerWritableStream,
+  sendUnaryData,
+} from '@grpc/grpc-js';
 import { Empty } from '@quip/pb/google/protobuf/empty';
-import { PlayerState } from '@quip/pb/matchmaker/messages';
+import { Player, PlayerState } from '@quip/pb/matchmaker/messages';
+import React from 'react';
+
+type MockUnaryRPC<Request, Response> = jest.Mock<
+  void,
+  [ServerUnaryCall<Request, Response>, sendUnaryData<Response>]
+>;
 
 interface mockQuipFrontendServer {
   // start begins listening port and returns the port
@@ -28,9 +43,9 @@ interface mockQuipFrontendServer {
 
   // Mock methods of QuipFrontendServer
   connect: jest.Mock<void, [ServerWritableStream<Empty, PlayerUpdate>]>;
-  getPlayer: jest.Mock;
-  startQueue: jest.Mock;
-  stopQueue: jest.Mock;
+  getPlayer: MockUnaryRPC<GetPlayerRequest, Player>;
+  startQueue: MockUnaryRPC<StartQueueRequest, Empty>;
+  stopQueue: MockUnaryRPC<StopQueueRequest, Empty>;
 }
 
 let cleanupFns: ((cb: (err?: Error) => void) => void)[] = [];
@@ -38,42 +53,7 @@ let cleanupFns: ((cb: (err?: Error) => void) => void)[] = [];
 function mockFrontendServer(): mockQuipFrontendServer {
   const server = new Server();
 
-  const connect = jest.fn(
-    (call: ServerWritableStream<Empty, PlayerUpdate>): void => {
-      console.log('original mock');
-      // TODO: add callbacks to send status update as desired
-      call.write({
-        player: {
-          id: 'asd',
-          state: PlayerState.ONLINE,
-        },
-        update: {
-          queueStarted: {
-            id: 'asd',
-            config: {
-              gamemode: 'test',
-            },
-            startTime: new Date(),
-          },
-        },
-      });
-      return;
-    }
-  );
-
-  const getPlayer = jest.fn();
-  const startQueue = jest.fn();
-  const stopQueue = jest.fn();
-
-  const impl: QuipFrontendServer = {
-    connect,
-    getPlayer,
-    startQueue,
-    stopQueue,
-  };
-  server.addService(QuipFrontendService, impl);
-
-  return {
+  const mock: mockQuipFrontendServer = {
     start: async () => {
       return new Promise<number>((resolve, reject) =>
         server.bindAsync(
@@ -92,16 +72,31 @@ function mockFrontendServer(): mockQuipFrontendServer {
         )
       );
     },
-    stop: (cb) => server.tryShutdown(cb),
-    connect,
-    getPlayer,
-    startQueue,
-    stopQueue,
+    stop: (cb: (err?: Error) => void) => server.tryShutdown(cb),
+    connect: jest.fn((call) => {
+      return;
+    }),
+    getPlayer: jest.fn((call, cb) => {
+      cb(null, Player.create());
+    }),
+    startQueue: jest.fn((call, cb) => {
+      cb(null, Empty.create());
+    }),
+    stopQueue: jest.fn((call, cb) => {
+      cb(null, Empty.create());
+    }),
   };
-}
 
-// cleanup any mounted React trees
-afterEach(cleanup);
+  const impl: QuipFrontendServer = {
+    connect: mock.connect,
+    getPlayer: mock.getPlayer,
+    startQueue: mock.startQueue,
+    stopQueue: mock.stopQueue,
+  };
+  server.addService(QuipFrontendService, impl);
+
+  return mock;
+}
 
 afterAll(() => {
   const promise = Promise.all(
@@ -123,23 +118,28 @@ afterAll(() => {
 });
 
 describe('MatchmakerProvider', () => {
-  it('should call connect on server', async () => {
+  it('should automatically connect to QuipFrontendServer', async () => {
     const server = mockFrontendServer();
     const port = await server.start();
 
-    function TestComponent() {
-      useMatchmaker();
-      return <div />;
-    }
-    render(
+    render(<MatchmakerProvider address={`localhost:${port}`} />);
+    await waitFor(() => expect(server.connect).toHaveBeenCalled());
+  });
+
+  it('should not connect multiple times on rerender', async () => {
+    const server = mockFrontendServer();
+    const port = await server.start();
+
+    const wrapper = ({ children }: { children: React.ReactElement }) => (
       <MatchmakerProvider address={`localhost:${port}`}>
-        <TestComponent></TestComponent>
+        {children}
       </MatchmakerProvider>
     );
 
-    await waitFor(() => expect(server.connect).toHaveBeenCalled());
+    const { rerender } = render(<div />, { wrapper });
+    for (let i = 0; i < 10; i++) rerender(<p>{i}</p>);
 
-    cleanup();
+    await waitFor(() => expect(server.connect).toHaveBeenCalledTimes(1));
   });
 });
 
@@ -197,13 +197,9 @@ describe('useMatchmaker', () => {
     expect(screen.getByText('Renders')).toBeVisible();
   });
 
-  it.only('should have error set', async () => {
-    // Hide expected uncaught error message thrown by React (suggests adding ErrorBoundary)
-    const spy = jest.spyOn(console, 'error').mockImplementation(() => null);
-
+  it('should have error set', async () => {
     const server = mockFrontendServer();
     server.connect.mockImplementation((call) => {
-      // TODO: fix Jest ReferenceError
       call.emit('error', new Error('some error'));
       return;
     });
@@ -222,11 +218,101 @@ describe('useMatchmaker', () => {
     const { rerender } = render(ui);
 
     await waitFor(() => {
-      expect(server.connect).toBeCalled();
       rerender(ui);
       expect(mm?.error).toBeTruthy();
     });
+  });
 
-    spy.mockRestore();
+  it('should update status', async () => {
+    const server = mockFrontendServer();
+    const connected = new Promise<(state: PlayerState) => void>((resolve) => {
+      server.connect.mockImplementation((c) => {
+        resolve((state) => {
+          c.write(
+            PlayerUpdate.fromJSON({
+              player: {
+                state,
+              },
+            })
+          );
+        });
+      });
+    });
+
+    const port = await server.start();
+
+    let mm = {} as Matchmaker;
+    const ui = (
+      <WatchMatchmaker
+        port={port}
+        cb={(m: Matchmaker) => {
+          mm = m;
+        }}
+      />
+    );
+    const { rerender } = render(ui);
+
+    const sendState = await connected;
+
+    sendState(PlayerState.OFFLINE);
+    await waitFor(() => {
+      rerender(ui);
+      expect(mm?.status).toEqual('offline');
+    });
+
+    sendState(PlayerState.IDLE);
+    await waitFor(() => {
+      rerender(ui);
+      expect(mm?.status).toEqual('idle');
+    });
+
+    sendState(PlayerState.ONLINE);
+    await waitFor(() => {
+      rerender(ui);
+      expect(mm?.status).toEqual('online');
+    });
+
+    sendState(PlayerState.SEARCHING);
+    await waitFor(() => {
+      rerender(ui);
+      expect(mm?.status).toEqual('searching');
+    });
+
+    sendState(PlayerState.PLAYING);
+    await waitFor(() => {
+      rerender(ui);
+      expect(mm?.status).toEqual('playing');
+    });
+  });
+
+  it('should call grpc methods on the server', async () => {
+    const server = mockFrontendServer();
+    const port = await server.start();
+
+    let mm = {} as Matchmaker;
+
+    const ui = (
+      <WatchMatchmaker
+        port={port}
+        cb={(m: Matchmaker) => {
+          mm = m;
+        }}
+      />
+    );
+    render(ui);
+
+    // wait for matchmaker to be set by context
+    await waitFor(() => {
+      expect(mm.getPlayer).toBeTruthy();
+    });
+
+    await mm?.getPlayer();
+    expect(server.getPlayer).toBeCalled();
+
+    await mm?.startQueue(StartQueueRequest.create());
+    expect(server.startQueue).toBeCalled();
+
+    await mm?.stopQueue();
+    expect(server.stopQueue).toBeCalled();
   });
 });
