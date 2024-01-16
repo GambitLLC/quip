@@ -124,12 +124,33 @@ afterAll(() => {
 });
 
 describe('MatchmakerProvider', () => {
+  it.todo('should throw outside of AuthProvider');
+
   it('should automatically connect to QuipFrontendServer', async () => {
     const server = mockFrontendServer();
     const port = await server.start();
 
     render(<MatchmakerProvider address={`localhost:${port}`} />);
     await waitFor(() => expect(server.connect).toHaveBeenCalled());
+  });
+
+  it('should connect with credentials from AuthProvider', async () => {
+    const server = mockFrontendServer();
+    const auth = new Promise<string>((resolve, reject) => {
+      server.connect.mockImplementation((call) => {
+        const val = call.metadata.get('Authorization');
+        if (val.length < 1) return reject('Authorization metadata not found');
+        resolve(val[0].toString());
+      });
+    });
+
+    const port = await server.start();
+
+    render(<MatchmakerProvider address={`localhost:${port}`} />);
+    const token = await auth;
+    expect(token.startsWith('Bearer ')).toBeTruthy();
+
+    // TODO: validate token matches expected token provided by AuthProvider
   });
 
   it('should not connect multiple times on rerender', async () => {

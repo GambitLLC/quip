@@ -1,5 +1,5 @@
 import React, { useState, createContext, useEffect, useContext } from 'react';
-import { credentials } from '@grpc/grpc-js';
+import { Metadata, credentials } from '@grpc/grpc-js';
 import {
   PlayerUpdate,
   QuipFrontendClient,
@@ -55,6 +55,8 @@ export interface Matchmaker {
 
 export const MatchmakerContext = createContext<Matchmaker | null>(null);
 
+// TODO: create some AuthContext and Provider
+
 export interface MatchmakerProviderProps extends React.PropsWithChildren {
   /**
    * address of the QuipFrontendServer to connect to.
@@ -71,28 +73,40 @@ export function MatchmakerProvider({
       new QuipFrontendClient(
         address || 'localhost:8080',
         credentials.createInsecure()
+        // credentials.createInsecure().compose(
+        //   credentials.createFromMetadataGenerator((opts, cb) => {
+        //     const md = new Metadata();
+        //     md.set('Authorization', `Bearer id`);
+
+        //     cb(null, md);
+        //   })
+        // )
       )
   );
+
+  // TODO: compose into call credentials
+  const md = new Metadata();
+  md.set('Authorization', `Bearer id`);
 
   const [matchmaker, setMatchmaker] = useState<Matchmaker>({
     status: 'offline',
     getPlayer: () =>
       new Promise<messages.Player>((resolve, reject) =>
-        client.getPlayer({}, (err, resp) => {
+        client.getPlayer({}, md, (err, resp) => {
           if (err) return reject(err);
           resolve(resp);
         })
       ),
     startQueue: (req: StartQueueRequest) =>
       new Promise<void>((resolve, reject) =>
-        client.startQueue(req, (err, _) => {
+        client.startQueue(req, md, (err, _) => {
           if (err) return reject(err);
           resolve();
         })
       ),
     stopQueue: () =>
       new Promise<void>((resolve, reject) =>
-        client.stopQueue({}, (err, _) => {
+        client.stopQueue({}, md, (err, _) => {
           if (err) return reject(err);
           resolve();
         })
@@ -100,7 +114,7 @@ export function MatchmakerProvider({
   });
 
   useEffect(() => {
-    const stream = client.connect(Empty.create());
+    const stream = client.connect(Empty.create(), md);
     stream.on('status', (status) => {
       // grpc status
       // console.log('status', status);
