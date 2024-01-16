@@ -26,8 +26,14 @@ import {
   sendUnaryData,
 } from '@grpc/grpc-js';
 import { Empty } from '@quip/pb/google/protobuf/empty';
-import { Player, PlayerState } from '@quip/pb/matchmaker/messages';
+import {
+  MatchAssignment,
+  Player,
+  PlayerState,
+  QueueAssignment,
+} from '@quip/pb/matchmaker/messages';
 import React from 'react';
+import { randomBytes } from 'crypto';
 
 type MockUnaryRPC<Request, Response> = jest.Mock<
   void,
@@ -282,6 +288,64 @@ describe('useMatchmaker', () => {
     await waitFor(() => {
       rerender(ui);
       expect(mm?.status).toEqual('playing');
+    });
+  });
+
+  it('should update queueAssignment and matchAssignment', async () => {
+    const server = mockFrontendServer();
+    const connected = new Promise<
+      (queue?: QueueAssignment, match?: MatchAssignment) => void
+    >((resolve) => {
+      server.connect.mockImplementation((c) => {
+        resolve((queue, match) => {
+          c.write(
+            PlayerUpdate.fromJSON({
+              player: {
+                queueAssignment: queue,
+                matchAssignment: match,
+              },
+            })
+          );
+        });
+      });
+    });
+
+    const port = await server.start();
+
+    let mm = {} as Matchmaker;
+    const ui = (
+      <WatchMatchmaker
+        port={port}
+        cb={(m: Matchmaker) => {
+          mm = m;
+        }}
+      />
+    );
+    const { rerender } = render(ui);
+
+    const sendAssignment = await connected;
+
+    const qa = QueueAssignment.create({
+      id: randomBytes(12).toString(),
+      startTime: new Date(),
+    });
+
+    sendAssignment(qa, undefined);
+    await waitFor(() => {
+      rerender(ui);
+      expect(mm?.queueAssignment).toStrictEqual(qa);
+      expect(mm?.matchAssignment).toBeUndefined();
+    });
+
+    const ma = MatchAssignment.create({
+      id: randomBytes(16).toString(),
+    });
+
+    sendAssignment(undefined, ma);
+    await waitFor(() => {
+      rerender(ui);
+      expect(mm?.queueAssignment).toBeUndefined();
+      expect(mm?.matchAssignment).toStrictEqual(ma);
     });
   });
 

@@ -1,11 +1,9 @@
 import React, { useState, createContext, useEffect, useContext } from 'react';
 import { credentials } from '@grpc/grpc-js';
 import {
-  GetPlayerRequest,
   PlayerUpdate,
   QuipFrontendClient,
   StartQueueRequest,
-  StopQueueRequest,
 } from '@quip/pb/matchmaker/frontend';
 import * as messages from '@quip/pb/matchmaker/messages';
 import { Empty } from '@quip/pb/google/protobuf/empty';
@@ -22,6 +20,16 @@ export interface Matchmaker {
    * status is the current state of the QuipFrontendClient.
    */
   status: QuipStatus;
+
+  /**
+   * queueAssignment contains queue details while player is in queue.
+   */
+  queueAssignment?: messages.QueueAssignment;
+
+  /**
+   * matchAssignment will contain match details while player is in a game.
+   */
+  matchAssignment?: messages.MatchAssignment;
 
   // TODO: is there a better way of handling errors? perhaps useMatchmaker
   // should register subscribers or MatchmakerProvider takes in an onError?...
@@ -123,6 +131,8 @@ export function MatchmakerProvider({
         return {
           ...matchmaker,
           status,
+          queueAssignment: msg.player.queueAssignment,
+          matchAssignment: msg.player.matchAssignment,
         };
       });
       // console.log('data', msg);
