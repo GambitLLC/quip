@@ -33,7 +33,7 @@ import {
   QueueAssignment,
 } from '@quip/pb/matchmaker/messages';
 import React from 'react';
-import { randomBytes } from 'crypto';
+import { randomUUID } from 'crypto';
 
 type MockUnaryRPC<Request, Response> = jest.Mock<
   void,
@@ -124,13 +124,11 @@ afterAll(() => {
 });
 
 describe('MatchmakerProvider', () => {
-  it.todo('should throw outside of AuthProvider');
-
   it('should automatically connect to QuipFrontendServer', async () => {
     const server = mockFrontendServer();
     const port = await server.start();
 
-    render(<MatchmakerProvider address={`localhost:${port}`} />);
+    render(<MatchmakerProvider address={`localhost:${port}`} authToken="" />);
     await waitFor(() => expect(server.connect).toHaveBeenCalled());
   });
 
@@ -146,9 +144,13 @@ describe('MatchmakerProvider', () => {
 
     const port = await server.start();
 
-    render(<MatchmakerProvider address={`localhost:${port}`} />);
-    const token = await auth;
-    expect(token.startsWith('Bearer ')).toBeTruthy();
+    const token = randomUUID();
+
+    render(
+      <MatchmakerProvider address={`localhost:${port}`} authToken={token} />
+    );
+
+    expect(await auth).toStrictEqual(token);
 
     // TODO: validate token matches expected token provided by AuthProvider
   });
@@ -158,7 +160,7 @@ describe('MatchmakerProvider', () => {
     const port = await server.start();
 
     const wrapper = ({ children }: { children: React.ReactElement }) => (
-      <MatchmakerProvider address={`localhost:${port}`}>
+      <MatchmakerProvider address={`localhost:${port}`} authToken="">
         {children}
       </MatchmakerProvider>
     );
@@ -185,7 +187,7 @@ describe('useMatchmaker', () => {
     }
 
     const ui = (
-      <MatchmakerProvider address={`localhost:${port}`}>
+      <MatchmakerProvider address={`localhost:${port}`} authToken="">
         <Consumer />
       </MatchmakerProvider>
     );
@@ -216,7 +218,7 @@ describe('useMatchmaker', () => {
     }
 
     const { baseElement } = render(
-      <MatchmakerProvider>
+      <MatchmakerProvider authToken="">
         <TestComponent></TestComponent>
       </MatchmakerProvider>
     );
@@ -347,7 +349,7 @@ describe('useMatchmaker', () => {
     const sendAssignment = await connected;
 
     const qa = QueueAssignment.create({
-      id: randomBytes(12).toString(),
+      id: randomUUID(),
       startTime: new Date(),
     });
 
@@ -359,7 +361,7 @@ describe('useMatchmaker', () => {
     });
 
     const ma = MatchAssignment.create({
-      id: randomBytes(16).toString(),
+      id: randomUUID(),
     });
 
     sendAssignment(undefined, ma);

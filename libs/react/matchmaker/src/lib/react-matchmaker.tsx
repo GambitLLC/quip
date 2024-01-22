@@ -1,4 +1,10 @@
-import React, { useState, createContext, useEffect, useContext } from 'react';
+import React, {
+  useState,
+  createContext,
+  useEffect,
+  useContext,
+  useMemo,
+} from 'react';
 import { Metadata, credentials } from '@grpc/grpc-js';
 import {
   PlayerUpdate,
@@ -55,24 +61,29 @@ export interface Matchmaker {
 
 export const MatchmakerContext = createContext<Matchmaker | null>(null);
 
-// TODO: create some AuthContext and Provider
-
 export interface MatchmakerProviderProps extends React.PropsWithChildren {
   /**
    * address of the QuipFrontendServer to connect to.
    */
   address?: string;
+
+  /**
+   * authorization token to pass with any rpc calls.
+   */
+  authToken: string;
 }
 
 export function MatchmakerProvider({
   address,
+  authToken,
   children,
 }: MatchmakerProviderProps) {
-  const [client] = useState(
+  const client = useMemo(
     () =>
       new QuipFrontendClient(
         address || 'localhost:8080',
         credentials.createInsecure()
+        // TODO: use SSL credentials (insecure credentials cannot be composed)
         // credentials.createInsecure().compose(
         //   credentials.createFromMetadataGenerator((opts, cb) => {
         //     const md = new Metadata();
@@ -81,12 +92,15 @@ export function MatchmakerProvider({
         //     cb(null, md);
         //   })
         // )
-      )
+      ),
+    [address]
   );
 
-  // TODO: compose into call credentials
-  const md = new Metadata();
-  md.set('Authorization', `Bearer id`);
+  const md = useMemo(() => {
+    const md = new Metadata();
+    md.set('Authorization', authToken);
+    return md;
+  }, [authToken]);
 
   const [matchmaker, setMatchmaker] = useState<Matchmaker>({
     status: 'offline',
@@ -166,10 +180,10 @@ export function MatchmakerProvider({
     });
 
     return () => {
-      stream?.cancel();
+      stream.cancel();
       client.close();
     };
-  }, [client]);
+  }, [client, md]);
 
   return (
     <MatchmakerContext.Provider value={matchmaker}>
