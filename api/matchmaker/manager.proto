@@ -1,6 +1,6 @@
 syntax = "proto3";
 package quip.matchmaker;
-option go_package="github.com/GambitLLC/quip/libs/pb/matchmaker";
+option go_package="github.com/GambitLLC/quip/pkg/matchmaker/pb";
 
 import "google/protobuf/empty.proto";
 import "matchmaker/messages.proto";

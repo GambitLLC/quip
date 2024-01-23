@@ -35,17 +35,12 @@ endif
 
 PROTOC_INCLUDES := api/third-party
 
-
-
 MATCHMAKER_PROTO_NAMES = frontend manager broker extensions messages
-MATCHMAKER_TYPESCRIPT_PROTOS = $(foreach proto,$(MATCHMAKER_PROTO_NAMES), libs/pb/matchmaker/$(proto).ts)
-MATCHMAKER_GOLANG_PROTOS = $(foreach proto,$(MATCHMAKER_PROTO_NAMES), libs/pb/matchmaker/$(proto).pb.go)
-# MATCHMAKER_INTERNAL_PROTOS = libs/matchmaker/internal/ipb/messages.pb.go
-MATCHMAKER_PROTOS = $(MATCHMAKER_TYPESCRIPT_PROTOS) $(MATCHMAKER_GOLANG_PROTOS)
+MATCHMAKER_GOLANG_PROTOS = $(foreach proto,$(MATCHMAKER_PROTO_NAMES), pkg/matchmaker/pb/$(proto).pb.go)
+MATCHMAKER_TYPESCRIPT_PROTOS = $(foreach proto,$(MATCHMAKER_PROTO_NAMES), packages/pb/matchmaker/$(proto).ts)
+MATCHMAKER_PROTOS = $(MATCHMAKER_GOLANG_PROTOS) $(MATCHMAKER_TYPESCRIPT_PROTOS)
 
-SWAGGER_JSON_DOCS = api/matchmaker/matchmaker.swagger.json api/matchmaker/manager.swagger.json
-
-ALL_PROTOS = $(MATCHMAKER_PROTOS) $(SWAGGER_JSON_DOCS)
+ALL_PROTOS = $(MATCHMAKER_PROTOS)
 
 help:
 	@cat Makefile | grep ^\#\# | grep -v ^\#\#\# |cut -c 4-
@@ -90,76 +85,6 @@ build/toolchain/bin/protoc-gen-go-grpc$(EXE_EXTENSION):
 	mkdir -p $(TOOLCHAIN_BIN)
 	cd $(TOOLCHAIN_BIN) && $(GO) get google.golang.org/grpc/cmd/protoc-gen-go-grpc && $(GO) build -pkgdir . google.golang.org/grpc/cmd/protoc-gen-go-grpc
 
-build/toolchain/bin/protoc-gen-openapiv2$(EXE_EXTENSION):
-	mkdir -p $(TOOLCHAIN_BIN)
-	cd $(TOOLCHAIN_BIN) && $(GO) get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 && $(GO) build -pkgdir . github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
-
-# init module because there are conflicting module versions (prometheus)
-build/e2e/bin/minimatch:
-	mkdir -p $(BUILD_DIR)/e2e/bin
-	-cd $(BUILD_DIR)/e2e/bin && $(GO) mod init derp
-	cd $(BUILD_DIR)/e2e/bin && $(GO) get open-match.dev/open-match/cmd/minimatch && $(GO) build -pkgdir . open-match.dev/open-match/cmd/minimatch
-
-# init module because there are conflicting module versions (prometheus)
-build/e2e/bin/default-evaluator:
-	mkdir -p $(BUILD_DIR)/e2e/bin
-	-cd $(BUILD_DIR)/e2e/bin && $(GO) mod init derp
-	cd $(BUILD_DIR)/e2e/bin && $(GO) get open-match.dev/open-match/cmd/default-evaluator && $(GO) build -pkgdir . open-match.dev/open-match/cmd/default-evaluator
-
-# init module because there are conflicting module versions (prometheus)
-build/e2e/bin/synchronizer:
-	mkdir -p $(BUILD_DIR)/e2e/bin
-	-cd $(BUILD_DIR)/e2e/bin && $(GO) mod init derp
-	cd $(BUILD_DIR)/e2e/bin && $(GO) get open-match.dev/open-match/cmd/synchronizer && $(GO) build -pkgdir . open-match.dev/open-match/cmd/synchronizer
-
-
-api/third-party/: api/third-party/google api/third-party/protoc-gen-openapiv2/options api/third-party/open-match
-
-api/third-party/open-match:
-	mkdir -p $(TOOLCHAIN_DIR)/open-match-temp/
-	mkdir -p $(REPOSITORY_ROOT)/api/third-party/open-match
-	curl -o $(TOOLCHAIN_DIR)/open-match-temp/open-match.zip -L https://github.com/googleforgames/open-match/archive/v$(OPEN_MATCH_VERSION).zip
-	(cd $(TOOLCHAIN_DIR)/open-match-temp/; unzip -q -o open-match.zip)
-	cp -f $(TOOLCHAIN_DIR)/open-match-temp/open-match-$(OPEN_MATCH_VERSION)/api/messages.proto $(REPOSITORY_ROOT)/api/third-party/open-match/
-	rm -rf $(TOOLCHAIN_DIR)/open-match-temp
-
-GOOGLE_API_FILES := api/http api/annotations rpc/status
-api/third-party/google:
-	mkdir -p $(TOOLCHAIN_DIR)/googleapis-temp/
-	mkdir -p $(REPOSITORY_ROOT)/api/third-party/google/api
-	curl -o $(TOOLCHAIN_DIR)/googleapis-temp/googleapis.zip -L https://github.com/googleapis/googleapis/archive/$(GOOGLE_APIS_VERSION).zip
-	(cd $(TOOLCHAIN_DIR)/googleapis-temp/; unzip -q -o googleapis.zip)
-	$(foreach file,$(GOOGLE_API_FILES),mkdir -p $(REPOSITORY_ROOT)/api/third-party/google/$(dir $(file)))
-	$(foreach file,$(GOOGLE_API_FILES),cp -f $(TOOLCHAIN_DIR)/googleapis-temp/googleapis-$(GOOGLE_APIS_VERSION)/google/$(file).proto $(REPOSITORY_ROOT)/api/third-party/google/$(dir $(file));)
-	rm -rf $(TOOLCHAIN_DIR)/googleapis-temp
-
-api/third-party/protoc-gen-openapiv2/options:
-	mkdir -p $(TOOLCHAIN_DIR)/grpc-gateway-temp/
-	mkdir -p $(REPOSITORY_ROOT)/api/third-party/protoc-gen-openapiv2/options
-	curl -o $(TOOLCHAIN_DIR)/grpc-gateway-temp/grpc-gateway.zip -L https://github.com/grpc-ecosystem/grpc-gateway/archive/v$(GRPC_GATEWAY_VERSION).zip
-	(cd $(TOOLCHAIN_DIR)/grpc-gateway-temp/; unzip -q -o grpc-gateway.zip)
-	cp -f $(TOOLCHAIN_DIR)/grpc-gateway-temp/grpc-gateway-$(GRPC_GATEWAY_VERSION)/protoc-gen-openapiv2/options/*.proto $(REPOSITORY_ROOT)/api/third-party/protoc-gen-openapiv2/options/
-	rm -rf $(TOOLCHAIN_DIR)/grpc-gateway-temp
-
-## ####################################
-## # Testing
-##
-## test
-##
-
-.PHONY: test
-test: install-npm
-	npx nx run-many --targets=test,e2e --all --exclude database --skip-nx-cache
-
-## ####################################
-## # GraphQL
-##
-
-## graph/generated.go
-
-graph/generated.go: graph/schema.graphqls gqlgen.yml
-	$(GO) run github.com/99designs/gqlgen generate .
-
 ## ####################################
 ## # Protobuf
 ##
@@ -168,65 +93,76 @@ graph/generated.go: graph/schema.graphqls gqlgen.yml
 ## all-protos
 ## matchmaker-protos
 ##
-## # Build Swagger OpenAPI docs
-## api-docs
+## # Download third party protobuf definitions
+## api/third-party/
 ##
 
-
-api-docs: $(SWAGGER_JSON_DOCS)
-
-matchmaker-protos: $(MATCHMAKER_PROTOS)
 all-protos: $(ALL_PROTOS)
+matchmaker-protos: $(MATCHMAKER_PROTOS)
 
 GO_PROTOC_DEPS := build/toolchain/bin/protoc$(EXE_EXTENSION)
 GO_PROTOC_DEPS += build/toolchain/bin/protoc-gen-go$(EXE_EXTENSION)
 GO_PROTOC_DEPS += build/toolchain/bin/protoc-gen-go-grpc$(EXE_EXTENSION)
 
-libs/pb/matchmaker/%.pb.go: api/matchmaker/%.proto api/third-party/ $(GO_PROTOC_DEPS)
-	mkdir -p $(REPOSITORY_ROOT)/libs/pb/matchmaker
+pkg/matchmaker/pb/%.pb.go: api/matchmaker/%.proto api/third-party/ $(GO_PROTOC_DEPS)
+	mkdir -p $(REPOSITORY_ROOT)/pkg/matchmaker/pb
 	$(PROTOC) matchmaker/$(*F).proto \
 		-I $(REPOSITORY_ROOT)/api -I $(PROTOC_INCLUDES) \
-		--go_out=$(REPOSITORY_ROOT)/libs/pb/matchmaker \
-		--go_opt=module=$(GO_MODULE)/libs/pb/matchmaker \
-		--go-grpc_out=require_unimplemented_servers=false:$(REPOSITORY_ROOT)/libs/pb/matchmaker \
-		--go-grpc_opt=module=$(GO_MODULE)/libs/pb/matchmaker
+		--go_out=$(REPOSITORY_ROOT)/pkg/matchmaker/pb \
+		--go_opt=module=$(GO_MODULE)/pkg/matchmaker/pb \
+		--go-grpc_out=require_unimplemented_servers=false:$(REPOSITORY_ROOT)/pkg/matchmaker/pb \
+		--go-grpc_opt=module=$(GO_MODULE)/pkg/matchmaker/pb
 
 # Include proto structure for dependency chain to run properly.
-libs/pb/matchmaker/frontend.pb.go: libs/pb/matchmaker/messages.pb.go
-libs/pb/matchmaker/manager.pb.go: libs/pb/matchmaker/messages.pb.go
-libs/pb/matchmaker/broker.pb.go: libs/pb/matchmaker/messages.pb.go
-libs/pb/matchmaker/extensions.pb.go: libs/pb/matchmaker/messages.pb.go
-
-# libs/matchmaker/internal/ipb/%.pb.go: libs/matchmaker/internal/api/%.proto $(GO_PROTOC_DEPS)
-# 	mkdir -p $(REPOSITORY_ROOT)/libs/matchmaker/internal/ipb
-# 	$(PROTOC) $< \
-# 		-I $(REPOSITORY_ROOT) -I $(PROTOC_INCLUDES) \
-# 		--go_out=$(REPOSITORY_ROOT)/libs/matchmaker/internal/ipb \
-# 		--go_opt=module=$(GO_MODULE)/libs/matchmaker/internal/ipb
+pkg/matchmaker/pb/frontend.pb.go: pkg/matchmaker/pb/messages.pb.go
+pkg/matchmaker/pb/manager.pb.go: pkg/matchmaker/pb/messages.pb.go
+pkg/matchmaker/pb/broker.pb.go: pkg/matchmaker/pb/messages.pb.go
+pkg/matchmaker/pb/extensions.pb.go: pkg/matchmaker/pb/messages.pb.go
 
 TS_PROTOC_DEPS := build/toolchain/bin/protoc$(EXE_EXTENSION) node_modules
 
 # ts proto regenerates dependency files as well
 # pass all protos at once into protoc so that make can properly cache
-libs/pb/matchmaker/%.ts: api/matchmaker/%.proto api/third-party/ $(TS_PROTOC_DEPS)
-	mkdir -p $(REPOSITORY_ROOT)/libs/pb/matchmaker
+packages/pb/matchmaker/%.ts: api/matchmaker/%.proto api/third-party/ $(TS_PROTOC_DEPS)
+	mkdir -p $(REPOSITORY_ROOT)/packages/pb
 	$(PROTOC) $(foreach proto,$(MATCHMAKER_PROTO_NAMES),matchmaker/$(proto).proto)  \
 		-I $(REPOSITORY_ROOT)/api -I $(PROTOC_INCLUDES) \
 		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
-		--ts_proto_out=$(REPOSITORY_ROOT)/libs/pb \
+		--ts_proto_out=$(REPOSITORY_ROOT)/packages/pb \
 		--ts_proto_opt=esModuleInterop=true \
 		--ts_proto_opt=outputServices=grpc-js \
 		--ts_proto_opt=removeEnumPrefix=true \
 		--ts_proto_opt=unrecognizedEnum=false
 
-# Include proto structure for dependency chain to run properly.
-libs/pb/matchmaker/frontend.ts: libs/pb/matchmaker/messages.ts
-libs/pb/matchmaker/backend.ts: libs/pb/matchmaker/messages.ts
+api/third-party/:
+	mkdir -p api/third-party
+# api/third-party/: api/third-party/google api/third-party/protoc-gen-openapiv2/options api/third-party/open-match
 
-api/matchmaker/%.swagger.json: api/matchmaker/%.proto api/third-party/ build/toolchain/bin/protoc$(EXE_EXTENSION) build/toolchain/bin/protoc-gen-openapiv2$(EXE_EXTENSION)
-	$(PROTOC) matchmaker/$(*F).proto \
-		-I $(REPOSITORY_ROOT)/api -I $(PROTOC_INCLUDES) \
-		--openapiv2_out=json_names_for_fields=false,logtostderr=true,allow_delete_body=true:$(REPOSITORY_ROOT)/api
+# api/third-party/open-match:
+# 	mkdir -p $(TOOLCHAIN_DIR)/open-match-temp/
+# 	mkdir -p $(REPOSITORY_ROOT)/api/third-party/open-match
+# 	curl -o $(TOOLCHAIN_DIR)/open-match-temp/open-match.zip -L https://github.com/googleforgames/open-match/archive/v$(OPEN_MATCH_VERSION).zip
+# 	(cd $(TOOLCHAIN_DIR)/open-match-temp/; unzip -q -o open-match.zip)
+# 	cp -f $(TOOLCHAIN_DIR)/open-match-temp/open-match-$(OPEN_MATCH_VERSION)/api/messages.proto $(REPOSITORY_ROOT)/api/third-party/open-match/
+# 	rm -rf $(TOOLCHAIN_DIR)/open-match-temp
+
+# GOOGLE_API_FILES := api/http api/annotations rpc/status
+# api/third-party/google:
+# 	mkdir -p $(TOOLCHAIN_DIR)/googleapis-temp/
+# 	mkdir -p $(REPOSITORY_ROOT)/api/third-party/google/api
+# 	curl -o $(TOOLCHAIN_DIR)/googleapis-temp/googleapis.zip -L https://github.com/googleapis/googleapis/archive/$(GOOGLE_APIS_VERSION).zip
+# 	(cd $(TOOLCHAIN_DIR)/googleapis-temp/; unzip -q -o googleapis.zip)
+# 	$(foreach file,$(GOOGLE_API_FILES),mkdir -p $(REPOSITORY_ROOT)/api/third-party/google/$(dir $(file)))
+# 	$(foreach file,$(GOOGLE_API_FILES),cp -f $(TOOLCHAIN_DIR)/googleapis-temp/googleapis-$(GOOGLE_APIS_VERSION)/google/$(file).proto $(REPOSITORY_ROOT)/api/third-party/google/$(dir $(file));)
+# 	rm -rf $(TOOLCHAIN_DIR)/googleapis-temp
+
+## ####################################
+## # Clean
+##
+## clean
+## clean-build
+## clean-third-party
+##
 
 clean-build:
 	rm -rf $(BUILD_DIR)/
@@ -234,8 +170,8 @@ clean-build:
 clean-third-party:
 	rm -rf $(REPOSITORY_ROOT)/api/third-party/
 
-PB_EXCLUDE_ITEMS = libs/pb/package.json libs/pb/project.json libs/pb/README.md libs/pb/tsconfig.json libs/pb/tsconfig.lib.json
-PB_ITEMS = $(filter-out $(PB_EXCLUDE_ITEMS), $(wildcard libs/pb/*))
+PB_EXCLUDE_ITEMS = packages/pb/README.md pkg/matchmaker/pb/README.md
+PB_ITEMS = $(filter-out $(PB_EXCLUDE_ITEMS), $(wildcard packages/pb/* pkg/matchmaker/pb/*))
 
 clean-protos:
 	rm -rf $(foreach item,$(PB_ITEMS), $(REPOSITORY_ROOT)/$(item))
