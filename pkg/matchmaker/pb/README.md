@@ -1,3 +1,0 @@
-# pb
-
-Generated protobuf files.

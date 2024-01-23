@@ -1,0 +1,12 @@
+{
+  "name": "database",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "test": {
+      "executor": "@nx-go/nx-go:test"
+    },
+    "lint": {
+      "executor": "@nx-go/nx-go:lint"
+    }
+  }
+}

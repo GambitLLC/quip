@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { useTheme } from "vuetify";
+import {useTheme} from "vuetify";
 
 const props = defineProps<{
-  hasBorder?: boolean;
-}>();
+  hasBorder?: boolean
+}>()
 
-const colors = useTheme().current.value.colors;
+const colors = useTheme().current.value.colors
 </script>
 
 <template>
-  <div class="card" :class="{ quipBorder: hasBorder }">
-    <slot></slot>
+  <div class="card" :class="{'quipBorder': hasBorder}">
+    <slot />
   </div>
 </template>
 
@@ -21,6 +21,6 @@ const colors = useTheme().current.value.colors;
 }
 
 .quipBorder {
-  border: 1px solid v-bind(colors[ "border-grey"]);
+  border: 1px solid v-bind(colors["border-grey"]);
 }
 </style>

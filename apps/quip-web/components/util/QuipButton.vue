@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Icon } from "@iconify/vue";
-import { useTheme } from "vuetify";
+import {Icon} from "@iconify/vue";
+import {useTheme} from "vuetify";
 
-const colors = useTheme().current.value.colors;
+const colors = useTheme().current.value.colors
 
 const props = defineProps({
   icon: {
@@ -19,31 +19,31 @@ const props = defineProps({
   },
   color: {
     type: String,
-    optional: true,
+    optional: true
   },
   iconSize: {
     type: Number,
     optional: true,
-    default: 24,
+    default: 24
   },
   prependIcon: {
     type: Boolean,
     optional: true,
-    default: true,
-  },
-});
+    default: true
+  }
+})
 
 const computedWidth = computed(() => {
-  return props.width !== undefined ? props.width + "px" : "auto";
-});
+  return props.width !== undefined? props.width + 'px' : 'auto'
+})
 
 const computedHeight = computed(() => {
-  return props.height !== undefined ? props.height + "px" : "42px";
-});
+  return props.height !== undefined? props.height + 'px' : '42px'
+})
 
 const computedIconSize = computed(() => {
-  return props.iconSize !== undefined ? props.iconSize + "px" : "24px";
-});
+  return props.iconSize !== undefined? props.iconSize + 'px' : '24px'
+})
 </script>
 
 <template>
@@ -56,22 +56,12 @@ const computedIconSize = computed(() => {
     class="co-headline font-weight-bold unselectable"
   >
     <div v-if="prependIcon">
-      <Icon
-        class="mr-2 icon"
-        :style="{ fontSize: computedIconSize }"
-        v-if="props.icon !== undefined"
-        :icon="props.icon ?? ''"
-      />
+      <Icon class="mr-2 icon" :style="{fontSize: computedIconSize}" v-if="props.icon !== undefined" :icon="props.icon ?? ''"/>
       <slot />
     </div>
     <div v-else>
       <slot />
-      <Icon
-        class="ml-2 icon"
-        :style="{ fontSize: computedIconSize }"
-        v-if="props.icon !== undefined"
-        :icon="props.icon ?? ''"
-      />
+      <Icon class="ml-2 icon" :style="{fontSize: computedIconSize}" v-if="props.icon !== undefined" :icon="props.icon ?? ''"/>
     </div>
   </a>
 </template>
