@@ -24,14 +24,15 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: 'npm'
+          cache: "npm"
 
       # build the nuxt app using the `nx build` command
       - name: Build
         id: build
+        working-directory: ./apps/quip-web
         run: |
           npm ci
-          npx nx run quip-web:generate --prod
+          npm run generate
 
       # deploy the app to Azure Static Web Apps
       - name: Deploy
