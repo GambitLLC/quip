@@ -15,8 +15,9 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@quip/react": ["packages/react/src/index.ts"],
-      "@quip/pb/*": ["packages/pb/*"]
+      "@quip/nx-go": ["packages/nx-go/src/index.ts"],
+      "@quip/pb/*": ["packages/pb/*"],
+      "@quip/react": ["packages/react/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

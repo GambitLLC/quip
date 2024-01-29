@@ -16,5 +16,5 @@
     "graphql"
   ],
   "eslint.format.enable": true,
-  "eslint.validate": ["graphql"]
+  "eslint.validate": ["graphql", "json"]
 }

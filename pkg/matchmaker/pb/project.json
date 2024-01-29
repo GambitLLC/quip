@@ -3,7 +3,9 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "tags": [],
-  "implicitDependencies": ["api"],
+  "implicitDependencies": [
+    "api"
+  ],
   "targets": {
     "make": {
       "command": "make matchmaker-go-protos"
