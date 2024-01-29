@@ -5,6 +5,7 @@
     "dbaeumer.vscode-eslint",
     "firsttris.vscode-jest-runner",
     "zxh404.vscode-proto3",
-    "golang.go"
+    "golang.go",
+    "editorconfig.editorconfig"
   ]
 }
