@@ -12,5 +12,6 @@ quip
 ├── internal      # Internal golang packages
 ├── packages      # Public npm packages
 ├── pkg           # Public golang packages
+├── serverless    # Azure serverless functions
 └── README.md
 ```

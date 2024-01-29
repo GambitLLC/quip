@@ -43,9 +43,7 @@ testem.log
 Thumbs.db
 
 # Configuration files
-config/*
-!config/default.yaml
-!config/games.json
+config/
 
 # Expo
 node_modules/
@@ -61,10 +59,6 @@ npm-debug.*
 *.orig.*
 web-build/
 cache/
-
-
-apps/quip-app-e2e/artifacts
-apps/quip-app-e2e/artifacts
 
 # React Native
 
