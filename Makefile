@@ -1,6 +1,6 @@
 ## quip Make Help
 ## =====================
-## 
+##
 
 PROTOC_VERSION = 21.12
 GOOGLE_APIS_VERSION = 73131bbb21f396969b5cf86893231dbe4c94728d
@@ -38,7 +38,6 @@ PROTOC_INCLUDES := api/third-party
 MATCHMAKER_PROTO_NAMES = frontend manager broker extensions messages
 MATCHMAKER_GOLANG_PROTOS = $(foreach proto,$(MATCHMAKER_PROTO_NAMES), pkg/matchmaker/pb/$(proto).pb.go)
 MATCHMAKER_TYPESCRIPT_PROTOS = $(foreach proto,$(MATCHMAKER_PROTO_NAMES), packages/pb/matchmaker/$(proto).ts)
-MATCHMAKER_PROTOS = $(MATCHMAKER_GOLANG_PROTOS) $(MATCHMAKER_TYPESCRIPT_PROTOS)
 
 ALL_PROTOS = $(MATCHMAKER_PROTOS)
 
@@ -54,7 +53,7 @@ help:
 ##
 ## install-npm
 ## install-toolchain
-## 
+##
 
 install: install-npm install-toolchain
 
@@ -98,7 +97,9 @@ build/toolchain/bin/protoc-gen-go-grpc$(EXE_EXTENSION):
 ##
 
 all-protos: $(ALL_PROTOS)
-matchmaker-protos: $(MATCHMAKER_PROTOS)
+matchmaker-protos: matchmaker-go-protos matchmaker-ts-protos
+matchmaker-go-protos: $(MATCHMAKER_GOLANG_PROTOS)
+matchmaker-ts-protos: $(MATCHMAKER_TYPESCRIPT_PROTOS)
 
 GO_PROTOC_DEPS := build/toolchain/bin/protoc$(EXE_EXTENSION)
 GO_PROTOC_DEPS += build/toolchain/bin/protoc-gen-go$(EXE_EXTENSION)
