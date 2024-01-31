@@ -5,7 +5,7 @@
     "plugin:@typescript-eslint/recommended",
     "prettier"
   ],
-  "plugins": ["@typescript-eslint", "nx"],
+  "plugins": ["@typescript-eslint", "@nx/eslint-plugin"],
   "overrides": [
     {
       "files": "*.json",

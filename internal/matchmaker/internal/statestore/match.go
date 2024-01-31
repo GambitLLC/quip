@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	matchPlayersFmt  string = "players:%s"
-	matchConnectionsFmt  string = "connection:%s"
+	matchPlayersFmt     string = "players:%s"
+	matchConnectionsFmt string = "connection:%s"
 )
 
 func (rb *redisBackend) CreateMatch(ctx context.Context, id string, players []string, connection string) error {
@@ -33,4 +33,3 @@ func (rb *redisBackend) DeleteMatch(ctx context.Context, id string) error {
 		fmt.Sprintf(matchConnectionsFmt, id),
 	).Err()
 }
-
