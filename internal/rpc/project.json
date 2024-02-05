@@ -1,0 +1,11 @@
+{
+  "name": "rpc",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "internal/rpc",
+  "targets": {
+    "lint": {
+      "executor": "@quip/nx-go:lint"
+    }
+  }
+}

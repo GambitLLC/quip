@@ -2,31 +2,18 @@
   "targetDefaults": {
     "build": {
       "cache": true,
-      "dependsOn": [
-        "^make",
-        "make",
-        "^build"
-      ],
-      "inputs": [
-        "production",
-        "^production"
-      ]
+      "dependsOn": ["^make", "make", "^build"],
+      "inputs": ["production", "^production"]
     },
     "test": {
       "cache": true
     },
     "make": {
-      "inputs": [
-        "makefile"
-      ]
+      "inputs": ["makefile"]
     },
     "@nx/jest:jest": {
       "cache": true,
-      "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/jest.preset.js"
-      ],
+      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
       "options": {
         "passWithNoTests": true
       },
@@ -42,16 +29,9 @@
     "defaultBase": "main"
   },
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals"
-    ],
-    "sharedGlobals": [
-      "{workspaceRoot}/go.mod"
-    ],
-    "makefile": [
-      "{workspaceRoot}/Makefile"
-    ],
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "sharedGlobals": ["{workspaceRoot}/go.mod"],
+    "makefile": ["{workspaceRoot}/Makefile"],
     "production": [
       "default",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
@@ -61,9 +41,7 @@
       "!{projectRoot}/test-setup.[jt]s"
     ]
   },
-  "plugins": [
-    "@quip/nx-go"
-  ],
+  "plugins": ["@quip/nx-go"],
   "generators": {
     "@nx/react": {
       "application": {

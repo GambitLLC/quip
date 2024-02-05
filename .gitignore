@@ -43,7 +43,7 @@ testem.log
 Thumbs.db
 
 # Configuration files
-config/
+/config/
 
 # Expo
 node_modules/
